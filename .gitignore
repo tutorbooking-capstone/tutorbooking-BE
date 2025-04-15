@@ -3,3 +3,8 @@
 ################################################################################
 
 /.vs/TutorBookingAPI/FileContentIndex
+/.vs/TutorBookingAPI
+/App.Core/bin/Debug/net8.0/App.Core.dll
+/App.Core/bin/Debug/net8.0/App.Core.pdb
+/App.Core/obj/Debug/net8.0/ref/App.Core.dll
+/App.Core/obj/Debug/net8.0/refint/App.Core.dll
