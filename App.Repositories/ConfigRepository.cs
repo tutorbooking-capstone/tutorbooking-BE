@@ -1,0 +1,63 @@
+using App.Core.Config;
+using App.Repositories.Context;
+using App.Repositories.Models;
+using App.Repositories.UoW;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+
+namespace App.Repositories
+{
+    public static class ConfigRepository
+    {
+        public static IServiceCollection AddAppRepositoriesConfig(
+            this IServiceCollection services,
+            IConfiguration configuration,
+            string connectionStringName = "DefaultConnection")
+        {
+            services.AddAppDbContext(configuration, connectionStringName);
+            services.AddModelsValidation();
+
+            services.AddAppIdentityConfig<AppUser, IdentityRole>()
+                .AddEntityFrameworkStores<AppDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            return services;
+        }
+
+        #region Add Sub Services
+        public static IServiceCollection AddAppDbContext(
+            this IServiceCollection services,
+            IConfiguration configuration,
+            string connectionStringName = "DefaultConnection")
+        {
+            var connectionString = configuration.GetConnectionString(connectionStringName);
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException($"Connection string '{connectionStringName}' not found in configuration.");
+                
+            // services.AddDbContext<AppDbContext>(options =>
+            //     options.UseSqlServer(connectionString));
+            services.AddDbContext<AppDbContext>(options => 
+                options.UseNpgsql(
+                    connectionString,
+                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__efmigrationshistory", "public")
+                ));
+                
+            return services;
+        }
+
+        public static IServiceCollection AddModelsValidation(this IServiceCollection services)
+        {
+            services.AddFluentValidationAutoValidation();
+            services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            return services;
+        }
+        #endregion
+    }
+}
