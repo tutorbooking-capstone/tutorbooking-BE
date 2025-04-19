@@ -127,7 +127,7 @@ namespace App.Repositories.Migrations
                         .HasColumnName("user_name");
 
                     b.HasKey("Id")
-                        .HasName("pk_i_users");
+                        .HasName("pk___users");
 
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("email_index");
@@ -136,7 +136,71 @@ namespace App.Repositories.Migrations
                         .IsUnique()
                         .HasDatabaseName("user_name_index");
 
-                    b.ToTable("i_users", (string)null);
+                    b.ToTable("__users", (string)null);
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.ApplicationRevision", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer")
+                        .HasColumnName("action");
+
+                    b.Property<string>("ApplicationId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("application_id");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("StaffId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("staff_id");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("timestamp");
+
+                    b.HasKey("Id")
+                        .HasName("pk_application_revisions");
+
+                    b.HasIndex("ApplicationId")
+                        .HasDatabaseName("ix_application_revisions_application_id");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("application_revisions");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
@@ -144,6 +208,10 @@ namespace App.Repositories.Migrations
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
+
+                    b.Property<string>("AppUserId")
+                        .HasColumnType("text")
+                        .HasColumnName("app_user_id");
 
                     b.Property<string>("Content")
                         .IsRequired()
@@ -191,9 +259,335 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_blogs");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("AppUserId")
+                        .HasDatabaseName("ix_blogs_app_user_id");
 
                     b.ToTable("blogs");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Document", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ApplicationId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("application_id");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content_type");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("download_url");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
+
+                    b.Property<bool>("IsVisibleToLearner")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_visible_to_learner");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<string>("StaffId")
+                        .HasColumnType("text")
+                        .HasColumnName("staff_id");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("storage_path");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_documents");
+
+                    b.HasIndex("ApplicationId")
+                        .HasDatabaseName("ix_documents_application_id");
+
+                    b.HasIndex("StaffId");
+
+                    b.ToTable("documents");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Hashtag", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<int>("UsageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("usage_count");
+
+                    b.HasKey("Id")
+                        .HasName("pk_hashtags");
+
+                    b.ToTable("hashtags");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorApplication", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("InternalNotes")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("internal_notes");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<string>("RevisionNotes")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("revision_notes");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<string>("TutorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tutor_applications");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("tutor_applications");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("HashtagId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("hashtag_id");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<string>("TutorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tutor_hashtags");
+
+                    b.HasIndex("HashtagId")
+                        .HasDatabaseName("ix_tutor_hashtags_hashtag_id");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("tutor_hashtags");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorLanguage", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_primary");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("language_code");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<int>("Proficiency")
+                        .HasColumnType("integer")
+                        .HasColumnName("proficiency");
+
+                    b.Property<string>("TutorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tutor_languages");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("tutor_languages");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Staff", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("staffs");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Tutor", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.Property<DateTime?>("LastStatusUpdateAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_status_update_at");
+
+                    b.Property<int>("VerificationStatus")
+                        .HasColumnType("integer")
+                        .HasColumnName("verification_status");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("tutors");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -218,13 +612,13 @@ namespace App.Repositories.Migrations
                         .HasColumnName("normalized_name");
 
                     b.HasKey("Id")
-                        .HasName("pk_i_roles");
+                        .HasName("pk___roles");
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
                         .HasDatabaseName("role_name_index");
 
-                    b.ToTable("i_roles", (string)null);
+                    b.ToTable("__roles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -250,12 +644,12 @@ namespace App.Repositories.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_i_role_claims");
+                        .HasName("pk___role_claims");
 
                     b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_i_role_claims_role_id");
+                        .HasDatabaseName("ix___role_claims_role_id");
 
-                    b.ToTable("i_role_claims", (string)null);
+                    b.ToTable("__role_claims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -281,12 +675,12 @@ namespace App.Repositories.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("Id")
-                        .HasName("pk_i_user_claims");
+                        .HasName("pk___user_claims");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_i_user_claims_user_id");
+                        .HasDatabaseName("ix___user_claims_user_id");
 
-                    b.ToTable("i_user_claims", (string)null);
+                    b.ToTable("__user_claims", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -309,12 +703,12 @@ namespace App.Repositories.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("LoginProvider", "ProviderKey")
-                        .HasName("pk_i_user_logins");
+                        .HasName("pk___user_logins");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_i_user_logins_user_id");
+                        .HasDatabaseName("ix___user_logins_user_id");
 
-                    b.ToTable("i_user_logins", (string)null);
+                    b.ToTable("__user_logins", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -328,12 +722,12 @@ namespace App.Repositories.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("UserId", "RoleId")
-                        .HasName("pk_i_user_roles");
+                        .HasName("pk___user_roles");
 
                     b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_i_user_roles_role_id");
+                        .HasDatabaseName("ix___user_roles_role_id");
 
-                    b.ToTable("i_user_roles", (string)null);
+                    b.ToTable("__user_roles", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -355,21 +749,129 @@ namespace App.Repositories.Migrations
                         .HasColumnName("value");
 
                     b.HasKey("UserId", "LoginProvider", "Name")
-                        .HasName("pk_i_user_tokens");
+                        .HasName("pk___user_tokens");
 
-                    b.ToTable("i_user_tokens", (string)null);
+                    b.ToTable("__user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.ApplicationRevision", b =>
+                {
+                    b.HasOne("App.Repositories.Models.TutorApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_application_revisions__tutor_applications_application_id");
+
+                    b.HasOne("App.Repositories.Models.User.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_application_revisions__staffs_staff_temp_id");
+
+                    b.Navigation("Application");
+
+                    b.Navigation("Staff");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
                 {
                     b.HasOne("App.Repositories.Models.AppUser", "AppUser")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_blogs_i_users_app_user_id");
+                        .HasForeignKey("AppUserId")
+                        .HasConstraintName("fk_blogs___users_app_user_id");
 
                     b.Navigation("AppUser");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Document", b =>
+                {
+                    b.HasOne("App.Repositories.Models.TutorApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_documents__tutor_applications_application_id");
+
+                    b.HasOne("App.Repositories.Models.User.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_documents__staffs_staff_temp_id1");
+
+                    b.Navigation("Application");
+
+                    b.Navigation("Staff");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorApplication", b =>
+                {
+                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_applications__tutors_tutor_temp_id");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
+                {
+                    b.HasOne("App.Repositories.Models.Hashtag", "Hashtag")
+                        .WithMany()
+                        .HasForeignKey("HashtagId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_hashtags_hashtags_hashtag_id");
+
+                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id1");
+
+                    b.Navigation("Hashtag");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.TutorLanguage", b =>
+                {
+                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id2");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Staff", b =>
+                {
+                    b.HasOne("App.Repositories.Models.AppUser", "User")
+                        .WithOne()
+                        .HasForeignKey("App.Repositories.Models.User.Staff", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_staffs___users_user_id");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Tutor", b =>
+                {
+                    b.HasOne("App.Repositories.Models.AppUser", "User")
+                        .WithOne()
+                        .HasForeignKey("App.Repositories.Models.User.Tutor", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_tutors___users_user_id");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -379,7 +881,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_role_claims_i_roles_role_id");
+                        .HasConstraintName("fk___role_claims___roles_role_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -389,7 +891,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_user_claims_i_users_user_id");
+                        .HasConstraintName("fk___user_claims___users_user_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -399,7 +901,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_user_logins_i_users_user_id");
+                        .HasConstraintName("fk___user_logins___users_user_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -409,14 +911,14 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_user_roles_i_roles_role_id");
+                        .HasConstraintName("fk___user_roles___roles_role_id");
 
                     b.HasOne("App.Repositories.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_user_roles_i_users_user_id");
+                        .HasConstraintName("fk___user_roles___users_user_id");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -426,7 +928,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_i_user_tokens_i_users_user_id");
+                        .HasConstraintName("fk___user_tokens___users_user_id");
                 });
 #pragma warning restore 612, 618
         }

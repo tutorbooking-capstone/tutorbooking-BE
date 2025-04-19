@@ -20,6 +20,7 @@ namespace App.Core.Base
         public DateTimeOffset LastUpdatedTime { get; protected set; }
         public DateTimeOffset? DeletedTime { get; protected set; }
 
+        #region Behavior
         public virtual void TrackCreate(string userId)
         {
             CreatedBy = userId;
@@ -38,7 +39,8 @@ namespace App.Core.Base
         {
             DeletedBy = userId;
             DeletedTime = CoreHelper.SystemTimeNow;
-            TrackUpdate(userId); // Cập nhật LastUpdated fields
+            TrackUpdate(userId); // Update LastUpdated fields
         }
+        #endregion
     }
 }

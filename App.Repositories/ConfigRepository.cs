@@ -46,7 +46,7 @@ namespace App.Repositories
             services.AddDbContext<AppDbContext>(options => 
                 options.UseNpgsql(
                     connectionString,
-                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__efmigrationshistory", "public")
+                    npgsqlOptions => npgsqlOptions.MigrationsHistoryTable("__efmigrations_history", "public")
                 ));
                 
             return services;

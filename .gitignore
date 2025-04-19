@@ -2,9 +2,48 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/.vs/TutorBookingAPI/FileContentIndex
-/.vs/TutorBookingAPI
-/App.Core/bin/Debug/net8.0/App.Core.dll
-/App.Core/bin/Debug/net8.0/App.Core.pdb
-/App.Core/obj/Debug/net8.0/ref/App.Core.dll
-/App.Core/obj/Debug/net8.0/refint/App.Core.dll
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+*.userprefs
+*.usertasks
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# NuGet Packages
+*.nupkg
+# NuGet Symbol Packages
+*.snupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+
+# Local configuration files
+plan.txt
+/.plan
+
+# Other potential build artifacts
+*.dll
+*.pdb
+*.cache

@@ -6,7 +6,6 @@ namespace App.Repositories.Models
     {
         public string FullName { get; set; } = "SystemCreated";
 
-
         public int? EmailCode { get; set; }
         public DateTime? CodeGeneratedTime { get; set; }
 

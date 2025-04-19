@@ -49,7 +49,7 @@ namespace App.Repositories.Context
 
         private static string HandleSpecialCases(string name)
         {
-            name = name.Replace("AspNet", "i"); 
+            name = name.Replace("AspNet", "_"); 
             
             name = _splitWordsRegex.Replace(name, "_");
 
