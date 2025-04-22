@@ -5,14 +5,11 @@ namespace App.Repositories.Models
 {
     public class Hashtag : BaseEntity
     {
-        //Brief of hashtag
-        public string Description { get; set; } = string.Empty;
-
-        //Count of usage by Tutor
-        public int UsageCount { get; set; } = 0;
+        public string Description { get; set; } = string.Empty; //Brief of hashtag
+        public int UsageCount { get; set; } = 0; //Count of usage by Tutor
     }
 
-    public class TutorHashtag : BaseEntity
+    public class TutorHashtag
     {
         public string TutorId { get; set; } = string.Empty;
         public string HashtagId { get; set; } = string.Empty;

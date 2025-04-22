@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace App.Core.Base
 {
-    public abstract class BaseUser : IdentityUser
+    public abstract class BaseUser : IdentityUser, ITrackable
     {
         public BaseUser()
         {

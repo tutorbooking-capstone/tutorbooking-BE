@@ -26,9 +26,7 @@ namespace App.Repositories.UoW
             if (!disposed)
             {
                 if (disposing)
-                {
                     _dbContext.Dispose();
-                }
             }
             disposed = true;
         }
@@ -36,11 +34,6 @@ namespace App.Repositories.UoW
         public void RollBack()
         {
             _dbContext.Database.RollbackTransaction();
-        }
-
-        public void Save()
-        {
-            _dbContext.SaveChanges();
         }
 
         public async Task SaveAsync()

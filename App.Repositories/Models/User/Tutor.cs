@@ -1,12 +1,32 @@
-﻿namespace App.Repositories.Models.User
+﻿using System.Linq.Expressions;
+
+namespace App.Repositories.Models.User
 {
     public class Tutor
     {
         public string UserId { get; set; } = string.Empty;
         public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.NotStarted;
-        public DateTime? LastStatusUpdateAt { get; set; }
+        public DateTime LastStatusUpdateAt { get; set; }
+        public DateTime? BecameTutorAt { get; set; }
 
         public virtual AppUser User { get; set; } = new();
+
+        #region Behavior
+        public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
+        {
+            if (VerificationStatus == newStatus)
+                return Array.Empty<Expression<Func<Tutor, object>>>();
+
+            VerificationStatus = newStatus;
+            LastStatusUpdateAt = DateTime.UtcNow;
+            
+            return
+            [
+                x => x.VerificationStatus,
+                x => x.LastStatusUpdateAt
+            ];
+        }
+        #endregion      
     }
 
     public enum VerificationStatus

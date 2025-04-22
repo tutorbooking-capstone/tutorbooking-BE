@@ -8,14 +8,9 @@ namespace App.Repositories.Models
     {
         public string ApplicationId { get; set; } = string.Empty;
         public string StaffId { get; set; } = string.Empty;
-
-        // Type of action performed (request revision, approve, reject)
-        public RevisionAction Action { get; set; }
-
-        // Detailed notes explaining the action taken
-        public string Notes { get; set; } = string.Empty;
-
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+        public RevisionAction Action { get; set; } // Type of action performed (request revision, approve, reject)
+        public string Notes { get; set; } = string.Empty; // Detailed notes explaining the action taken
 
         public virtual TutorApplication Application { get; set; } = new();
         public virtual Staff Staff { get; set; } = new();

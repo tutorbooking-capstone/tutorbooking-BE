@@ -6,15 +6,9 @@ namespace App.Repositories.Models
     public class TutorLanguage : BaseEntity
     {
         public string TutorId { get; set; } = string.Empty;
-
-        //Base on ISO Code
-        public string LanguageCode { get; set; } = string.Empty;
-
-        //Is main language or not
-        public bool IsPrimary { get; set; }
-
-        //Represent the level of proficiency in the language (1-7 scale)
-        public int Proficiency { get; set; }
+        public string LanguageCode { get; set; } = string.Empty; //Base on ISO Code
+        public bool IsPrimary { get; set; } //Is main teaching language or not
+        public int Proficiency { get; set; } //Represent the level of proficiency in the language (1-7 scale)
 
         public virtual Tutor Tutor { get; set; } = new();
     }

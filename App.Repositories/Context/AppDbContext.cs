@@ -109,7 +109,15 @@ namespace App.Repositories.Context
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
 
+            #region Hashtag Configuration
+            // Config directly in constructor
+            #endregion
+
             #region TutorHashtag Configuration
+            // TutorHashtag composite key
+            modelBuilder.Entity<TutorHashtag>()
+                .HasKey(th => new { th.TutorId, th.HashtagId });
+
             // TutorHashtag -> Tutor (M:1)
             modelBuilder.Entity<TutorHashtag>()
                 .HasOne(th => th.Tutor)

@@ -18,13 +18,13 @@ namespace App.DTOs.UserDTOs
     public static class UserProfileResponseExtensions
     {
         public static UserProfileResponse ToUserProfileResponse(this AppUser user)
-        => new UserProfileResponse
-        {
-            Id = Guid.TryParse(user.Id, out var id) ? id : Guid.Empty,
-            FullName = user.FullName ?? string.Empty,
-            UserName = user.UserName ?? string.Empty,
-            Email = user.Email ?? string.Empty,
-            PhoneNumber = user.PhoneNumber ?? string.Empty,
-        };
+            => new UserProfileResponse
+            {
+                Id = Guid.TryParse(user.Id, out var id) ? id : Guid.Empty,
+                FullName = user.FullName ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                PhoneNumber = user.PhoneNumber ?? string.Empty,
+            };
     }
 }

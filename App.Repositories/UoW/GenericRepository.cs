@@ -9,6 +9,7 @@ namespace App.Repositories.UoW
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
+        #region DI Constructor
         protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
         public GenericRepository(AppDbContext dbContext)
@@ -16,8 +17,10 @@ namespace App.Repositories.UoW
             _context = dbContext;
             _dbSet = _context.Set<T>();
         }
+        #endregion
+
         public IQueryable<T> Entities 
-        => _context.Set<T>();
+            => _context.Set<T>();
 
         #region Exist Entities
         public IQueryable<T> ExistEntities()
@@ -44,54 +47,82 @@ namespace App.Repositories.UoW
         }
 
         public async Task<IEnumerable<T>> GetAllExistAsync()
-        => await ExistEntities().ToListAsync();
+            => await ExistEntities().ToListAsync();
 
         public async Task<IEnumerable<T>> FindAllExistAsync(Expression<Func<T, bool>> predicate)
-        => await ExistEntities()
-                .Where(predicate)
-                .ToListAsync();
+            => await ExistEntities()
+                    .Where(predicate)
+                    .ToListAsync();
         #endregion
 
-        public void Delete(object id)
-        {
-            T entity = _dbSet.Find(id) ?? throw new Exception();
-            _dbSet.Remove(entity);
-        }
-
-        public async Task DeleteAsync(object id)
-        {
-            T entity = await _dbSet.FindAsync(id) ?? throw new Exception();
-            _dbSet.Remove(entity);
-        }
-        
         public async Task<IList<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
-
-        public IEnumerable<T> GetAll()
-        {
-            return _dbSet.AsEnumerable();
-        }
-
-        public T? GetById(object id)
-        {
-            return _dbSet.Find(id);
-        }
+            => await _dbSet.ToListAsync();
 
         public async Task<T?> GetByIdAsync(object id)
+            => await _dbSet.FindAsync(id);
+
+        public void Insert(T obj)
+            => _dbSet.Add(obj);
+
+        public void InsertRange(IEnumerable<T> entities)
+            => _dbSet.AddRange(entities);
+
+        public void Update(T obj)
+            => _dbSet.Update(obj);
+
+        public void UpdateFields(T entity, params Expression<Func<T, object>>[] properties)
         {
-            return await _dbSet.FindAsync(id);
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+                _dbSet.Attach(entity);
+
+            foreach (var property in properties)
+            {
+                entry.Property(property).IsModified = true;
+            }
         }
+
+        public void Delete(T entity)
+            => _dbSet.Remove(entity);
+
+        public void DeleteRange(IEnumerable<T> entities)
+            => _dbSet.RemoveRange(entities);
+
+        public async Task DeleteByIdAsync(object id)
+        {
+            T entity = await _dbSet.FindAsync(id)
+                ?? throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ResponseCodeConstants.NOT_FOUND,
+                    "Entity not found");
+
+            _dbSet.Remove(entity);
+        }
+
+        public async Task<List<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
+            => await _dbSet.Where(predicate).ToListAsync();
+
+        public IQueryable<T> GetQueryable()
+            => _dbSet.AsQueryable();
+
+        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
+            => await _dbSet.FirstOrDefaultAsync(predicate) 
+                ?? throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ResponseCodeConstants.NOT_FOUND, 
+                    "Entity not found");
 
         public async Task<BasePaginatedList<T>> GetPagging(IQueryable<T> query, int index, int pageSize)
         {
+            if (query == null)
+                throw new ArgumentNullException(nameof(query));
+
             pageSize = Math.Clamp(pageSize, 1, 100);  
-            index = Math.Max(index, 0); 
-            
-            query = query.AsNoTracking();
-            int count = await query.CountAsync();
-            
+            index = Math.Max(index, 0);
+
+            //query = query.AsNoTracking();
+            //int count = await query.CountAsync();
+            int count = await query.AsNoTracking().CountAsync();
             int maxIndex = count == 0 ? 0 : (int)Math.Ceiling(count / (double)pageSize) - 1;
             index = Math.Min(index, maxIndex);
 
@@ -101,65 +132,6 @@ namespace App.Repositories.UoW
                 .ToListAsync();
 
             return new BasePaginatedList<T>(items, count, index, pageSize);
-        }
-
-        public void Insert(T obj)
-        {
-            _dbSet.Add(obj);
-        }
-
-        public async Task InsertAsync(T obj)
-        {
-            await _dbSet.AddAsync(obj);
-        }
-
-        public void InsertRange(IList<T> obj)
-        {
-            _dbSet.AddRange(obj);
-        }
-
-        public void Save()
-        {
-            _context.SaveChanges();
-        }
-
-        public async Task SaveAsync()
-        {
-            await _context.SaveChangesAsync();
-        }
-
-        public void Update(T obj)
-        {
-            _dbSet.Entry(obj).State = EntityState.Modified;
-        }
-
-        public Task UpdateAsync(T obj)
-        {
-            return Task.FromResult(_dbSet.Update(obj));
-        }
-
-        public async Task<List<T>> FindAllAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _dbSet.Where(predicate).ToListAsync();
-        }
-
-        public async Task<T> FindAsync(Expression<Func<T, bool>> predicate)
-        {
-            var result = await _dbSet.FirstOrDefaultAsync(predicate);
-            return result ?? throw new ErrorException(
-                StatusCodes.Status404NotFound, 
-                ResponseCodeConstants.NOT_FOUND, 
-                "Entity not found");
-        }
-
-        public async Task<IQueryable<T>> GetAllQueryableAsync()
-        {
-            return await Task.FromResult(_dbSet.AsQueryable());
-        }
-
-        public IQueryable<T> GetQueryable()
-        {
-            return _dbSet.AsQueryable();
         }
     }
 }

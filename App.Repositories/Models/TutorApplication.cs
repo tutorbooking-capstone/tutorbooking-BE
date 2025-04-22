@@ -8,12 +8,8 @@ namespace App.Repositories.Models
         public string TutorId { get; set; } = string.Empty;
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
         public ApplicationStatus Status { get; set; } = ApplicationStatus.PendingVerification;
-
-        // Notes for revisions requested by the admin/verifier 
-        public string RevisionNotes { get; set; } = string.Empty;
-
-        // Internal notes for administrative use (not shown to tutors)
-        public string InternalNotes { get; set; } = string.Empty;
+        public string RevisionNotes { get; set; } = string.Empty; // Notes for revisions requested by the admin/verifier 
+        public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
 
         public virtual Tutor Tutor { get; set; } = new();
     }
