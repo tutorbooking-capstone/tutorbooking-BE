@@ -122,8 +122,17 @@ namespace App.Services.Services.User
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
             }
 
-            await _emailService.SendEmailAsync(model.Email, "Xác thực tài khoản",
-                $"Chào {model.Email},<br><br> Mã OTP của bạn để xác thực tài khoản là: <strong>{otp}</strong>.<br> Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.");
+            string greeting = $"Chào {model.Email},";
+            string mainMessage = $@"
+Cảm ơn bạn đã đăng ký tài khoản.
+<br>Mã OTP của bạn để xác thực tài khoản là: <div class='otp-code'>{otp}</div>
+<br>Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.";
+
+            await _emailService.SendEmailAsync(
+                model.Email,
+                "Xác thực tài khoản",
+                greeting,
+                mainMessage);
         }
 
         public async Task VerifyOtpAsync(ConfirmOTPRequest model, bool isResetPassword)
@@ -226,10 +235,17 @@ namespace App.Services.Services.User
                     ErrorCode.BadRequest, 
                     "Không thể lưu OTP, vui lòng thử lại sau.");
 
+            string greeting = $"Chào {model.Email},";
+            string mainMessage = $@"
+Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
+<br>Mã OTP của bạn là: <div class='otp-code'>{OTP}</div>
+<br>Vui lòng sử dụng mã này trong vòng 5 phút để đặt lại mật khẩu.";
+
             await _emailService.SendEmailAsync(
-                model.Email, 
-                "Đặt lại mật khẩu", 
-                $"Vui lòng xác nhận tài khoản của bạn, OTP của bạn là: <div class='otp'>{OTP}</div>");
+                model.Email,
+                "Yêu cầu đặt lại mật khẩu",
+                greeting,
+                mainMessage);
         }
 
         public async Task ResetPasswordAsync(ResetPasswordRequest model)
