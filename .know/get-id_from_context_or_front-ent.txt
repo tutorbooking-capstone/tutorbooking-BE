@@ -2,6 +2,7 @@
 Đây là một câu hỏi rất hay và chạm đến vấn đề quan trọng về thiết kế API và bảo mật. Câu trả lời là: **Nó phụ thuộc vào ngữ cảnh của hành động.**
 
 Có hai trường hợp chính cần xem xét:
+git
 
 **Trường hợp 1: Người dùng thực hiện hành động trên chính tài nguyên của họ**
 
