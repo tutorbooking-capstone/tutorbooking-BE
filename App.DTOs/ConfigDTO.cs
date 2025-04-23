@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using App.DTOs.AppUserDTOs.TutorDTOs;
+using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
@@ -23,8 +24,8 @@ namespace App.DTOs
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
 
             // Hoặc đăng ký từng validator riêng lẻ
-            // services.AddScoped<IValidator<ConfirmOTPRequest>, ConfirmOTPRequestValidator>();
-
+            //services.AddScoped<IValidator<TutorLanguageDTO>, TutorLanguageDTOValidator>();
+            //services.AddTransient<IValidator<TutorLanguageDTO>, TutorLanguageDTOValidator>();
             return services;
         }
         #endregion

@@ -14,7 +14,7 @@ namespace App.Repositories.Models
         public string TutorId { get; set; } = string.Empty;
         public string HashtagId { get; set; } = string.Empty;
 
-        public virtual Tutor Tutor { get; set; } = new();
-        public virtual Hashtag Hashtag { get; set; } = new();
+        public virtual Tutor? Tutor { get; set; } 
+        public virtual Hashtag? Hashtag { get; set; } 
     }
 }

@@ -5,6 +5,9 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Text;
 using App.Core;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace TutorBooking.APIService
 {
@@ -38,26 +41,49 @@ namespace TutorBooking.APIService
             IConfiguration configuration)
         {
             var jwtSettings = configuration.GetSection("JwtSettings");
-            services.AddAuthentication(e =>
+            services.AddAuthentication(options =>
             {
-                e.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                e.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            }).AddJwtBearer(e =>
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(options =>
             {
-                e.TokenValidationParameters = new TokenValidationParameters
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
+                    ValidIssuer = jwtSettings["Issuer"],
                     ValidateAudience = true,
+                    ValidAudience = jwtSettings["Audience"],
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["SecretKey"] ?? string.Empty)),
-                    ClockSkew = TimeSpan.Zero
+                    NameClaimType = JwtRegisteredClaimNames.Sub,
+                    RoleClaimType = ClaimTypes.Role
                 };
-                e.SaveToken = true;
-                e.RequireHttpsMetadata = true;
-                e.Events = new JwtBearerEvents();
+                options.SaveToken = true;
+                options.RequireHttpsMetadata = true;
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        logger.LogError(context.Exception, "[AUTH FAILED] Authentication failed for request path {Path}", context.Request.Path);
+                        Console.WriteLine($"\n\n\n[Authentication failed]\n {context.Exception.Message}\n\n\n");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
+                        var claims = context.Principal?.Claims.Select(c => $"{c.Type}: {c.Value}") ?? Enumerable.Empty<string>();
+                        var roles = context.Principal?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? Enumerable.Empty<string>();
+                        var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "N/A";
+
+                        logger.LogInformation("[TOKEN VALIDATED] User ID: {UserId}, Path: {Path}", userId, context.Request.Path);
+                        logger.LogDebug("[TOKEN VALIDATED] Claims: [{Claims}]", string.Join(", ", claims));
+                        logger.LogDebug("[TOKEN VALIDATED] Roles found in token: [{Roles}]", string.Join(", ", roles));
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             return services;

@@ -10,7 +10,7 @@ namespace App.Repositories.Models
         public int LikeCount { get; set; } = 0;
         public string UserId { get; set; } = string.Empty;
         
-        public virtual AppUser? AppUser { get; set; } = null;
+        public virtual AppUser? AppUser { get; set; }
     }
 
     #region Validator

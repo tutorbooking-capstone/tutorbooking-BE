@@ -21,6 +21,8 @@ namespace App.Services
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserService, UserService>();
+
+            services.AddScoped<ITutorService, TutorService>();
             #endregion
 
             #region Another Services

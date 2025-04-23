@@ -4,6 +4,6 @@
     {
         public string UserId { get; set; } = string.Empty;
 
-        public virtual AppUser User { get; set; } = new();
+        public virtual AppUser? User { get; set; } 
     }
 }

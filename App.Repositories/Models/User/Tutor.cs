@@ -9,7 +9,7 @@ namespace App.Repositories.Models.User
         public DateTime LastStatusUpdateAt { get; set; }
         public DateTime? BecameTutorAt { get; set; }
 
-        public virtual AppUser User { get; set; } = new();
+        public virtual AppUser? User { get; set; }
 
         #region Behavior
         public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)

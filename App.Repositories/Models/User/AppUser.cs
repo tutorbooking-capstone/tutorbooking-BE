@@ -26,6 +26,8 @@ namespace App.Repositories.Models
                 UserId = userId,
                 VerificationStatus = VerificationStatus.NotStarted,
                 BecameTutorAt = DateTime.UtcNow,
+                LastStatusUpdateAt = DateTime.UtcNow,
+
                 User = this
             };
         #endregion

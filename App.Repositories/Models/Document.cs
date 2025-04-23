@@ -17,7 +17,7 @@ namespace App.Repositories.Models
         public string StoragePath { get; set; } = string.Empty; // Path in Firebase Storage (e.g., "documents/{applicationId}/{filename}")
         public string DownloadUrl { get; set; } = string.Empty; // Public URL to access the file
 
-        public virtual TutorApplication Application { get; set; } = new();
-        public virtual Staff Staff { get; set; } = new();
+        public virtual TutorApplication? Application { get; set; }
+        public virtual Staff? Staff { get; set; }
     }
 }

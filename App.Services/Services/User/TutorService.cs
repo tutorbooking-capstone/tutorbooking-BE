@@ -117,7 +117,6 @@ namespace App.Services.Services.User
                 }
 
                 var newLang = requestedLang.ToEntity(tutorId);
-                newLang.TrackCreate(tutorId);
                 languagesToAdd.Add(newLang);
             }
 
@@ -173,6 +172,8 @@ namespace App.Services.Services.User
             var newTutor = appUser.BecameTutor(userId);
             _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
             await _unitOfWork.SaveAsync();
+
+            await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
 
             return newTutor.ToTutorResponse();
         }

@@ -3,16 +3,24 @@ using System.ComponentModel.DataAnnotations;
 
 namespace App.Core.Base
 {
-    public abstract class BaseEntity : ITrackable
+    public abstract class CoreEntity
     {
-        protected BaseEntity()
+        protected CoreEntity()
         {
             Id = Guid.NewGuid().ToString("N");
-            CreatedTime = LastUpdatedTime = CoreHelper.SystemTimeNow;
         }
 
         [Key]
         public string Id { get; set; }
+    }
+
+    public abstract class BaseEntity : CoreEntity, ITrackable
+    {
+        protected BaseEntity()
+        {
+            CreatedTime = LastUpdatedTime = CoreHelper.SystemTimeNow;
+        }
+
         public string? CreatedBy { get; set; }
         public string? LastUpdatedBy { get; set; }
         public string? DeletedBy { get; set; }

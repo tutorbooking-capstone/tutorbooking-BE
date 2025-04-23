@@ -19,6 +19,18 @@ namespace TutorBooking.APIService.Controllers
         }
         #endregion  
 
+        [HttpPost("sync-roles")]
+        public async Task<IActionResult> SyncRoles()
+        {
+            var roleNames = await _authService.SyncRolesAsync();
+            return Ok(new BaseResponseModel<IEnumerable<string>>(
+                statusCode: StatusCodes.Status200OK,
+                code: ResponseCodeConstants.SUCCESS,
+                data: roleNames,
+                message: "Đồng bộ roles thành công!"
+            ));
+        }
+        
         [HttpPost("create-role")]
         public async Task<IActionResult> CreateRole(CreateRoleRequest model)
         {
@@ -118,5 +130,7 @@ namespace TutorBooking.APIService.Controllers
                 message: "Đăng xuất thành công!"
             ));
         }
+
+
     }
 }

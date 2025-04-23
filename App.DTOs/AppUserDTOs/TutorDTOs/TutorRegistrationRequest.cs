@@ -1,5 +1,3 @@
-using App.Repositories.Models;
-using App.Repositories.Models.User;
 using FluentValidation;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs

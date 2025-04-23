@@ -43,6 +43,9 @@ namespace TutorBooking.APIService
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Middleware handle logging, better for debug engineering :>>>
+            app.UseMiddleware<RequestLogSeparatorMiddleware>();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -54,13 +57,17 @@ namespace TutorBooking.APIService
             app.UseRouting();
             app.UseCors("AllowAll");
 
-            #region Use Middleware
-            app.UseMiddleware<ExceptionMiddleware>();
-            app.UseMiddleware<PermissionMiddleware>();
-            #endregion
+            // Exception handling middleware should come first to catch exceptions from subsequent middleware.
+            app.UseMiddleware<ExceptionMiddleware>(); // Correct: Placed early to handle exceptions globally.
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            // Authentication must come before Authorization and custom permission checks.
+            app.UseAuthentication(); // Correct: Establishes user identity.
+
+            // Authorization checks if the authenticated user has permission based on standard policies/roles.
+            app.UseAuthorization(); // Correct: Must follow UseAuthentication.
+
+            // Custom Permission middleware performs additional checks, relying on the authenticated user.
+            app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
 
             app.UseEndpoints(endpoints =>
             {

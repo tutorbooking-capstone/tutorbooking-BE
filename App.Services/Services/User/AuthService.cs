@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System.Data;
 using Microsoft.Extensions.Logging;
+using App.Repositories.Models.User;
 
 namespace App.Services.Services.User
 {
@@ -316,6 +317,24 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
 
             if (!result.Succeeded)
                 _logger.LogError($"Failed to remove refresh token for user {user.Id}. Errors: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        }
+
+        public async Task<IEnumerable<string>> SyncRolesAsync()
+        {
+            var existingRoles = _roleManager.Roles.ToList();
+            foreach (var role in existingRoles)
+            {
+                await _roleManager.DeleteAsync(role);
+            }
+
+            var roleNames = Enum.GetNames(typeof(Role));
+            foreach (var roleName in roleNames)
+            {
+                if (!await _roleManager.RoleExistsAsync(roleName))
+                    await _roleManager.CreateAsync(new IdentityRole(roleName));
+            }
+
+            return roleNames;
         }
     }
 

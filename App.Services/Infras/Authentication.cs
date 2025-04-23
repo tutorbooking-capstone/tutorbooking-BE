@@ -21,10 +21,9 @@ namespace App.Services.Infras
     {
         public static string CreateToken(string id, JwtSettings jwtSettings, bool isRefresh = false)
         {
-
-            List<Claim> claims = new List<Claim>
+            var claims = new List<Claim>
             {
-                new Claim("id", id),
+                new Claim(JwtRegisteredClaimNames.Sub, id)
             };
 
             DateTime dateTimeExpr = DateTime.UtcNow.AddMinutes(jwtSettings.AccessTokenExpirationMinutes);
@@ -71,7 +70,7 @@ namespace App.Services.Infras
                     throw new UnauthorizedException("Invalid token format");
 
                 var token = tokenHandler.ReadJwtToken(jwtToken);
-                var idClaim = token.Claims.FirstOrDefault(claim => claim.Type == "id");
+                var idClaim = token.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Sub);
 
                 return idClaim?.Value ?? throw new UnauthorizedException("Cannot get userId from token");
             }
@@ -119,7 +118,7 @@ namespace App.Services.Infras
                     throw new UnauthorizedException("Invalid token format");
 
                 var token = tokenHandler.ReadJwtToken(jwtToken);
-                var idClaim = token.Claims.FirstOrDefault(claim => claim.Type == "id");
+                var idClaim = token.Claims.FirstOrDefault(claim => claim.Type == JwtRegisteredClaimNames.Sub);
 
                 return idClaim?.Value ?? throw new UnauthorizedException("Cannot get userId from token");
             }
@@ -161,7 +160,7 @@ namespace App.Services.Infras
                     throw new UnauthorizedException("Invalid token format");
 
                 var token = tokenHandler.ReadJwtToken(jwtToken);
-                var roleClaim = token.Claims.FirstOrDefault(claim => claim.Type == "role");
+                var roleClaim = token.Claims.FirstOrDefault(claim => claim.Type == ClaimTypes.Role);
 
                 return roleClaim?.Value ?? throw new UnauthorizedException("Cannot get user id from token");
             }

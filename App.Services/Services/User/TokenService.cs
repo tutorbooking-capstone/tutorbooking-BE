@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Security.Cryptography; // Needed for opaque refresh token
 
 namespace App.Services.Services.User
 {
@@ -17,43 +18,45 @@ namespace App.Services.Services.User
     {
         #region DI Constructor
         private readonly JwtSettings _jwtSettings;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        // private readonly IHttpContextAccessor _httpContextAccessor; // Consider removing if not used elsewhere
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
 
         public TokenService(
             JwtSettings jwtSettings,
-            IHttpContextAccessor httpContextAccessor,
+            // IHttpContextAccessor httpContextAccessor, // Consider removing
             IUnitOfWork unitOfWork,
             UserManager<AppUser> userManager)
         {
             _jwtSettings = jwtSettings;
-            _httpContextAccessor = httpContextAccessor;
+            // _httpContextAccessor = httpContextAccessor; // Consider removing
             _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
         #endregion
 
-        public async Task<TokenResponse> GenerateTokens(AppUser user, string role)
+        public async Task<TokenResponse> GenerateTokens(AppUser user, string _) // Role parameter is unused now
         {
-            List<Claim> claims = new List<Claim>
+            var roles = await _userManager.GetRolesAsync(user);
+
+            var claims = new List<Claim>
             {
-                new Claim("id", user.Id.ToString()),
-                new Claim("role", role),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty)
             };
 
-            var keyString = _jwtSettings.SecretKey ?? string.Empty;
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
-
-            var claimsIdentity = new ClaimsIdentity(claims, "Bearer");
-            if (_httpContextAccessor.HttpContext != null)
+            // Add all roles
+            foreach (var userRole in roles)
             {
-                var principal = new ClaimsPrincipal(new[] { claimsIdentity });
-                _httpContextAccessor.HttpContext.User = principal;
+                claims.Add(new Claim(ClaimTypes.Role, userRole));
             }
 
+            var keyString = _jwtSettings.SecretKey ?? throw new InvalidOperationException("JWT SecretKey is not configured.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
+            // --- Access Token ---
             var accessToken = new JwtSecurityToken(
                 claims: claims,
                 issuer: _jwtSettings.Issuer,
@@ -63,21 +66,13 @@ namespace App.Services.Services.User
             );
             var accessTokenString = new JwtSecurityTokenHandler().WriteToken(accessToken);
 
-            var refreshToken = new JwtSecurityToken(
-                claims: new List<Claim> { new Claim("id", user.Id.ToString()) },
-                issuer: _jwtSettings.Issuer,
-                audience: _jwtSettings.Audience,
-                expires: DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
-                signingCredentials: creds
-            );
-            var refreshTokenString = new JwtSecurityTokenHandler().WriteToken(refreshToken);
-            
-            var roles = await _userManager.GetRolesAsync(user);
-            var roleName = roles.FirstOrDefault() ?? "unknown";
-
+            // --- Opaque Refresh Token (Recommended approach) ---
+            var refreshTokenString = GenerateSecureRefreshToken(); // Generate random string
             await _userManager.RemoveAuthenticationTokenAsync(user, "Default", "RefreshToken");
+            // Store the opaque token (or its hash)
             await _userManager.SetAuthenticationTokenAsync(user, "Default", "RefreshToken", refreshTokenString);
-            
+
+            // --- Response ---
             return new TokenResponse
             {
                 AccessToken = accessTokenString,
@@ -90,30 +85,45 @@ namespace App.Services.Services.User
                     FullName = user.FullName ?? string.Empty,
                     PhoneNumber = user.PhoneNumber ?? string.Empty,
                     CreatedTime = user.CreatedTime,
-                    Role = roleName,
+                    Role = roles.FirstOrDefault() ?? "unknown", // Get role from fetched roles
                 }
             };
         }
+
+        // Helper for generating opaque refresh token
+        private string GenerateSecureRefreshToken(int size = 64)
+        {
+            var randomNumber = new byte[size];
+            using (var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(randomNumber);
+                return Convert.ToBase64String(randomNumber);
+            }
+        }
+
 
         public async Task<AppUser?> FindUserByRefreshTokenAsync(string provider, string tokenName, string tokenValue)
         {
             var tokenRepository = _unitOfWork.GetRepository<IdentityUserToken<string>>();
             if (tokenRepository == null)
-                throw new NotSupportedException("IUnitOfWork does not provide a repository for IdentityUserToken<string>.");
+                throw new InvalidOperationException("Repository for IdentityUserToken<string> not registered.");
+
 
             var userToken = await tokenRepository.Entities
                 .Where(t => t.LoginProvider == provider && t.Name == tokenName && t.Value == tokenValue)
                 .FirstOrDefaultAsync();
 
             if (userToken == null)
-                return null; 
+                return null;
+
+             // Optional: Add expiry check for refresh token if storing expiry date separately
 
             var userRepository = _unitOfWork.GetRepository<AppUser>();
             if (userRepository == null)
-                throw new NotSupportedException("IUnitOfWork does not provide a repository for AppUser.");
+                throw new InvalidOperationException("Repository for AppUser not registered.");
 
             return await userRepository.Entities
-                .Where(u => u.Id == userToken.UserId && !u.DeletedTime.HasValue)  
+                .Where(u => u.Id == userToken.UserId && !u.DeletedTime.HasValue)
                 .FirstOrDefaultAsync();
         }
     }

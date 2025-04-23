@@ -23,6 +23,14 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 .InclusiveBetween(1, 7).WithMessage("Proficiency must be between 1 and 7.");
         }
     }
+
+    //public class TutorLanguageListValidator : AbstractValidator<List<TutorLanguageDTO>>
+    //{
+    //    public TutorLanguageListValidator(IValidator<TutorLanguageDTO> itemValidator)
+    //    {
+    //        RuleForEach(x => x).SetValidator(itemValidator);
+    //    }
+    //}
     #endregion
 
     #region Mapping

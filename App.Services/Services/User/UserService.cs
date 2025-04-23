@@ -6,6 +6,8 @@ using App.Services.Infras;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace App.Services.Services.User
 {
@@ -14,13 +16,16 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly UserManager<AppUser> _userManager;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly ILogger<UserService> _logger;
 
         public UserService(
             UserManager<AppUser> userManager,
-            IHttpContextAccessor contextAccessor)
+            IHttpContextAccessor contextAccessor,
+            ILogger<UserService> logger)
         {
             _userManager = userManager;
             _contextAccessor = contextAccessor;
+            _logger = logger;
         }
         #endregion
 
@@ -56,7 +61,18 @@ namespace App.Services.Services.User
         }
 
         public string GetCurrentUserId()
-            => Authentication.GetUserIdFromHttpContextAccessor(_contextAccessor);
+        {
+            var user = _contextAccessor.HttpContext?.User;
+            
+            if (user != null)
+            {
+                var claims = user.Claims.Select(c => $"{c.Type}: {c.Value}");
+                //_logger.LogDebug("User claims: {ClaimsString}", string.Join(", \n", claims));
+            }
+
+            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return userId ?? throw new UnauthorizedException("Cannot get userId from NameIdentifier claim");
+        }
 
         public async Task<AppUser> GetCurrentUserAsync()
             => await GetUserByIdAsync(GetCurrentUserId());
@@ -85,6 +101,21 @@ namespace App.Services.Services.User
                     authorizationErrorMessage ?? "Bạn không có quyền thực hiện hành động này trên tài nguyên của người dùng khác.");
 
             return await GetUserByIdAsync(userId);
+        }
+
+        public async Task AssignRoleAsync(string userId, string roleName)
+        {
+            var user = await GetUserByIdAsync(userId);
+            
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            if (!result.Succeeded)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Không thể gán vai trò cho người dùng");
         }
 
     }
