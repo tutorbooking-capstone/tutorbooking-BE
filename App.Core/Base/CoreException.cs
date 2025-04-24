@@ -21,6 +21,13 @@ namespace App.Core.Base
 
     }
 
+    public class ErrorDetail
+    {
+        [JsonPropertyName("statusCode")] public int? StatusCode { get; set; }
+        [JsonPropertyName("errorCode")] public string? ErrorCode { get; set; }
+        [JsonPropertyName("errorMessage")] public object? ErrorMessage { get; set; }
+    }
+
     public class BadRequestException : ErrorException
     {
         public BadRequestException(string errorCode, string message) : base(
@@ -82,12 +89,35 @@ namespace App.Core.Base
         }
     }
 
-    public class ErrorDetail
+    public class InvalidArgumentException : ErrorException
     {
-        [JsonPropertyName("statusCode")] public int? StatusCode { get; set; }
-        [JsonPropertyName("errorCode")] public string? ErrorCode { get; set; }
-        [JsonPropertyName("errorMessage")] public object? ErrorMessage { get; set; }
+        public InvalidArgumentException(string paramName, string message)
+            : base(
+                statusCode: StatusCodes.Status400BadRequest,
+                errorCode: "invalid_argument",
+                message: $"Tham số không hợp lệ: {paramName}. {message}")
+        {
+            this.ErrorDetail.ErrorMessage = new Dictionary<string, object>
+            {
+                { "paramName", paramName },
+                { "details", message }
+            };
+        }
     }
 
-
+    public class AlreadySeededException : ErrorException
+    {
+        public AlreadySeededException(string resourceName, object? seededData = null)
+            : base(
+                statusCode: StatusCodes.Status409Conflict,
+                errorCode: "already_seeded",
+                message: $"Tài nguyên '{resourceName}' đã được seed trước đó.")
+        {
+            this.ErrorDetail.ErrorMessage = new Dictionary<string, object>
+            {
+                { "resource", resourceName },
+                { "seededData", seededData ?? new object() }
+            };
+        }
+    }
 }

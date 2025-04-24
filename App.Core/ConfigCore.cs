@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using App.Core.Config;
+using App.Core.Utils;
 
 namespace App.Core
 {
@@ -17,6 +18,12 @@ namespace App.Core
             });     
             
             return builder;
+        }
+
+        public static IServiceCollection AddAppCoreConfig(this IServiceCollection services)
+        {
+            services.AddScoped<DatabaseQueryTracker>();
+            return services;
         }
     }
 }

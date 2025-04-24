@@ -34,9 +34,7 @@ namespace TutorBooking.APIService.Middleware
                 "/api/auth/reset-password",
                 "/api/auth/refresh-token",
 
-                "/api/hashtag/seed",
-                "/api/hashtag/get-seed",
-                "/api/hashtag/get-seed-id"
+                "/api/seed/hashtags",
 
             };
             _rolePermissions = new Dictionary<string, List<string>>()

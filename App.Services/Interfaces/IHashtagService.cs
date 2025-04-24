@@ -4,7 +4,7 @@ namespace App.Services.Interfaces
 {
     public interface IHashtagService
     {
-        List<Hashtag> GetSeedHashtags();
-        Task SeedHashtagsAsync();
+        // List<Hashtag> GetSeedHashtags();
+        // Task SeedHashtagsAsync();
     }
 }

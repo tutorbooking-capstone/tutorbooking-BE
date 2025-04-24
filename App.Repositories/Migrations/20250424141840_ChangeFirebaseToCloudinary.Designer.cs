@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250424141840_ChangeFirebaseToCloudinary")]
+    partial class ChangeFirebaseToCloudinary
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -745,14 +748,14 @@ namespace App.Repositories.Migrations
                     b.HasOne("App.Repositories.Models.Hashtag", "Hashtag")
                         .WithMany()
                         .HasForeignKey("HashtagId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("fk_tutor_hashtags_hashtags_hashtag_id");
 
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany()
                         .HasForeignKey("TutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id1");
 

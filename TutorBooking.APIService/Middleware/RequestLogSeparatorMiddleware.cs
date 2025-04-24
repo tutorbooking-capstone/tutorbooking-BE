@@ -1,4 +1,5 @@
-using System.Diagnostics; 
+using System.Diagnostics;
+using App.Core.Utils;
 
 namespace TutorBooking.APIService.Middleware
 {
@@ -15,30 +16,85 @@ namespace TutorBooking.APIService.Middleware
         }
         #endregion
         
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, DatabaseQueryTracker queryTracker)
         {
             var requestId = Activity.Current?.Id ?? context.TraceIdentifier;
 
-            _logger.LogInformation(
-                "\n\n\n[--- Request Start ---]\n \t- Method = {Method}\n \t- Path = {Path}\n \t- RequestId = {RequestId}\n",
-                context.Request.Method,
-                context.Request.Path,
-                requestId);
-
-            var start = Stopwatch.GetTimestamp(); 
+            LogRequestStart(context, requestId);
             
+            var sw = Stopwatch.StartNew();
             try
             {
                 await _next(context);
             }
             finally
             {
-                var elapsedMs = Stopwatch.GetElapsedTime(start).TotalMilliseconds;
+                sw.Stop();
+                LogDatabaseQueries(queryTracker);
+                LogRequestEnd(context, sw.Elapsed.TotalMilliseconds, requestId);
+            }
+        }
 
-                _logger.LogInformation(
-                    "\n\t- StatusCode = {StatusCode}\n \t- DurationMs = {DurationMs} ms \n[--- Request End ---]\n\n\n",
-                    context.Response.StatusCode,
-                    elapsedMs);
+        private void LogRequestStart(HttpContext context, string requestId)
+        {
+            _logger.LogInformation("""
+
+
+
+                [------- Request Start -------]
+                    Method: {Method}
+                    Path: {Path}
+                    RequestId: {RequestId}
+                [-----------------------------]
+                
+                """,
+                context.Request.Method,
+                context.Request.Path,
+                requestId);
+        }
+
+        private void LogRequestEnd(HttpContext context, double totalMs, string requestId)
+        {
+            _logger.LogInformation("""
+
+                [---------------------------]
+                    Status: {StatusCode}
+                    Duration: {TotalMs} ms
+                    RequestId: {RequestId}
+                [------- Request End -------]
+
+
+
+                """,
+                context.Response.StatusCode,
+                totalMs,
+                requestId);
+        }
+
+        private void LogDatabaseQueries(DatabaseQueryTracker queryTracker)
+        {
+            if (queryTracker.QueryCount > 0)
+            {
+                _logger.LogInformation("""
+
+                    --- Database Queries ---
+                        Total Queries: {QueryCount}
+                        Total Duration: {TotalDuration} ms
+                    """,
+                    queryTracker.QueryCount,
+                    queryTracker.TotalDurationMs);
+
+                foreach (var query in queryTracker.Queries)
+                {
+                    _logger.LogDebug("""
+                        Query: {CommandText}
+                            Duration: {Duration} ms
+                            Status: {Status}
+                        """,
+                        query.CommandText,
+                        query.DurationMs,
+                        query.Success ? "Success" : "Failed");
+                }
             }
         }
     }

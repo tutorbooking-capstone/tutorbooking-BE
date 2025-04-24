@@ -13,9 +13,8 @@ namespace App.Repositories.Models
         public long FileSize { get; set; }
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 
-        // Firebase-specific fields
-        public string StoragePath { get; set; } = string.Empty; // Path in Firebase Storage (e.g., "documents/{applicationId}/{filename}")
-        public string DownloadUrl { get; set; } = string.Empty; // Public URL to access the file
+        // 3rd archive
+        public string CloudinaryUrl { get; set; } = string.Empty; // Public URL to access the file
 
         public virtual TutorApplication? Application { get; set; }
         public virtual Staff? Staff { get; set; }

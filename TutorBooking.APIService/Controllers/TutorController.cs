@@ -45,6 +45,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPatch("update-tutor-hashtags")]
+        [Authorize]
         public async Task<IActionResult> UpdateHashtags([FromBody] UpdateTutorHashtagListRequest request)
         {
             await _tutorService.UpdateTutorHashtagsAsync(request);

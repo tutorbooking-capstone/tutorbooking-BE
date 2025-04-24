@@ -23,37 +23,56 @@ namespace TutorBooking.APIService.Middleware
             catch (ValidationException ex)
             {
                 _logger.LogWarning("Validation errors: {Errors}", ex.ErrorDetail.ErrorMessage);
-                
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json";
-                
+                await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
+            }
+            catch (InvalidArgumentException ex)
+            {
+                _logger.LogWarning("Invalid argument: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
+                context.Response.StatusCode = ex.StatusCode;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
+            }
+            catch (AlreadySeededException ex)
+            {
+                _logger.LogWarning("Already seeded: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
+                context.Response.StatusCode = ex.StatusCode;
+                context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
             catch (ErrorException ex)
             {
-                _logger.LogError(ex, ex.ErrorDetail?.ErrorMessage?.ToString() ?? "Unknown error occurred");
+                _logger.LogError(ex, "Error: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
-                var result = JsonSerializer.Serialize(ex.ErrorDetail);
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(result);
+                await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
             catch (CoreException ex)
             {
-                _logger.LogError(ex, ex.Message);
+                _logger.LogError(ex, "Core error: {Code}, {Message}", ex.Code, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
-                var result = JsonSerializer.Serialize(new { ex.Code, ex.Message, ex.AdditionalData });
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(result);
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new 
+                { 
+                    statusCode = ex.StatusCode,
+                    errorCode = ex.Code,
+                    errorMessage = ex.Message,
+                    ex.AdditionalData 
+                }));
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unexpected error occurred.");
+                _logger.LogError(ex, "Unexpected error: {Message}", ex.Message);
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                var result = JsonSerializer.Serialize(new { error = $"An unexpected error occurred. Detail{ex.Message}" });
                 context.Response.ContentType = "application/json";
-                await context.Response.WriteAsync(result);
+                await context.Response.WriteAsync(JsonSerializer.Serialize(new 
+                { 
+                    statusCode = StatusCodes.Status500InternalServerError,
+                    errorCode = "unexpected_error",
+                    errorMessage = $"An unexpected error occurred: {ex.Message}"
+                }));
             }
         }
     }
-
 }

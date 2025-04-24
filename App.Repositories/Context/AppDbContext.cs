@@ -118,19 +118,19 @@ namespace App.Repositories.Context
             modelBuilder.Entity<TutorHashtag>()
                 .HasKey(th => new { th.TutorId, th.HashtagId });
 
-            // TutorHashtag -> Tutor (M:1)
+            // TutorHashtag -> Tutor (M:1) - CASCADE DELETE
             modelBuilder.Entity<TutorHashtag>()
                 .HasOne(th => th.Tutor)
                 .WithMany()
                 .HasForeignKey(th => th.TutorId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
 
-            // TutorHashtag -> Hashtag (M:1)
+            // TutorHashtag -> Hashtag (M:1) - CASCADE DELETE
             modelBuilder.Entity<TutorHashtag>()
                 .HasOne(th => th.Hashtag)
                 .WithMany()
                 .HasForeignKey(th => th.HashtagId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
             #endregion
 
 

@@ -1,4 +1,4 @@
-﻿using App.Core.Base;
+﻿using App.Core.Jsetting;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using App.Services.Services;
@@ -26,8 +26,14 @@ namespace App.Services
             #endregion
 
             #region Another Services
+            services.AddScoped<ISeedService, SeedService>();
+
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();
+            #endregion
+
+            #region 3rd Party Services
+            services.AddScoped<ICloudinaryService, CloudinaryService>();
             #endregion
 
             services.AddHttpContextAccessor();
@@ -41,7 +47,9 @@ namespace App.Services
             IConfiguration configuration)
         {
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
-            
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+
+
             services.AddJwtSettingsConfig(configuration);
             
             return services;

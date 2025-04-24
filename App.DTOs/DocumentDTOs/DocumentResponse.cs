@@ -11,7 +11,7 @@ namespace App.DTOs.DocumentDTOs
         public string ContentType { get; set; } = string.Empty;
         public long FileSize { get; set; }
         public DateTime UploadedAt { get; set; }
-        public string DownloadUrl { get; set; } = string.Empty;
+        public string CloudinaryUrl { get; set; } = string.Empty;
         public bool IsVisibleToLearner { get; set; }
     }
 
@@ -28,7 +28,7 @@ namespace App.DTOs.DocumentDTOs
                 ContentType = entity.ContentType,
                 FileSize = entity.FileSize,
                 UploadedAt = entity.UploadedAt,
-                DownloadUrl = entity.DownloadUrl, 
+                CloudinaryUrl = entity.CloudinaryUrl, 
                 IsVisibleToLearner = entity.IsVisibleToLearner
             };
         }

@@ -1,5 +1,4 @@
-﻿using App.Core.Base;
-using App.Repositories.Models;
+﻿using App.Repositories.Models;
 using App.Repositories.UoW;
 using App.Services.Interfaces.User;
 using App.DTOs.AuthDTOs;
@@ -10,7 +9,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Security.Cryptography; // Needed for opaque refresh token
+using System.Security.Cryptography;
+using App.Core.Jsetting; // Needed for opaque refresh token
 
 namespace App.Services.Services.User
 {

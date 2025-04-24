@@ -444,3 +444,4 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\App.TestAPI\obj\Debug\net8.0\refint\App.TestAPI
 D:\FFF\Sem_9\_\_\TutorBookingAPI\App.TestAPI\obj\Debug\net8.0\App.TestAPI.pdb
 D:\FFF\Sem_9\_\_\TutorBookingAPI\App.TestAPI\obj\Debug\net8.0\App.TestAPI.genruntimeconfig.cache
 D:\FFF\Sem_9\_\_\TutorBookingAPI\App.TestAPI\obj\Debug\net8.0\ref\App.TestAPI.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\App.TestAPI\bin\Debug\net8.0\CloudinaryDotNet.dll

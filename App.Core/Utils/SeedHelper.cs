@@ -1,4 +1,5 @@
-﻿using System;
+﻿using App.Core.Base;
+using System;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -11,13 +12,19 @@ namespace App.Core.Utils
         public static string SeedId<T>(this T obj, Expression<Func<T, string>> identifyFieldExpr)
         {
             if (obj == null)
-                throw new ArgumentNullException(nameof(obj));
+                throw new InvalidArgumentException(
+                    paramName: nameof(obj),
+                    message: "Đối tượng không được null."
+                );
 
             var typeName = typeof(T).Name;
             if (!(identifyFieldExpr.Body is MemberExpression member))
-                throw new ArgumentException("Biểu thức phải là 1 MemberExpression", nameof(identifyFieldExpr));
-            var propName = member.Member.Name;
+                throw new InvalidArgumentException(
+                    paramName: nameof(identifyFieldExpr),
+                    message: "Biểu thức phải là một MemberExpression."
+                );
 
+            var propName = member.Member.Name;
             var getter = identifyFieldExpr.Compile();
             var rawValue = getter(obj);
             var valuePart = !string.IsNullOrEmpty(rawValue)

@@ -18,19 +18,19 @@ namespace TutorBooking.APIService.Controllers
         }
         #endregion
 
-        [HttpPost("seed")]
-        public async Task<IActionResult> SeedHashtags()
-        {
-            await _hashtagService.SeedHashtagsAsync();
-            return Ok(new BaseResponseModel<string>("Seeding hashtags thành công!"));
-        }
+        // [HttpPost("seed")]
+        // public async Task<IActionResult> SeedHashtags()
+        // {
+        //     await _hashtagService.SeedHashtagsAsync();
+        //     return Ok(new BaseResponseModel<string>("Seeding hashtags thành công!"));
+        // }
 
-        [HttpGet("get-seed")]
-        public IActionResult GetSeededHashtags() 
-        {
-            var hashtags = _hashtagService.GetSeedHashtags();
-            return Ok(new BaseResponseModel<List<Hashtag>>(hashtags));
-        }
+        // [HttpGet("get-seed")]
+        // public IActionResult GetSeededHashtags() 
+        // {
+        //     var hashtags = _hashtagService.GetSeedHashtags();
+        //     return Ok(new BaseResponseModel<List<Hashtag>>(hashtags));
+        // }
 
     }
 }

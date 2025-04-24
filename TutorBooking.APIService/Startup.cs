@@ -2,6 +2,7 @@
 using App.Services;
 using App.DTOs;
 using TutorBooking.APIService.Middleware;
+using App.Core;
 
 namespace TutorBooking.APIService
 {
@@ -21,6 +22,7 @@ namespace TutorBooking.APIService
             services.ConfigHttpClient();
 
             #region Add App Libraries Config
+            services.AddAppCoreConfig();
             services.AddAppRepositoriesConfig(Configuration);
             services.AddAppServicesConfig(Configuration);
             services.AddAppDTOsConfig();
