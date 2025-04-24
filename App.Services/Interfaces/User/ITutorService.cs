@@ -11,7 +11,7 @@ namespace App.Services.Interfaces.User
 
         // Profile Updates 
         Task UpdateLanguagesAsync(List<TutorLanguageDTO> languages);
-        Task UpdateHashtagsAsync(UpdateTutorHashtagListRequest request);
+        Task UpdateTutorHashtagsAsync(UpdateTutorHashtagListRequest request);
 
         // Retrieval
         Task<TutorResponse> GetByIdAsync(string tutorId);

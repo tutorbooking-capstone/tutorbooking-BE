@@ -27,6 +27,7 @@ namespace App.Services
 
             #region Another Services
             services.AddScoped<IBlogService, BlogService>();
+            services.AddScoped<IHashtagService, HashtagService>();
             #endregion
 
             services.AddHttpContextAccessor();

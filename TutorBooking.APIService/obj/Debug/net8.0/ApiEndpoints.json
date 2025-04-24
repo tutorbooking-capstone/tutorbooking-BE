@@ -154,6 +154,26 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
+    "Method": "GetSeededHashtags",
+    "RelativePath": "api/hashtag/get-seed",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
+    "Method": "SeedHashtags",
+    "RelativePath": "api/hashtag/seed",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "GetById",
     "RelativePath": "api/tutor/{id}",
@@ -229,22 +249,6 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
-    "Method": "UpdateHashtags",
-    "RelativePath": "api/tutor/update-hashtags",
-    "HttpMethod": "PATCH",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "App.DTOs.HashtagDTOs.UpdateTutorHashtagListRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "UpdateLanguages",
     "RelativePath": "api/tutor/update-languages",
     "HttpMethod": "PATCH",
@@ -254,6 +258,22 @@
       {
         "Name": "languages",
         "Type": "System.Collections.Generic.List\u00601[[App.DTOs.AppUserDTOs.TutorDTOs.TutorLanguageDTO, App.DTOs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
+    "Method": "UpdateHashtags",
+    "RelativePath": "api/tutor/update-tutor-hashtags",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.HashtagDTOs.UpdateTutorHashtagListRequest",
         "IsRequired": true
       }
     ],

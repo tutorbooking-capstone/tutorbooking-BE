@@ -1,11 +1,11 @@
 ﻿using App.Core.Base;
-using App.Core.Constants;
 using App.Repositories.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using App.Core.Constants;
 
 namespace TutorBooking.APIService.Middleware
 {
@@ -33,6 +33,10 @@ namespace TutorBooking.APIService.Middleware
                 "/api/auth/confirm-reset-password",
                 "/api/auth/reset-password",
                 "/api/auth/refresh-token",
+
+                "/api/hashtag/seed",
+                "/api/hashtag/get-seed",
+                "/api/hashtag/get-seed-id"
 
             };
             _rolePermissions = new Dictionary<string, List<string>>()
@@ -66,7 +70,10 @@ namespace TutorBooking.APIService.Middleware
             else
             {
                 _logger.LogWarning("PermissionMiddleware: Custom permission DENIED for path: {Path}. Returning 403.", path);
-                await HandleForbiddenRequest(context);
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden,
+                    ResponseCodeConstants.FORBIDDEN,
+                    "Bạn không có quyền truy cập tài nguyên này.");
             }
         }
 
@@ -134,7 +141,7 @@ namespace TutorBooking.APIService.Middleware
             context.Response.ContentType = "application/json";
 
             var error = new ErrorException(
-                (int)HttpStatusCode.Forbidden,
+                StatusCodes.Status403Forbidden,
                 ResponseCodeConstants.FORBIDDEN,
                 "Bạn không có quyền truy cập tài nguyên này.");
             string result = JsonSerializer.Serialize(error);

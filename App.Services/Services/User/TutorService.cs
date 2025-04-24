@@ -185,7 +185,7 @@ namespace App.Services.Services.User
             await _unitOfWork.SaveAsync();
         }
 
-        public async Task UpdateHashtagsAsync(UpdateTutorHashtagListRequest request)
+        public async Task UpdateTutorHashtagsAsync(UpdateTutorHashtagListRequest request)
         {
             var tutorId = _userService.GetCurrentUserId();
             await UpdateTutorHashtagsAsync(tutorId, request);

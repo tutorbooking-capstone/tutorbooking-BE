@@ -24,8 +24,6 @@ namespace TutorBooking.APIService.Controllers
         {
             var roleNames = await _authService.SyncRolesAsync();
             return Ok(new BaseResponseModel<IEnumerable<string>>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: roleNames,
                 message: "Đồng bộ roles thành công!"
             ));
@@ -36,8 +34,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.CreateRoleAsync(model);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Tạo Role thành công!"
             ));
         }
@@ -47,8 +43,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.RegisterAsync(model);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Đăng kí thành công!"
             ));
         }
@@ -58,8 +52,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.VerifyOtpAsync(model, false);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Xác nhận email thành công!"
             ));
         }
@@ -69,8 +61,6 @@ namespace TutorBooking.APIService.Controllers
         {
             var res = await _authService.LoginAsync(request);
             return Ok(new BaseResponseModel<LoginResponse>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: res,
                 message: "Đăng nhập thành công!"
             ));
@@ -81,8 +71,6 @@ namespace TutorBooking.APIService.Controllers
         {
             var res = await _authService.RefreshTokenAsync(model);
             return Ok(new BaseResponseModel<ResponseAuthModel>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: res
             ));
         }
@@ -92,8 +80,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.ForgotPasswordAsync(model);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Đã gửi email xác nhận yêu cầu thay đổi mật khẩu."
             ));
         }
@@ -103,8 +89,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.VerifyOtpAsync(model, true);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Xác nhận thay đổi mật khẩu thành công!"
             ));
         }
@@ -114,8 +98,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.ResetPasswordAsync(model);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Đã đặt lại mật khẩu thành công!"
             ));
         }
@@ -125,8 +107,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _authService.LogoutAsync(model);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Đăng xuất thành công!"
             ));
         }

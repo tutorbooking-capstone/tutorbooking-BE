@@ -28,33 +28,27 @@ namespace TutorBooking.APIService.Controllers
         {
             var tutor = await _tutorService.RegisterAsTutorAsync(request);
             return Ok(new BaseResponseModel<TutorResponse>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: tutor,
                 message: "Đăng ký làm gia sư thành công!"
             ));
         }
 
+        //[AuthorizeRoles(Role.Tutor, Role.Admin)]
         [HttpPatch("update-languages")]
         [AuthorizeRoles(Role.Tutor)]
-        //[AuthorizeRoles(Role.Tutor, Role.Admin)]
         public async Task<IActionResult> UpdateLanguages([FromBody] List<TutorLanguageDTO> languages)
         {
             await _tutorService.UpdateLanguagesAsync(languages);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Cập nhật ngôn ngữ thành công!"
             ));
         }
 
-        [HttpPatch("update-hashtags")]
+        [HttpPatch("update-tutor-hashtags")]
         public async Task<IActionResult> UpdateHashtags([FromBody] UpdateTutorHashtagListRequest request)
         {
-            await _tutorService.UpdateHashtagsAsync(request);
+            await _tutorService.UpdateTutorHashtagsAsync(request);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Cập nhật hashtag thành công!"
             ));
         }
@@ -64,8 +58,6 @@ namespace TutorBooking.APIService.Controllers
         {
             var tutor = await _tutorService.GetByIdAsync(id);
             return Ok(new BaseResponseModel<TutorResponse>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: tutor
             ));
         }
@@ -75,8 +67,6 @@ namespace TutorBooking.APIService.Controllers
         {
             var status = await _tutorService.GetVerificationStatusAsync(id);
             return Ok(new BaseResponseModel<VerificationStatus>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 data: status
             ));
         }
@@ -89,8 +79,6 @@ namespace TutorBooking.APIService.Controllers
         {
             await _tutorService.UpdateVerificationStatusAsync(id, status, updatedBy);
             return Ok(new BaseResponseModel<string>(
-                statusCode: StatusCodes.Status200OK,
-                code: ResponseCodeConstants.SUCCESS,
                 message: "Cập nhật trạng thái xác minh thành công!"
             ));
         }
