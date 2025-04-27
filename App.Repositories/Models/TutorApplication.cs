@@ -23,7 +23,6 @@ namespace App.Repositories.Models
                 SubmittedAt = DateTime.UtcNow,
             };
 
-            newTutorApplication.TrackCreate(tutorId);
             return newTutorApplication;
         }
         #endregion

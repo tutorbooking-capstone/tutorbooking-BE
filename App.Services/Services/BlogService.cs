@@ -45,7 +45,6 @@ namespace App.Services.Services
             model.TrimAllStrings();
 
             var newBlog = model.ToEntity(userId);
-            newBlog.TrackCreate(userId);
 
             _unitOfWork.GetRepository<Blog>().Insert(newBlog);
             await _unitOfWork.SaveAsync();
@@ -58,7 +57,6 @@ namespace App.Services.Services
 
             var blog = await _unitOfWork.GetRepository<Blog>().GetExistByIdAsync(id.Trim());
             blog.ApplyUpdateModel(model);
-            blog.TrackUpdate(userId);
 
             _unitOfWork.GetRepository<Blog>().Insert(blog);
             await _unitOfWork.SaveAsync();
@@ -70,7 +68,6 @@ namespace App.Services.Services
 
             var blog = await _unitOfWork.GetRepository<Blog>().GetExistByIdAsync(id.Trim());
 
-            blog.TrackDelete(userId);
             _unitOfWork.GetRepository<Blog>().Insert(blog);
             await _unitOfWork.SaveAsync();
         }

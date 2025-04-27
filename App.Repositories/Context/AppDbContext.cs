@@ -77,11 +77,6 @@ namespace App.Repositories.Context
                 .HasForeignKey(d => d.StaffId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            // Document property configurations
-            // modelBuilder.Entity<Document>()
-            //     .Property(d => d.IsVisibleToLearner)
-            //     .HasDefaultValue(false);
             #endregion
 
             #region ApplicationRevision Configuration

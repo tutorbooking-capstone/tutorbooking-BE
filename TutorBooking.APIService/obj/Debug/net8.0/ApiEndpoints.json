@@ -192,7 +192,7 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.DocumentController",
-    "Method": "UploadDocument",
+    "Method": "UploadDocuments",
     "RelativePath": "api/document/upload",
     "HttpMethod": "POST",
     "IsController": true,
@@ -209,18 +209,8 @@
         "IsRequired": false
       },
       {
-        "Name": "IsVisibleToLearner",
-        "Type": "System.Boolean",
-        "IsRequired": false
-      },
-      {
-        "Name": "Description",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "File",
-        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "Name": "Files",
+        "Type": "System.Collections.Generic.List\u00601[[App.DTOs.DocumentDTOs.DocumentFile, App.DTOs, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
         "IsRequired": false
       }
     ],

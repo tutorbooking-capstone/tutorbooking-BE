@@ -105,7 +105,7 @@ namespace TutorBooking.APIService
                     Description = "JWT Authorization header sử dụng scheme Bearer.",
                     Type = SecuritySchemeType.Http,
                     Name = "Authorization",
-                    Scheme = "bearer"
+                    Scheme = "Bearer"
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
