@@ -12,23 +12,38 @@ namespace App.Repositories.Models
         public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
 
         public virtual Tutor? Tutor { get; set; }
+
+        #region Behavior
+        public static TutorApplication Create(string tutorId)
+        {
+            var newTutorApplication =  new TutorApplication
+            {
+                TutorId = tutorId,
+                Status = ApplicationStatus.PendingVerification,
+                SubmittedAt = DateTime.UtcNow,
+            };
+
+            newTutorApplication.TrackCreate(tutorId);
+            return newTutorApplication;
+        }
+        #endregion
     }
 
     public enum ApplicationStatus
     {
         // Initial status when tutor first submits application
-        PendingVerification,
+        PendingVerification = 0,
         
         // Status when staff has requested changes to the application
-        RevisionRequested,
+        RevisionRequested = 1,
         
         // Status when tutor has submitted revised documents after a revision request
-        PendingReverification,
+        PendingReverification = 2,
         
         // Status when digital documents have been verified, but physical docs still needed
-        VerifiedUpload,
+        VerifiedUpload = 3,
         
         // Final status when both digital and physical documents are verified
-        VerifiedHardcopy
+        VerifiedHardcopy = 4
     }
 }

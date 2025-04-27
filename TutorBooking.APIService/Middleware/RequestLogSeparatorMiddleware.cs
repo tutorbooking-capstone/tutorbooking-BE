@@ -35,12 +35,11 @@ namespace TutorBooking.APIService.Middleware
             }
         }
 
+        private string HSpace => "\n\n\n\n\n\n\n";
         private void LogRequestStart(HttpContext context, string requestId)
         {
             _logger.LogInformation("""
-
-
-
+                {HSpace}
                 [------- Request Start -------]
                     Method: {Method}
                     Path: {Path}
@@ -48,6 +47,7 @@ namespace TutorBooking.APIService.Middleware
                 [-----------------------------]
                 
                 """,
+                HSpace,
                 context.Request.Method,
                 context.Request.Path,
                 requestId);
@@ -60,15 +60,12 @@ namespace TutorBooking.APIService.Middleware
                 [---------------------------]
                     Status: {StatusCode}
                     Duration: {TotalMs} ms
-                    RequestId: {RequestId}
                 [------- Request End -------]
-
-
-
+                {HSpace}
                 """,
                 context.Response.StatusCode,
                 totalMs,
-                requestId);
+                HSpace);
         }
 
         private void LogDatabaseQueries(DatabaseQueryTracker queryTracker)
@@ -80,6 +77,7 @@ namespace TutorBooking.APIService.Middleware
                     --- Database Queries ---
                         Total Queries: {QueryCount}
                         Total Duration: {TotalDuration} ms
+
                     """,
                     queryTracker.QueryCount,
                     queryTracker.TotalDurationMs);
@@ -87,6 +85,7 @@ namespace TutorBooking.APIService.Middleware
                 foreach (var query in queryTracker.Queries)
                 {
                     _logger.LogDebug("""
+
                         Query: {CommandText}
                             Duration: {Duration} ms
                             Status: {Status}

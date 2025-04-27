@@ -1,5 +1,4 @@
 ﻿using App.Core.Base;
-using App.Core.Constants;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
 using App.Repositories.Models.User;
@@ -74,11 +73,11 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpPatch("{id}/verification-status")]
         public async Task<IActionResult> UpdateVerificationStatus(
-            string id, 
+            string tutorId, 
             [FromBody] VerificationStatus status,
             [FromQuery] string? updatedBy = null)
         {
-            await _tutorService.UpdateVerificationStatusAsync(id, status, updatedBy);
+            await _tutorService.UpdateVerificationStatusAsync(tutorId, status, updatedBy);
             return Ok(new BaseResponseModel<string>(
                 message: "Cập nhật trạng thái xác minh thành công!"
             ));

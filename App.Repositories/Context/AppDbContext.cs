@@ -106,7 +106,7 @@ namespace App.Repositories.Context
                 .HasOne(tl => tl.Tutor)
                 .WithMany()
                 .HasForeignKey(tl => tl.TutorId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Cascade);
             #endregion
 
             #region Hashtag Configuration

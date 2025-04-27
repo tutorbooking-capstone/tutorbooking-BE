@@ -16,16 +16,13 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly UserManager<AppUser> _userManager;
         private readonly IHttpContextAccessor _contextAccessor;
-        private readonly ILogger<UserService> _logger;
 
         public UserService(
             UserManager<AppUser> userManager,
-            IHttpContextAccessor contextAccessor,
-            ILogger<UserService> logger)
+            IHttpContextAccessor contextAccessor)
         {
             _userManager = userManager;
             _contextAccessor = contextAccessor;
-            _logger = logger;
         }
         #endregion
 

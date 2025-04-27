@@ -1,18 +1,18 @@
 ﻿using App.Core.Base;
 using App.Core.Jsetting;
-using App.Services.Interfaces;
-using CloudinaryDotNet;
+using App.Core.Provider;
 using CloudinaryDotNet.Actions;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace App.Services.Services
+namespace App.Services.Infras
 {
-    public class CloudinaryService : ICloudinaryService
+    public class CloudinaryProvider : ICloudinaryProvider
     {
         private readonly Cloudinary _cloudinary;
 
-        public CloudinaryService(IOptions<CloudinarySettings> config)
+        public CloudinaryProvider(IOptions<CloudinarySettings> config)
         {
             var account = new Account(
                 config.Value.CloudName,
@@ -22,7 +22,7 @@ namespace App.Services.Services
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<string> UploadImageAsync(IFormFile file)
+        public async Task<string> UploadDocumentAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
                 throw new InvalidArgumentException(

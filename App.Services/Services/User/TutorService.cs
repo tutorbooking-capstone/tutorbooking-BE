@@ -9,6 +9,7 @@ using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
+using App.Services.Interfaces;
 
 namespace App.Services.Services.User
 {
@@ -103,7 +104,7 @@ namespace App.Services.Services.User
                 .Where(l => !requestedLangMap.ContainsKey(l.LanguageCode)).ToList();
             
             if (languagesToDelete.Any())
-                tutorLanguageRepo.DeleteRange(languagesToDelete);
+                tutorLanguageRepo.DeleteRange(languagesToDelete, false);
 
             var languagesToAdd = new List<TutorLanguage>();
             
@@ -153,7 +154,7 @@ namespace App.Services.Services.User
                 .ToList();
 
             if (hashtagsToDelete.Any())
-                tutorHashtagRepo.DeleteRange(hashtagsToDelete);
+                tutorHashtagRepo.DeleteRange(hashtagsToDelete, false);
             if (hashtagsToAdd.Any())
                 tutorHashtagRepo.InsertRange(hashtagsToAdd);
         }
@@ -164,18 +165,30 @@ namespace App.Services.Services.User
             var userId = _userService.GetCurrentUserId();
             var appUser = await GetUserToCreateTutor(userId);
 
-            appUser.UpdateProfile(
-                request.FullName, 
-                request.PhoneNumber, 
-                userId);
+            return await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                appUser.UpdateProfile(
+                    request.FullName,
+                    request.PhoneNumber,
+                    userId);
 
-            var newTutor = appUser.BecameTutor(userId);
-            _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
-            await _unitOfWork.SaveAsync();
+                var newTutor = appUser.BecameTutor(userId);
+                _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
+                await _unitOfWork.SaveAsync();
 
-            await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
+                var tutorApplication = TutorApplication.Create(newTutor.UserId);
+                _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
+                await _unitOfWork.SaveAsync();
 
-            return newTutor.ToTutorResponse();
+                await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
+
+                return newTutor.ToTutorResponse();
+            }, 
+            onError: ex => 
+            {
+                // Custom error handling (e.g., logging)
+                Console.WriteLine($"Error during tutor registration: {ex.Message}");
+            });
         }
 
         public async Task UpdateLanguagesAsync(List<TutorLanguageDTO> languages)
@@ -215,7 +228,10 @@ namespace App.Services.Services.User
             return tutorStatus.Value;
         }
 
-        public async Task UpdateVerificationStatusAsync(string tutorId, VerificationStatus status, string? updatedBy = null)
+        public async Task UpdateVerificationStatusAsync(
+            string tutorId, 
+            VerificationStatus status, 
+            string? updatedBy = null)
         {
             var tutor = await GetTutorByIdAsync(tutorId);
             var modifiedProperties = tutor.UpdateVerificationStatus(status);

@@ -109,25 +109,28 @@ namespace App.Services.Services.User
             };
 
             var result = await _userManager.CreateAsync(newUser);
+            newUser.TrackCreate(newUser.Id);
             if (!result.Succeeded)
-            {
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, 
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
-            }
 
             result = await _userManager.AddToRoleAsync(newUser, model.RoleName);
             if (!result.Succeeded)
             {
                 await _userManager.DeleteAsync(newUser);
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, 
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
             }
 
             string greeting = $"Chào {model.Email},";
             string mainMessage = $@"
-Cảm ơn bạn đã đăng ký tài khoản.
-<br>Mã OTP của bạn để xác thực tài khoản là: <div class='otp-code'>{otp}</div>
-<br>Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.";
+                Cảm ơn bạn đã đăng ký tài khoản.
+                <br>Mã OTP của bạn để xác thực tài khoản là: <div class='otp-code'>{otp}</div>
+                <br>Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.";
 
             await _emailService.SendEmailAsync(
                 model.Email,
@@ -322,12 +325,17 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
         public async Task<IEnumerable<string>> SyncRolesAsync()
         {
             var existingRoles = _roleManager.Roles.ToList();
-            foreach (var role in existingRoles)
+            var roleNames = Enum.GetNames(typeof(Role)).ToHashSet();  
+            
+            var rolesToDelete = existingRoles
+                .Where(role => role.Name != null && !roleNames.Contains(role.Name))
+                .ToList();
+            
+            foreach (var role in rolesToDelete)
             {
                 await _roleManager.DeleteAsync(role);
             }
 
-            var roleNames = Enum.GetNames(typeof(Role));
             foreach (var roleName in roleNames)
             {
                 if (!await _roleManager.RoleExistsAsync(roleName))

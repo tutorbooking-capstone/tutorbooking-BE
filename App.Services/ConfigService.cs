@@ -1,4 +1,6 @@
 ﻿using App.Core.Jsetting;
+using App.Core.Provider;
+using App.Services.Infras;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using App.Services.Services;
@@ -30,10 +32,14 @@ namespace App.Services
 
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();
+            services.AddScoped<IDocumentService, DocumentService>();
+
+            services.AddScoped<ITutorApplicationService, TutorApplicationService>();
             #endregion
 
-            #region 3rd Party Services
-            services.AddScoped<ICloudinaryService, CloudinaryService>();
+            #region Provider Services
+            services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+            services.AddScoped<ICloudinaryProvider, CloudinaryProvider>();
             #endregion
 
             services.AddHttpContextAccessor();

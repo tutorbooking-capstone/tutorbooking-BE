@@ -17,9 +17,8 @@ namespace App.Core.Base
         public static void TrackCreate(this ITrackable entity, string userId)
         {
             entity.CreatedBy = userId;
-            entity.LastUpdatedBy = userId;
             entity.CreatedTime = CoreHelper.SystemTimeNow;
-            entity.LastUpdatedTime = entity.CreatedTime;
+            entity.TrackUpdate(userId);
         }
 
         public static void TrackUpdate(this ITrackable entity, string userId)

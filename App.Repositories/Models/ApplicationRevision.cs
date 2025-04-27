@@ -19,13 +19,13 @@ namespace App.Repositories.Models
     public enum RevisionAction
     {
         // Staff requests the tutor to revise their application or documents
-        RequestRevision,
+        RequestRevision = 0,
 
         // Staff approves the application or a specific document Upload or Hardcopy
-        ApproveUpload,
-        ApproveHardcopy,
+        ApproveUpload = 1,
+        ApproveHardcopy = 2,
 
         // Staff rejects the application or a specific document
-        Reject
+        Reject = 3
     }
 }
