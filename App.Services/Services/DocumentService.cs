@@ -15,44 +15,65 @@ namespace App.Services.Services
     {
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IUserService _userService;
         private readonly ICloudinaryProvider _cloudinaryProvider;
 
         public DocumentService(
-            IUnitOfWork unitOfWork, 
-            IUserService userService,
+            IUnitOfWork unitOfWork,
             ICloudinaryProvider cloudinaryService)
         {
             _unitOfWork = unitOfWork;
-            _userService = userService;
             _cloudinaryProvider = cloudinaryService;
         }
         #endregion
 
         public async Task<DocumentResponse> UploadDocumentAsync(DocumentUploadRequest request)
         {
-            var userUploadId = _userService.GetCurrentUserId();
+            return await _unitOfWork.ExecuteInTransactionAsync(async () => 
+            {
+                var document = request.ToDocumentEntity();
+                _unitOfWork.GetRepository<Document>().Insert(document);
+                await _unitOfWork.SaveAsync(); // Save first to get Document ID
 
-            string cloudinaryUrl = await _cloudinaryProvider.UploadDocumentAsync(request.File);
+                var fileUploads = new List<FileUpload>();
+                var documentFileUploads = new List<DocumentFileUpload>();
 
-            var document = request.ToEntity(cloudinaryUrl, userUploadId);
+                foreach (var file in request.Files)
+                {
+                    var cloudinaryUrl = await _cloudinaryProvider.UploadDocumentAsync(file);
+                    var fileUpload = file.ToFileUploadEntity(cloudinaryUrl);
+                    
+                    fileUploads.Add(fileUpload);
+                    documentFileUploads.Add(fileUpload.ToDocumentFileUploadEntity(document.Id));
+                }
 
-            _unitOfWork.GetRepository<Document>().Insert(document);
-            await _unitOfWork.SaveAsync();
+                _unitOfWork.GetRepository<FileUpload>().InsertRange(fileUploads);
+                _unitOfWork.GetRepository<DocumentFileUpload>().InsertRange(documentFileUploads);
+                await _unitOfWork.SaveAsync();
 
-            return document.ToDocumentResponse();
-
+                return document.ToDocumentResponse();
+            });
         }
+
+        // public async Task<List<DocumentResponse>> UploadListDocumentsAsync(List<DocumentUploadRequest> requests)
+        // {
+        //     var documents = new List<DocumentResponse>();
+
+        //     foreach (var request in requests)
+        //     {
+        //         string cloudinaryUrl = await _cloudinaryProvider.UploadDocumentAsync(request.File);
+        //         var document = request.ToEntity(cloudinaryUrl);
+        //         _unitOfWork.GetRepository<Document>().Insert(document);
+        //         documents.Add(document.ToDocumentResponse());
+        //     }
+
+        //     await _unitOfWork.SaveAsync();
+        //     return documents;
+        // }
 
         public async Task UpdateDocumentVisibilityAsync(string documentId, bool isVisibleToLearner)
         {
             var document = await GetDocumentByIdAsync(documentId);
-            var modifiedProperties = document.UpdateDocumentInfo(
-                document.Description,
-                isVisibleToLearner,
-                document.ContentType,
-                document.FileSize,
-                document.CloudinaryUrl);
+            var modifiedProperties = document.UpdateVisibility(isVisibleToLearner);
 
             if (modifiedProperties.Length > 0)
             {

@@ -16,11 +16,16 @@ namespace App.Repositories.Context
         // Main entity DbSets
         public DbSet<TutorApplication> TutorApplications { get; set; }
         public DbSet<ApplicationRevision> ApplicationRevisions { get; set; }
-        public DbSet<Document> Documents { get; set; }
-        public DbSet<Hashtag> Hashtags { get; set; }
-        public DbSet<TutorHashtag> TutorHashtags { get; set; }
+
         public DbSet<TutorLanguage> TutorLanguages { get; set; }
         public DbSet<Blog> Blogs { get; set; }
+
+        public DbSet<Hashtag> Hashtags { get; set; }
+        public DbSet<TutorHashtag> TutorHashtags { get; set; }
+
+        public DbSet<Document> Documents { get; set; }
+        public DbSet<DocumentFileUpload> DocumentFileUploads { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -104,10 +109,6 @@ namespace App.Repositories.Context
                 .OnDelete(DeleteBehavior.Cascade);
             #endregion
 
-            #region Hashtag Configuration
-            // Config directly in constructor
-            #endregion
-
             #region TutorHashtag Configuration
             // TutorHashtag composite key
             modelBuilder.Entity<TutorHashtag>()
@@ -128,7 +129,25 @@ namespace App.Repositories.Context
                 .OnDelete(DeleteBehavior.Cascade);
             #endregion
 
+            #region DocumentFileUpload Configuration
+            // Composite key
+            modelBuilder.Entity<DocumentFileUpload>()
+                .HasKey(dfu => new { dfu.DocumentId, dfu.FileUploadId });
 
+            // DocumentFileUpload -> Document (M:1) - CASCADE DELETE
+            modelBuilder.Entity<DocumentFileUpload>()
+                .HasOne(dfu => dfu.Document)
+                .WithMany(d => d.DocumentFileUploads)
+                .HasForeignKey(dfu => dfu.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            // DocumentFileUpload -> FileUpload (M:1) - RESTRICT DELETE
+            modelBuilder.Entity<DocumentFileUpload>()
+                .HasOne(dfu => dfu.FileUpload)
+                .WithMany()
+                .HasForeignKey(dfu => dfu.FileUploadId)
+                .OnDelete(DeleteBehavior.Restrict); 
+            #endregion
         }
     }
 }

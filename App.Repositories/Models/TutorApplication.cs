@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Repositories.Models.User;
+using System.Linq.Expressions;
 
 namespace App.Repositories.Models
 {
@@ -24,6 +25,15 @@ namespace App.Repositories.Models
             };
 
             return newTutorApplication;
+        }
+
+        public Expression<Func<TutorApplication, object>>[] UpdateApplicationStatus(ApplicationStatus newStatus)
+        {
+            if (Status == newStatus)
+                return Array.Empty<Expression<Func<TutorApplication, object>>>();
+
+            Status = newStatus;
+            return [x => x.Status];
         }
         #endregion
     }

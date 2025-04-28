@@ -1,5 +1,4 @@
-﻿using App.Core.Base;
-using App.Repositories.Models;
+﻿using App.Repositories.Models;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 
@@ -11,7 +10,7 @@ namespace App.DTOs.DocumentDTOs
         public string? StaffId { get; set; } = null;
         public bool IsVisibleToLearner { get; set; }
         public string Description { get; set; } = string.Empty;
-        public IFormFile File { get; set; } = null!;    
+        public List<IFormFile> Files { get; set; } = new List<IFormFile>();
     }
 
     #region Validator
@@ -26,14 +25,18 @@ namespace App.DTOs.DocumentDTOs
                 .NotEmpty().WithMessage("Description is required.")
                 .MaximumLength(255).WithMessage("Description cannot exceed 255 characters.");
 
-            RuleFor(x => x.File)
-                .NotNull().WithMessage("File is required.")
-                .Must(file => file.Length > 0).WithMessage("File cannot be empty.")
-                .Must(file => file.Length <= 50 * 1024 * 1024) // 50MB limit
-                    .WithMessage("File size cannot exceed 50MB."); 
-                // Add content type validation 
-                // .Must(file => file.ContentType == "application/pdf" || file.ContentType == "image/jpeg")
-                //     .WithMessage("Only PDF and JPG files are allowed.");
+            RuleFor(x => x.Files)
+                .NotEmpty().WithMessage("File is required.")
+                .Must(files => files.All(f => f.Length > 0))
+                .Must(files => files.All(f => f.Length <= 50 * 1024 * 1024)) 
+                    .WithMessage("File size cannot exceed 50MB.")
+                .Must(files => files.All(f => 
+                    f.ContentType.StartsWith("image/") || 
+                    f.ContentType.StartsWith("video/") ||
+                    f.ContentType == "application/pdf" ||
+                    f.ContentType == "application/msword" ||
+                    f.ContentType == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
+                .WithMessage("Only images, video, PDFs and Word documents are allowed");
         }
     }
     #endregion
@@ -41,21 +44,36 @@ namespace App.DTOs.DocumentDTOs
     #region Mapping
     public static class DocumentUploadRequestExtensions
     {
-        public static Document ToEntity(this DocumentUploadRequest request, string cloudinaryUrl, string userCreateId)
+        public static Document ToDocumentEntity(this DocumentUploadRequest request)
         {
-            var newDocument =  new Document
+            return new Document
             {
                 ApplicationId = request.ApplicationId,
                 StaffId = request.StaffId,
                 Description = request.Description,
-                IsVisibleToLearner = request.IsVisibleToLearner,
-                ContentType = request.File.ContentType,
-                FileSize = request.File.Length,
-                CloudinaryUrl = cloudinaryUrl
+                IsVisibleToLearner = request.IsVisibleToLearner
             };
+        }
 
-            newDocument.TrackCreate(userCreateId);
-            return newDocument;
+        public static FileUpload ToFileUploadEntity(this IFormFile file, string cloudinaryUrl)
+        {
+            return new FileUpload
+            {
+                ContentType = file.ContentType,
+                FileSize = file.Length,
+                CloudinaryUrl = cloudinaryUrl,
+                OriginalFileName = file.FileName
+            };
+        }
+
+        public static DocumentFileUpload ToDocumentFileUploadEntity(this FileUpload fileUpload, string documentId)
+        {
+            return new DocumentFileUpload
+            {
+                DocumentId = documentId,
+                FileUploadId = fileUpload.Id,
+                FileUpload = fileUpload
+            };
         }
     }
     #endregion

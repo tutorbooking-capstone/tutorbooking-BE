@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Repositories.Models.User;
+using System.Linq.Expressions;
 
 namespace App.Repositories.Models
 {
@@ -14,6 +15,17 @@ namespace App.Repositories.Models
 
         public virtual TutorApplication? Application { get; set; }
         public virtual Staff? Staff { get; set; }
+
+        #region Behavior
+        public Expression<Func<ApplicationRevision, object>>[] UpdateAction(RevisionAction newAction)
+        {
+            if (Action == newAction)
+                return Array.Empty<Expression<Func<ApplicationRevision, object>>>();
+
+            Action = newAction;
+            return [x => x.Action];
+        }
+        #endregion
     }
 
     public enum RevisionAction

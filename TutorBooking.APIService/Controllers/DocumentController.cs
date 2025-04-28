@@ -21,7 +21,7 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpPost("upload")]
         [Authorize]
-        public async Task<IActionResult> UploadDocument([FromForm] DocumentUploadRequest request)
+        public async Task<IActionResult> UploadDocuments([FromForm] DocumentUploadRequest request)
         {
             var document = await _documentService.UploadDocumentAsync(request);
             return Ok(new BaseResponseModel<DocumentResponse>(

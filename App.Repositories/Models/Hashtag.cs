@@ -12,6 +12,7 @@ namespace App.Repositories.Models
 
     }
 
+    #region Many-to-Many Relationships
     public class TutorHashtag
     {
         public string TutorId { get; set; } = string.Empty;
@@ -20,6 +21,7 @@ namespace App.Repositories.Models
         public virtual Tutor? Tutor { get; set; } 
         public virtual Hashtag? Hashtag { get; set; } 
     }
+    #endregion
 
     #region Seed
     public static class HashtagSeeder

@@ -1,6 +1,7 @@
 using App.Core.Config;
 using App.Repositories.Context;
 using App.Repositories.Models;
+using App.Repositories.States;
 using App.Repositories.UoW;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -27,7 +28,7 @@ namespace App.Repositories
                 .AddDefaultTokenProviders();
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+            services.AddStateManagers();
             return services;
         }
 
@@ -56,6 +57,17 @@ namespace App.Repositories
         {
             services.AddFluentValidationAutoValidation();
             services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+            return services;
+        }
+
+        public static IServiceCollection AddStateManagers(this IServiceCollection services)
+        {
+            services.AddScoped<ApplicationRevisionStateManager>();
+            services.AddScoped<TutorApplicationStateManager>();
+            services.AddScoped<TutorStateManager>();
+
+            services.AddScoped<StateOrchestrator>();
+
             return services;
         }
         #endregion

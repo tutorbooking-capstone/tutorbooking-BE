@@ -31,14 +31,27 @@ namespace App.Services.Infras
                 );
 
             await using var stream = file.OpenReadStream();
-            var uploadParams = new ImageUploadParams
+            
+            if (file.ContentType.StartsWith("video/"))
             {
-                File = new FileDescription(file.FileName, stream),
-                PublicId = Guid.NewGuid().ToString()
-            };
-
-            var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-            return uploadResult.SecureUrl.ToString();
+                var uploadParams = new VideoUploadParams()  
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    PublicId = Guid.NewGuid().ToString()
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                return uploadResult.SecureUrl.ToString();
+            }
+            else
+            {
+                var uploadParams = new RawUploadParams()  
+                {
+                    File = new FileDescription(file.FileName, stream),
+                    PublicId = Guid.NewGuid().ToString()
+                };
+                var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+                return uploadResult.SecureUrl.ToString();
+            }
         }
 
         public async Task<bool> DeleteImageAsync(string publicId)

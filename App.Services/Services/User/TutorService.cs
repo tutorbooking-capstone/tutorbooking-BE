@@ -169,8 +169,7 @@ namespace App.Services.Services.User
             {
                 appUser.UpdateProfile(
                     request.FullName,
-                    request.PhoneNumber,
-                    userId);
+                    request.PhoneNumber);
 
                 var newTutor = appUser.BecameTutor(userId);
                 _unitOfWork.GetRepository<Tutor>().Insert(newTutor);

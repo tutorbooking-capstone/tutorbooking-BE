@@ -84,6 +84,8 @@ namespace TutorBooking.APIService.Middleware
 
                 foreach (var query in queryTracker.Queries)
                 {
+                    //_logger.LogInformation("""
+
                     _logger.LogDebug("""
 
                         Query: {CommandText}

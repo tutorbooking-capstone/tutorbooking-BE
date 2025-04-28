@@ -13,12 +13,10 @@ namespace App.Repositories.Models
         #region Behavior
         public void UpdateProfile(
             string fullName, 
-            string? phoneNumber, 
-            string updatedBy)
+            string? phoneNumber)
         {
             FullName = fullName;
             PhoneNumber = phoneNumber;
-            this.TrackUpdate(updatedBy); 
         }
 
         public Tutor BecameTutor(string userId)
