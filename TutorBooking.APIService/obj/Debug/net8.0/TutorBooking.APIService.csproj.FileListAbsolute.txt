@@ -6,6 +6,7 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\TutorB
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\TutorBooking.APIService.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\TutorBooking.APIService.pdb
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\BouncyCastle.Cryptography.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\CloudinaryDotNet.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\FluentValidation.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\FluentValidation.AspNetCore.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\FluentValidation.DependencyInjectionExtensions.dll
@@ -139,4 +140,4 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\refint
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\TutorBooking.APIService.pdb
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\TutorBooking.APIService.genruntimeconfig.cache
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\ref\TutorBooking.APIService.dll
-D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\CloudinaryDotNet.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\TutorBooking.APIService.staticwebassets.runtime.json

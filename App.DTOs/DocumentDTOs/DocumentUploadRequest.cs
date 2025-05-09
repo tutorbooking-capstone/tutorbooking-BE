@@ -1,4 +1,5 @@
 ﻿using App.Repositories.Models;
+using App.Repositories.Models.Papers;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 

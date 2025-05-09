@@ -1,6 +1,5 @@
-﻿using App.Repositories.Models;
+﻿using App.Repositories.Models.Papers;
 using App.Repositories.UoW;
-using System.Linq.Expressions;
 
 namespace App.Repositories.States
 {

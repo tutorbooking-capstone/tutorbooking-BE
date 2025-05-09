@@ -1,4 +1,5 @@
 using App.Core.Base;
+using App.Repositories.Models.Papers;
 
 namespace App.Repositories.Models
 {

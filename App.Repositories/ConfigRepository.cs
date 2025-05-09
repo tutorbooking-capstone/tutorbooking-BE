@@ -1,6 +1,7 @@
 using App.Core.Config;
 using App.Repositories.Context;
 using App.Repositories.Models;
+using App.Repositories.Models.User;
 using App.Repositories.States;
 using App.Repositories.UoW;
 using FluentValidation;

@@ -1,5 +1,4 @@
-﻿using App.Repositories.Models;
-using System;
+﻿using App.Repositories.Models.Papers;
 
 namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
 {

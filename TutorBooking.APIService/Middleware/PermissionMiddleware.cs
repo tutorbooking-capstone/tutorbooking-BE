@@ -1,11 +1,11 @@
 ﻿using App.Core.Base;
-using App.Repositories.Models;
 using Microsoft.AspNetCore.Identity;
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using App.Core.Constants;
+using App.Repositories.Models.User;
 
 namespace TutorBooking.APIService.Middleware
 {
@@ -36,6 +36,14 @@ namespace TutorBooking.APIService.Middleware
 
                 "/api/seed/hashtags",
 
+                "/api/ngrok/tunnels",
+                "/api/ngrok/tunnel-infos",
+                "/api/ngrok/tunnel-infos/{id}",
+
+                // //prefix for all database endpoints
+                // "/api/database/",
+
+                "/favicon.ico"
             };
             _rolePermissions = new Dictionary<string, List<string>>()
             {
@@ -43,14 +51,19 @@ namespace TutorBooking.APIService.Middleware
             };
         }
 
-        public async Task Invoke(
-            HttpContext context,
-            UserManager<AppUser> userManager)
+        public async Task Invoke(HttpContext context, UserManager<AppUser> userManager)
         {
             var path = context.Request.Path.Value ?? string.Empty;
             _logger.LogDebug("PermissionMiddleware: Executing for path: {Path}", path);
             var endpoint = context.GetEndpoint();
             
+            if (endpoint?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+            {
+                _logger.LogInformation("PermissionMiddleware: [AllowAnonymous] attribute found on endpoint for path [{Path}]. Skipping permission checks.", path);
+                await _next(context);
+                return;
+            }
+
             if (endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null)
             {
                 _logger.LogInformation("PermissionMiddleware: [Authorize] attribute found on endpoint for path\n\n [{Path}]\n", path);
@@ -59,6 +72,8 @@ namespace TutorBooking.APIService.Middleware
             }
 
             _logger.LogDebug("PermissionMiddleware: No [Authorize] attribute found. Proceeding with custom checks for path {Path}.", path);
+
+            var user = await userManager.GetUserAsync(context.User);
 
             if (await HasPermission(context))
             {
@@ -78,9 +93,12 @@ namespace TutorBooking.APIService.Middleware
         private Task<bool> HasPermission(HttpContext context)
         {
             string requestUri = context.Request.Path.Value!.ToLower();
-            _logger.LogDebug("PermissionMiddleware.HasPermission: Checking custom permissions for URI: {RequestUri}", requestUri);
+            _logger.LogDebug("PermissionMiddleware.HasPermission: Checking permissions for URI: {RequestUri}", requestUri);
 
-            if (_excludedUris.Any(uri => requestUri.StartsWith(uri.Replace("{id}", ""))))
+            if (_excludedUris.Any(uri => 
+                requestUri.Equals(uri, StringComparison.OrdinalIgnoreCase) || 
+                (uri.EndsWith("/") && requestUri.StartsWith(uri, StringComparison.OrdinalIgnoreCase)) ||
+                requestUri.StartsWith(uri.Replace("{id}", ""))))
             {
                 _logger.LogDebug("PermissionMiddleware.HasPermission: URI {RequestUri} is in excluded list. Granting access.", requestUri);
                 return Task.FromResult(true);

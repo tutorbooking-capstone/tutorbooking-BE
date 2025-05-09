@@ -2,7 +2,6 @@
 using App.Repositories.UoW;
 using App.Services.Interfaces.User;
 using App.DTOs.AuthDTOs;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -10,7 +9,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Security.Cryptography;
-using App.Core.Jsetting; // Needed for opaque refresh token
+using App.Core.Jsetting;
+using App.Repositories.Models.User;  
 
 namespace App.Services.Services.User
 {
@@ -18,24 +18,21 @@ namespace App.Services.Services.User
     {
         #region DI Constructor
         private readonly JwtSettings _jwtSettings;
-        // private readonly IHttpContextAccessor _httpContextAccessor; // Consider removing if not used elsewhere
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<AppUser> _userManager;
 
         public TokenService(
             JwtSettings jwtSettings,
-            // IHttpContextAccessor httpContextAccessor, // Consider removing
             IUnitOfWork unitOfWork,
             UserManager<AppUser> userManager)
         {
             _jwtSettings = jwtSettings;
-            // _httpContextAccessor = httpContextAccessor; // Consider removing
             _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
         #endregion
 
-        public async Task<TokenResponse> GenerateTokens(AppUser user, string _) // Role parameter is unused now
+        public async Task<TokenResponse> GenerateTokens(AppUser user, string _) 
         {
             var roles = await _userManager.GetRolesAsync(user);
 
@@ -84,8 +81,9 @@ namespace App.Services.Services.User
                     Email = user.Email ?? string.Empty,
                     FullName = user.FullName ?? string.Empty,
                     PhoneNumber = user.PhoneNumber ?? string.Empty,
-                    CreatedTime = user.CreatedTime,
-                    Role = roles.FirstOrDefault() ?? "unknown", // Get role from fetched roles
+                    ProfileImageUrl = user.ProfilePictureUrl ?? string.Empty,
+                    Role = roles.FirstOrDefault() ?? "unknown",
+                    CreatedTime = user.CreatedTime
                 }
             };
         }

@@ -32,11 +32,13 @@ namespace TutorBooking.APIService
             #region Add Cors
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", builder =>
+                options.AddPolicy("AllowFrontend", builder =>
                 {
-                    builder.AllowAnyOrigin()
+                    builder
+                            .WithOrigins("http://localhost:5173")
                             .AllowAnyMethod()
-                            .AllowAnyHeader();
+                            .AllowAnyHeader()
+                            .AllowCredentials();
                 });
             });
             #endregion
@@ -57,7 +59,7 @@ namespace TutorBooking.APIService
 
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseCors("AllowAll");
+            app.UseCors("AllowFrontend");
 
             // Exception handling middleware should come first to catch exceptions from subsequent middleware.
             app.UseMiddleware<ExceptionMiddleware>(); // Correct: Placed early to handle exceptions globally.

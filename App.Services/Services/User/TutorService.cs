@@ -9,7 +9,7 @@ using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
-using App.Services.Interfaces;
+using App.Repositories.Models.Papers;
 
 namespace App.Services.Services.User
 {

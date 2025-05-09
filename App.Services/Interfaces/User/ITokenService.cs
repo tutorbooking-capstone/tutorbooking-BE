@@ -1,5 +1,5 @@
 ﻿using App.DTOs.AuthDTOs;
-using App.Repositories.Models;
+using App.Repositories.Models.User;
 
 namespace App.Services.Interfaces.User
 {

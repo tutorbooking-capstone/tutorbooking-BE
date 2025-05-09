@@ -1,4 +1,5 @@
 ﻿using App.Repositories.Models;
+using App.Repositories.Models.User;
 
 namespace App.DTOs.UserDTOs
 {

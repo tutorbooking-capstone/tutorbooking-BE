@@ -154,6 +154,176 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllApplicationRevisions",
+    "RelativePath": "api/database/application-revisions",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllAvailabilitySlots",
+    "RelativePath": "api/database/availability-slots",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllBlogs",
+    "RelativePath": "api/database/blogs",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllBookingSlots",
+    "RelativePath": "api/database/booking-slots",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllDocumentFileUploads",
+    "RelativePath": "api/database/document-file-uploads",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllDocuments",
+    "RelativePath": "api/database/documents",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllHardcopySubmits",
+    "RelativePath": "api/database/hardcopy-submits",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllHashtags",
+    "RelativePath": "api/database/hashtags",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllLearners",
+    "RelativePath": "api/database/learners",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllRoles",
+    "RelativePath": "api/database/roles",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllStaffs",
+    "RelativePath": "api/database/staffs",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllTutorApplications",
+    "RelativePath": "api/database/tutor-applications",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllTutorHashtags",
+    "RelativePath": "api/database/tutor-hashtags",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllTutorLanguages",
+    "RelativePath": "api/database/tutor-languages",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllTutors",
+    "RelativePath": "api/database/tutors",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllUsers",
+    "RelativePath": "api/database/users",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.DatabaseController",
+    "Method": "GetAllWeeklyAvailabilityPatterns",
+    "RelativePath": "api/database/weekly-availability-patterns",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TutorBooking.APIService.Controllers.DocumentController",
     "Method": "DeleteDocument",
     "RelativePath": "api/document/{documentId}",
@@ -224,6 +394,68 @@
         "IsRequired": false
       }
     ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.NgrokController",
+    "Method": "GetTunnelInfos",
+    "RelativePath": "api/ngrok/tunnel-infos",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.NgrokController",
+    "Method": "GetTunnelInfoById",
+    "RelativePath": "api/ngrok/tunnel-infos/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.NgrokController",
+    "Method": "GetTunnels",
+    "RelativePath": "api/ngrok/tunnels",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UploadProfileImage",
+    "RelativePath": "api/profile/image",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "file",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "DeleteProfileImage",
+    "RelativePath": "api/profile/image",
+    "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
     "ReturnTypes": []
   },
   {

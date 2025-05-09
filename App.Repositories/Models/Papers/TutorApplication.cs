@@ -2,7 +2,7 @@
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
 
-namespace App.Repositories.Models
+namespace App.Repositories.Models.Papers
 {
     public class TutorApplication : BaseEntity
     {

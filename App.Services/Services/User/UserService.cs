@@ -1,12 +1,12 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
 using App.DTOs.UserDTOs;
-using App.Repositories.Models;
+using App.Repositories.Models.User;
 using App.Services.Infras;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace App.Services.Services.User
@@ -15,13 +15,16 @@ namespace App.Services.Services.User
     {
         #region DI Constructor
         private readonly UserManager<AppUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IHttpContextAccessor _contextAccessor;
 
         public UserService(
             UserManager<AppUser> userManager,
+            RoleManager<IdentityRole> roleManager,
             IHttpContextAccessor contextAccessor)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _contextAccessor = contextAccessor;
         }
         #endregion
@@ -115,6 +118,47 @@ namespace App.Services.Services.User
                     "Không thể gán vai trò cho người dùng");
         }
 
+        public async Task<List<AppUser>> GetAllUsersAsync()
+            => await _userManager.Users.ToListAsync();
+
+        public async Task<List<IdentityRole>> GetAllRolesAsync()
+            => await _roleManager.Roles.ToListAsync();
+
+        public async Task AddRoleToUserAsync(string userId, string roleName)
+        {
+            var user = await GetUserByIdAsync(userId);
+            
+            if (await _userManager.IsInRoleAsync(user, roleName))
+                return;
+        
+            var result = await _userManager.AddToRoleAsync(user, roleName);
+            if (!result.Succeeded)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Không thể thêm vai trò cho người dùng");
+        }
+
+        public async Task RemoveRoleFromUserAsync(string userId, string roleName)
+        {
+            var user = await GetUserByIdAsync(userId);
+            
+            if (!await _userManager.IsInRoleAsync(user, roleName))
+                return;
+        
+            var result = await _userManager.RemoveFromRoleAsync(user, roleName);
+            if (!result.Succeeded)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Không thể xóa vai trò của người dùng");
+        }
+
+        public async Task<IList<string>> GetUserRolesAsync(string userId)
+        {
+            var user = await GetUserByIdAsync(userId);
+            return await _userManager.GetRolesAsync(user);
+        }
     }
 }
 

@@ -25,14 +25,14 @@ namespace App.Services.Services.User
         private readonly ILogger<AuthService> _logger;
 
         public AuthService(
-            UserManager<AppUser> userManager, 
+            UserManager<AppUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            IEmailService emailService, 
-            IConfiguration configuration, 
+            IEmailService emailService,
+            IConfiguration configuration,
             ITokenService tokenService,
             ILogger<AuthService> logger)
         {
-            _userManager = userManager;
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager)); ;
             _roleManager = roleManager;
             _emailService = emailService;
             _configuration = configuration;
@@ -40,7 +40,7 @@ namespace App.Services.Services.User
             _logger = logger;
         }
         #endregion
-        
+
         #region Private Service
         private string GenerateOtp()
         {
@@ -55,12 +55,12 @@ namespace App.Services.Services.User
             {
                 throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Vai trò đã tồn tại!");
             }
-            
+
             var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName));
-            
+
             if (!result.Succeeded)
             {
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, 
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest,
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo vai trò");
             }
         }
@@ -71,21 +71,15 @@ namespace App.Services.Services.User
 
             if (existingUser != null && !existingUser.DeletedTime.HasValue)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Email đã được đăng ký!");
 
             if (model.Password != model.ConfirmPassword)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Xác nhận mật khẩu không đúng!");
-
-            if (!await _roleManager.RoleExistsAsync(model.RoleName))
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Vai trò không tồn tại!");
 
             var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
 
@@ -98,7 +92,7 @@ namespace App.Services.Services.User
                 Email = model.Email,
                 UserName = model.Email,
                 NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(model.Email),
-                NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(model.Email), 
+                NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(model.Email),
                 SecurityStamp = Guid.NewGuid().ToString(),
                 PasswordHash = passwordHasher.HashPassword(null, model.Password),
                 PhoneNumberConfirmed = true,
@@ -112,17 +106,17 @@ namespace App.Services.Services.User
             newUser.TrackCreate(newUser.Id);
             if (!result.Succeeded)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
 
-            result = await _userManager.AddToRoleAsync(newUser, model.RoleName);
+            result = await _userManager.AddToRoleAsync(newUser, Role.Learner.ToString());
             if (!result.Succeeded)
             {
                 await _userManager.DeleteAsync(newUser);
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
             }
 
@@ -143,20 +137,20 @@ namespace App.Services.Services.User
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)
                 ?? throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
             if (user.EmailCode == null || user.EmailCode.ToString() != model.OTP)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "OTP không hợp lệ");
 
             if (!user.CodeGeneratedTime.HasValue || DateTime.UtcNow > user.CodeGeneratedTime.Value.AddMinutes(5))
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "OTP đã hết hạn");
 
             if (!isResetPassword)
@@ -171,25 +165,31 @@ namespace App.Services.Services.User
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Không thể cập nhật thông tin người dùng");
         }
 
         public async Task<LoginResponse> LoginAsync(LoginRequest model)
         {
-            var user = await _userManager.FindByNameAsync(model.Username);
+            if (_userManager == null)
+            {
+                _logger.LogError("UserManager is null!");
+                throw new InvalidOperationException("UserManager is not initialized.");
+            }
             
+            var user = await _userManager.FindByNameAsync(model.Username);
+
             if (user == null || user.DeletedTime.HasValue)
                 throw new ErrorException(
-                    StatusCodes.Status401Unauthorized, 
-                    ResponseCodeConstants.BADREQUEST, 
+                    StatusCodes.Status401Unauthorized,
+                    ResponseCodeConstants.BADREQUEST,
                     "Không tìm thấy tài khoản");
 
             if (user.EmailConfirmed == false || user.PhoneNumberConfirmed == false)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ResponseCodeConstants.BADREQUEST, 
+                    StatusCodes.Status400BadRequest,
+                    ResponseCodeConstants.BADREQUEST,
                     "Tài khoản chưa được xác thực!");
 
             var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
@@ -197,13 +197,13 @@ namespace App.Services.Services.User
 
             if (hashedInputPassword != user.PasswordHash)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Không tìm thấy tài khoản");
 
             var roles = await _userManager.GetRolesAsync(user);
             var roleName = roles.FirstOrDefault() ?? "unknown";
-            
+
             var tokenResponse = await _tokenService.GenerateTokens(user, roleName);
             var loginResponse = new LoginResponse
             {
@@ -218,14 +218,14 @@ namespace App.Services.Services.User
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)
                 ?? throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
             if (!await _userManager.IsEmailConfirmedAsync(user))
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
             string OTP = GenerateOtp();
@@ -235,8 +235,8 @@ namespace App.Services.Services.User
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Không thể lưu OTP, vui lòng thử lại sau.");
 
             string greeting = $"Chào {model.Email},";
@@ -256,14 +256,14 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)
                 ?? throw new ErrorException(
-                    StatusCodes.Status404NotFound, 
-                    ErrorCode.NotFound, 
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
                     "Không tìm thấy user");
 
             if (!await _userManager.IsEmailConfirmedAsync(user))
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
             var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
@@ -275,8 +275,8 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
 
             if (!updateResult.Succeeded)
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
                     updateResult.Errors.FirstOrDefault()?.Description ?? "Không thể cập nhật mật khẩu");
         }
 
@@ -325,12 +325,12 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
         public async Task<IEnumerable<string>> SyncRolesAsync()
         {
             var existingRoles = _roleManager.Roles.ToList();
-            var roleNames = Enum.GetNames(typeof(Role)).ToHashSet();  
-            
+            var roleNames = Enum.GetNames(typeof(Role)).ToHashSet();
+
             var rolesToDelete = existingRoles
                 .Where(role => role.Name != null && !roleNames.Contains(role.Name))
                 .ToList();
-            
+
             foreach (var role in rolesToDelete)
             {
                 await _roleManager.DeleteAsync(role);
