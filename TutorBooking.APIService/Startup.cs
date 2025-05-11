@@ -35,10 +35,13 @@ namespace TutorBooking.APIService
                 options.AddPolicy("AllowFrontend", builder =>
                 {
                     builder
-                            .WithOrigins("http://localhost:5173")
-                            .AllowAnyMethod()
-                            .AllowAnyHeader()
-                            .AllowCredentials();
+                        .WithOrigins(
+                            "http://localhost:5173", // Local development
+                            "https://ngoai-ngu-ngay.vercel.app" // Deployed frontend
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
             });
             #endregion
