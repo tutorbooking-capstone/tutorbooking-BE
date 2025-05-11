@@ -74,6 +74,34 @@ namespace App.Repositories.Models.User
             return [x => x.Gender];
         }
 
+        public Expression<Func<AppUser, object>>[] UpdateProfile(
+            string? fullName,
+            DateTime? dateOfBirth,
+            Gender? gender)
+        {
+            var updatedFields = new List<Expression<Func<AppUser, object>>>();
+
+            if (fullName != null && FullName != fullName)
+            {
+                FullName = fullName;
+                updatedFields.Add(x => x.FullName);
+            }
+
+            if (dateOfBirth.HasValue && DateOfBirth != dateOfBirth)
+            {
+                DateOfBirth = dateOfBirth;
+                updatedFields.Add(x => x.DateOfBirth);
+            }
+
+            if (gender.HasValue && Gender != gender)
+            {
+                Gender = gender.Value;
+                updatedFields.Add(x => x.Gender);
+            }
+
+            return updatedFields.ToArray();
+        }
+
         public Tutor BecameTutor(string userId)
             => new Tutor
             {

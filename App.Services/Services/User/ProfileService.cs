@@ -122,5 +122,24 @@ namespace App.Services.Services.User
                 await _unitOfWork.SaveAsync();
             }
         }
+
+        public async Task UpdateProfileAsync(UpdateProfileRequest request)
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            var updatedFields = user.UpdateProfile(
+                request.FullName,
+                request.DateOfBirth,
+                request.Gender
+            );
+
+            if (updatedFields.Length > 0)
+            {
+                var userRepository = _unitOfWork.GetRepository<AppUser>();
+                userRepository.UpdateFields(user, updatedFields);
+                await _unitOfWork.SaveAsync();
+            }
+        }
     }
 }

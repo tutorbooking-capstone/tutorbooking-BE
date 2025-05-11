@@ -434,6 +434,22 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateProfile",
+    "RelativePath": "api/profile",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.UserDTOs.UpdateProfileRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "UpdateDateOfBirth",
     "RelativePath": "api/profile/dateofbirth",
     "HttpMethod": "PATCH",

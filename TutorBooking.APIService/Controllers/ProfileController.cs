@@ -60,5 +60,14 @@ namespace TutorBooking.APIService.Controllers
             await _profileService.UpdateGenderAsync(request.Gender);
             return Ok(new BaseResponseModel<string>(message: "Giới tính đã được cập nhật thành công."));
         }
+
+        [HttpPatch("")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            await _profileService.UpdateProfileAsync(request);
+            return Ok(new BaseResponseModel<string>(
+                message: "Thông tin cá nhân đã được cập nhật thành công."
+            ));
+        }
     }
 }

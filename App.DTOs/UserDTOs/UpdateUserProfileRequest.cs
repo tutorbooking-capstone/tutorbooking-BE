@@ -9,6 +9,12 @@ namespace App.DTOs.UserDTOs
     public record UpdateDateOfBirthRequest(DateTime? DateOfBirth);
 
     public record UpdateGenderRequest(Gender Gender);
+
+    public record UpdateProfileRequest(
+        string? FullName = null,
+        DateTime? DateOfBirth = null,
+        Gender? Gender = null
+    );
     #endregion
 
     #region Validators
@@ -16,7 +22,9 @@ namespace App.DTOs.UserDTOs
     {
         public UpdateFullNameRequestValidator()
         {
-            // Không validate FullName 
+            RuleFor(x => x.FullName)
+                .NotEmpty().WithMessage("Tên không được để trống.")
+                .MaximumLength(100).WithMessage("Tên không vượt quá 100 ký tự.");
         }
     }
 
@@ -36,7 +44,29 @@ namespace App.DTOs.UserDTOs
         {
             RuleFor(x => x.Gender)
                 .IsInEnum()
-                .WithMessage("Giới tính không hợp lệ.");
+                .WithMessage("Giới tính không hợp lệ (0 - Khác, 1 - Nam, 2 - Nữ).");
+        }
+    }
+
+    public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
+    {
+        public UpdateProfileRequestValidator()
+        {
+            When(x => x.FullName != null, () => {
+                RuleFor(x => x.FullName)
+                    .NotEmpty().WithMessage("Tên không được để trống.")
+                    .MaximumLength(100).WithMessage("Tên không vượt quá 100 ký tự.");
+            });
+
+            RuleFor(x => x.DateOfBirth)
+                .Must(dob => dob == null || dob < DateTime.Now)
+                .When(x => x.DateOfBirth.HasValue)
+                .WithMessage("Ngày sinh không được ở tương lai.");
+
+            RuleFor(x => x.Gender)
+                .IsInEnum()
+                .When(x => x.Gender.HasValue)
+                .WithMessage("Giới tính không hợp lệ (0 - Khác, 1 - Nam, 2 - Nữ).");
         }
     }
     #endregion
