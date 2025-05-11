@@ -3,13 +3,10 @@ using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
-using App.Repositories.UoW; // For IUnitOfWork
+using App.Repositories.UoW;  
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging; // For logging
-using System;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 
 namespace App.Services.Services.User
@@ -37,24 +34,17 @@ namespace App.Services.Services.User
 
         public async Task<ProfileImageResponseDTO> UploadProfileImageAsync(IFormFile file)
         {
+            if (file == null || file.Length == 0)
+                throw new InvalidArgumentException(nameof(file), "Vui lòng chọn một tệp ảnh.");
+
+            if (!file.ContentType.StartsWith("image/"))
+                throw new InvalidArgumentException(nameof(file), "Tệp tải lên không phải là ảnh hợp lệ.");
+
             var userId = _userService.GetCurrentUserId();
             var user = await _userService.GetUserByIdAsync(userId);
 
             if (!string.IsNullOrEmpty(user.ProfilePicturePublicId))
-            {
-                try
-                {
-                    bool deleted = await _cloudinaryProvider.DeleteImageAsync(user.ProfilePicturePublicId);
-                    if (!deleted)
-                    {
-                        _logger.LogWarning("Failed to delete old profile image with PublicId {PublicId} from Cloudinary for user {UserId}.", user.ProfilePicturePublicId, userId);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error deleting old profile image with PublicId {PublicId} from Cloudinary for user {UserId}.", user.ProfilePicturePublicId, userId);
-                }
-            }
+                await _cloudinaryProvider.DeleteImageAsync(user.ProfilePicturePublicId);
 
             var (newUrl, newPublicId) = await _cloudinaryProvider.UploadImageAsync(file);
 
@@ -78,23 +68,53 @@ namespace App.Services.Services.User
                 return;
 
             if (!string.IsNullOrEmpty(user.ProfilePicturePublicId))
-            {
-                try
-                {
-                    bool deleted = await _cloudinaryProvider.DeleteImageAsync(user.ProfilePicturePublicId);
-                    if (!deleted)
-                        _logger.LogWarning("Failed to delete profile image with PublicId {PublicId} from Cloudinary for user {UserId}.", user.ProfilePicturePublicId, userId);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error deleting profile image with PublicId {PublicId} from Cloudinary for user {UserId}.", user.ProfilePicturePublicId, userId);
-                    throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "Lỗi xóa ảnh từ Cloudinary.");
-                }
-            }
+                await _cloudinaryProvider.DeleteImageAsync(user.ProfilePicturePublicId);
             else
                 _logger.LogWarning("Profile picture URL exists for user {UserId}, but PublicId is missing. Cannot delete from Cloudinary.", userId);
 
             var updatedFields = user.UpdateProfilePicture(null, null);
+            if (updatedFields.Length > 0)
+            {
+                var userRepository = _unitOfWork.GetRepository<AppUser>();
+                userRepository.UpdateFields(user, updatedFields);
+                await _unitOfWork.SaveAsync();
+            }
+        }
+
+        public async Task UpdateFullNameAsync(string fullName)
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            var updatedFields = user.UpdateFullName(fullName);
+            if (updatedFields.Length > 0)
+            {
+                var userRepository = _unitOfWork.GetRepository<AppUser>();
+                userRepository.UpdateFields(user, updatedFields);
+                await _unitOfWork.SaveAsync();
+            }
+        }
+
+        public async Task UpdateDateOfBirthAsync(DateTime? dateOfBirth)
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            var updatedFields = user.UpdateDateOfBirth(dateOfBirth);
+            if (updatedFields.Length > 0)
+            {
+                var userRepository = _unitOfWork.GetRepository<AppUser>();
+                userRepository.UpdateFields(user, updatedFields);
+                await _unitOfWork.SaveAsync();
+            }
+        }
+
+        public async Task UpdateGenderAsync(Gender gender)
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            var updatedFields = user.UpdateGender(gender);
             if (updatedFields.Length > 0)
             {
                 var userRepository = _unitOfWork.GetRepository<AppUser>();

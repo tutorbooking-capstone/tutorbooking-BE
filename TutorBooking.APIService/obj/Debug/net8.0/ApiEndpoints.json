@@ -434,6 +434,54 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateDateOfBirth",
+    "RelativePath": "api/profile/dateofbirth",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.UserDTOs.UpdateDateOfBirthRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateFullName",
+    "RelativePath": "api/profile/fullname",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.UserDTOs.UpdateFullNameRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateGender",
+    "RelativePath": "api/profile/gender",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.UserDTOs.UpdateGenderRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "UploadProfileImage",
     "RelativePath": "api/profile/image",
     "HttpMethod": "POST",

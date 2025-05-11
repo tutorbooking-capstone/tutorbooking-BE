@@ -1,5 +1,6 @@
 using App.Core.Base;
 using App.DTOs.UserDTOs;
+using App.Repositories.Models.User;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,12 +24,6 @@ namespace TutorBooking.APIService.Controllers
         [HttpPost("image")]
         public async Task<IActionResult> UploadProfileImage(IFormFile file)
         {
-            if (file == null || file.Length == 0)
-                return BadRequest(new BaseResponseModel<object>(message: "Vui lòng chọn một tệp ảnh."));
-
-            if (!file.ContentType.StartsWith("image/"))
-                return BadRequest(new BaseResponseModel<object>(message: "Tệp tải lên không phải là ảnh hợp lệ."));
-
             var result = await _profileService.UploadProfileImageAsync(file);
             return Ok(new BaseResponseModel<ProfileImageResponseDTO>(
                 data: result,
@@ -43,6 +38,27 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<string>(
                 message: "Ảnh đại diện đã được xóa thành công."
             ));
+        }
+
+        [HttpPatch("fullname")]
+        public async Task<IActionResult> UpdateFullName([FromBody] UpdateFullNameRequest request)
+        {
+            await _profileService.UpdateFullNameAsync(request.FullName);
+            return Ok(new BaseResponseModel<string>(message: "Tên đã được cập nhật thành công."));
+        }
+
+        [HttpPatch("dateofbirth")]
+        public async Task<IActionResult> UpdateDateOfBirth([FromBody] UpdateDateOfBirthRequest request)
+        {
+            await _profileService.UpdateDateOfBirthAsync(request.DateOfBirth);
+            return Ok(new BaseResponseModel<string>(message: "Ngày sinh đã được cập nhật thành công."));
+        }
+
+        [HttpPatch("gender")]
+        public async Task<IActionResult> UpdateGender([FromBody] UpdateGenderRequest request)
+        {
+            await _profileService.UpdateGenderAsync(request.Gender);
+            return Ok(new BaseResponseModel<string>(message: "Giới tính đã được cập nhật thành công."));
         }
     }
 }
