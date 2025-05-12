@@ -40,11 +40,21 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPatch("")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
+        public async Task<IActionResult> UpdateBasicInformation([FromBody] UpdateBasicInformationRequest request)
         {
-            await _profileService.UpdateProfileAsync(request);
+            await _profileService.UpdateBasicInformationAsync(request);
             return Ok(new BaseResponseModel<string>(
                 message: "Thông tin cá nhân đã được cập nhật thành công."
+            ));
+        }
+
+        [HttpGet("")]
+        public async Task<IActionResult> GetUserProfile()
+        {
+            var profileData = await _profileService.GetUserProfileAsync();
+            return Ok(new BaseResponseModel<UserProfileResponse>(
+                data: profileData,
+                message: "Thông tin hồ sơ người dùng."
             ));
         }
     }

@@ -7,7 +7,7 @@ using App.Repositories.UoW;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Services.Services.User
 {
@@ -48,7 +48,7 @@ namespace App.Services.Services.User
 
             var (newUrl, newPublicId) = await _cloudinaryProvider.UploadImageAsync(file);
 
-            var updatedFields = user.UpdateProfilePicture(newUrl, newPublicId);
+            var updatedFields = user.UpdateBasicInformationPicture(newUrl, newPublicId);
             if (updatedFields.Length > 0)
             {
                 var userRepository = _unitOfWork.GetRepository<AppUser>();
@@ -72,7 +72,7 @@ namespace App.Services.Services.User
             else
                 _logger.LogWarning("Profile picture URL exists for user {UserId}, but PublicId is missing. Cannot delete from Cloudinary.", userId);
 
-            var updatedFields = user.UpdateProfilePicture(null, null);
+            var updatedFields = user.UpdateBasicInformationPicture(null, null);
             if (updatedFields.Length > 0)
             {
                 var userRepository = _unitOfWork.GetRepository<AppUser>();
@@ -123,15 +123,16 @@ namespace App.Services.Services.User
             }
         }
 
-        public async Task UpdateProfileAsync(UpdateProfileRequest request)
+        public async Task UpdateBasicInformationAsync(UpdateBasicInformationRequest request)
         {
             var userId = _userService.GetCurrentUserId();
             var user = await _userService.GetUserByIdAsync(userId);
 
-            var updatedFields = user.UpdateProfile(
+            var updatedFields = user.UpdateBasicInformation(
                 request.FullName,
                 request.DateOfBirth,
-                request.Gender
+                request.Gender,
+                request.Timezone
             );
 
             if (updatedFields.Length > 0)
@@ -140,6 +141,19 @@ namespace App.Services.Services.User
                 userRepository.UpdateFields(user, updatedFields);
                 await _unitOfWork.SaveAsync();
             }
+        }
+
+        public async Task<UserProfileResponse> GetUserProfileAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+            
+            // Get learner info if it exists
+            var learnerRepository = _unitOfWork.GetRepository<Learner>();
+            var learner = await learnerRepository.ExistEntities()
+                .FirstOrDefaultAsync(l => l.UserId == userId);
+            
+            return user.ToUserProfileResponse(learner);
         }
     }
 }

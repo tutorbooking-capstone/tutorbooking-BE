@@ -20,9 +20,10 @@ namespace App.Repositories.Models.User
         public string ProfilePicturePublicId { get; set; } = string.Empty;
         public DateTime? DateOfBirth { get; set; }
         public Gender Gender { get; set; } = Gender.NotGiven;
+        public string Timezone { get; set; } = "UTC+7";
 
         #region Behavior
-        public void UpdateProfile(
+        public void UpdateBasicInformation(
             string fullName,
             string? phoneNumber)
         {
@@ -30,7 +31,7 @@ namespace App.Repositories.Models.User
             PhoneNumber = phoneNumber;
         }
 
-        public Expression<Func<AppUser, object>>[] UpdateProfilePicture(
+        public Expression<Func<AppUser, object>>[] UpdateBasicInformationPicture(
             string? profilePictureUrl, 
             string? profilePicturePublicId)
         {
@@ -74,10 +75,11 @@ namespace App.Repositories.Models.User
             return [x => x.Gender];
         }
 
-        public Expression<Func<AppUser, object>>[] UpdateProfile(
+        public Expression<Func<AppUser, object>>[] UpdateBasicInformation(
             string? fullName,
             DateTime? dateOfBirth,
-            Gender? gender)
+            Gender? gender,
+            string? timezone = null)
         {
             var updatedFields = new List<Expression<Func<AppUser, object>>>();
 
@@ -99,6 +101,12 @@ namespace App.Repositories.Models.User
                 updatedFields.Add(x => x.Gender);
             }
 
+            if (timezone != null && Timezone != timezone)
+            {
+                Timezone = timezone;
+                updatedFields.Add(x => x.Timezone);
+            }
+
             return updatedFields.ToArray();
         }
 
@@ -110,6 +118,16 @@ namespace App.Repositories.Models.User
                 BecameTutorAt = DateTime.UtcNow,
                 LastStatusUpdateAt = DateTime.UtcNow,
 
+                User = this
+            };
+
+        public Learner BecomeLearner(string userId)
+            => new Learner
+            {
+                UserId = userId,
+                LanguageCode = string.Empty,
+                ProficiencyLevel = 1,
+                
                 User = this
             };
         #endregion

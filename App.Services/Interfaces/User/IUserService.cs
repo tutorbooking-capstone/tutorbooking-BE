@@ -11,7 +11,7 @@ namespace App.Services.Interfaces.User
         Task RemoveRoleFromUserAsync(string userId, string roleName);
         Task<IList<string>> GetUserRolesAsync(string userId);
         
-        Task<UserProfileResponse> GetUserProfileAsync(string userId);
+        //Task<UserProfileResponse> GetUserProfileAsync(string userId);
         Task UpdateUserProfileAsync(string userId, UpdateUserRequest model);
         Task ChangePasswordAsync(string userId, ChangePasswordRequest model);
 

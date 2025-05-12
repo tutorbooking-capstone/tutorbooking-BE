@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using System.Data;
 using Microsoft.Extensions.Logging;
 using App.Repositories.Models.User;
+using App.Repositories.UoW;
 
 namespace App.Services.Services.User
 {
@@ -23,6 +24,7 @@ namespace App.Services.Services.User
         private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;
         private readonly ILogger<AuthService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -30,7 +32,8 @@ namespace App.Services.Services.User
             IEmailService emailService,
             IConfiguration configuration,
             ITokenService tokenService,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IUnitOfWork unitOfWork)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager)); ;
             _roleManager = roleManager;
@@ -38,6 +41,7 @@ namespace App.Services.Services.User
             _configuration = configuration;
             _tokenService = tokenService;
             _logger = logger;
+            _unitOfWork = unitOfWork;
         }
         #endregion
 
@@ -119,6 +123,11 @@ namespace App.Services.Services.User
                     ErrorCode.BadRequest,
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
             }
+
+            // Create Learner entity
+            var learner = newUser.BecomeLearner(newUser.Id);
+            _unitOfWork.GetRepository<Learner>().Insert(learner);
+            await _unitOfWork.SaveAsync();
 
             string greeting = $"Chào {model.Email},";
             string mainMessage = $@"

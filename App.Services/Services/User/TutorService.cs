@@ -167,7 +167,7 @@ namespace App.Services.Services.User
 
             return await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                appUser.UpdateProfile(
+                appUser.UpdateBasicInformation(
                     request.FullName,
                     request.PhoneNumber);
 

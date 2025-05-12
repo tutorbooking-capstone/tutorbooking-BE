@@ -10,10 +10,11 @@ namespace App.DTOs.UserDTOs
 
     public record UpdateGenderRequest(Gender Gender);
 
-    public record UpdateProfileRequest(
+    public record UpdateBasicInformationRequest(
         string? FullName = null,
         DateTime? DateOfBirth = null,
-        Gender? Gender = null
+        Gender? Gender = null,
+        string? Timezone = null
     );
     #endregion
 
@@ -48,9 +49,9 @@ namespace App.DTOs.UserDTOs
         }
     }
 
-    public class UpdateProfileRequestValidator : AbstractValidator<UpdateProfileRequest>
+    public class UpdateBasicInformationRequestValidator : AbstractValidator<UpdateBasicInformationRequest>
     {
-        public UpdateProfileRequestValidator()
+        public UpdateBasicInformationRequestValidator()
         {
             When(x => x.FullName != null, () => {
                 RuleFor(x => x.FullName)

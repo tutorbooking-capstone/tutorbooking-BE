@@ -1,7 +1,5 @@
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using App.Core.Base;
-using App.Repositories.Models;
 
 namespace TutorBooking.APIService.Controllers
 {

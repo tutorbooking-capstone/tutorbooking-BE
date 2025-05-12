@@ -29,11 +29,11 @@ namespace App.Services.Services.User
         }
         #endregion
 
-        public async Task<UserProfileResponse> GetUserProfileAsync(string userId)
-        {
-            var user = await GetUserByIdAsync(userId);
-            return user.ToUserProfileResponse();
-        }
+        // public async Task<UserProfileResponse> GetUserProfileAsync(string userId)
+        // {
+        //     var user = await GetUserByIdAsync(userId);
+        //     return user.ToUserProfileResponse();
+        // }
 
         public async Task UpdateUserProfileAsync(string userId, UpdateUserRequest model)
         {

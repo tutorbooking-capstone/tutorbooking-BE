@@ -11,6 +11,7 @@ namespace App.Services.Interfaces.User
         Task UpdateFullNameAsync(string fullName);
         Task UpdateDateOfBirthAsync(DateTime? dateOfBirth);
         Task UpdateGenderAsync(Gender gender);
-        Task UpdateProfileAsync(UpdateProfileRequest request);
+        Task UpdateBasicInformationAsync(UpdateBasicInformationRequest request);
+        Task<UserProfileResponse> GetUserProfileAsync();
     }
 }

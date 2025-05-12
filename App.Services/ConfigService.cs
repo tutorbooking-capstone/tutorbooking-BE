@@ -26,6 +26,7 @@ namespace App.Services
             services.AddScoped<IProfileService, ProfileService>();
             
             services.AddScoped<ITutorService, TutorService>();
+            services.AddScoped<ILearnerService, LearnerService>();
             #endregion
 
             #region Another Services
