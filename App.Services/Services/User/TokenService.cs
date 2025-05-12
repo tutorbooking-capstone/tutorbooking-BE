@@ -1,5 +1,4 @@
-﻿using App.Repositories.Models;
-using App.Repositories.UoW;
+﻿using App.Repositories.UoW;
 using App.Services.Interfaces.User;
 using App.DTOs.AuthDTOs;
 using Microsoft.AspNetCore.Identity;
