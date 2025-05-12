@@ -19,7 +19,7 @@ namespace App.Repositories
         public static IServiceCollection AddAppRepositoriesConfig(
             this IServiceCollection services,
             IConfiguration configuration,
-            string connectionStringName = "DefaultConnection")
+            string connectionStringName = "DeployConnection")
         {
             services.AddAppDbContext(configuration, connectionStringName);
             services.AddModelsValidation();
@@ -37,7 +37,7 @@ namespace App.Repositories
         public static IServiceCollection AddAppDbContext(
             this IServiceCollection services,
             IConfiguration configuration,
-            string connectionStringName = "DefaultConnection")
+            string connectionStringName)
         {
             var connectionString = configuration.GetConnectionString(connectionStringName);
             if (string.IsNullOrEmpty(connectionString))

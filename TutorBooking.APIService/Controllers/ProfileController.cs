@@ -1,6 +1,5 @@
 using App.Core.Base;
 using App.DTOs.UserDTOs;
-using App.Repositories.Models.User;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,27 +39,6 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPatch("fullname")]
-        public async Task<IActionResult> UpdateFullName([FromBody] UpdateFullNameRequest request)
-        {
-            await _profileService.UpdateFullNameAsync(request.FullName);
-            return Ok(new BaseResponseModel<string>(message: "Tên đã được cập nhật thành công."));
-        }
-
-        [HttpPatch("dateofbirth")]
-        public async Task<IActionResult> UpdateDateOfBirth([FromBody] UpdateDateOfBirthRequest request)
-        {
-            await _profileService.UpdateDateOfBirthAsync(request.DateOfBirth);
-            return Ok(new BaseResponseModel<string>(message: "Ngày sinh đã được cập nhật thành công."));
-        }
-
-        [HttpPatch("gender")]
-        public async Task<IActionResult> UpdateGender([FromBody] UpdateGenderRequest request)
-        {
-            await _profileService.UpdateGenderAsync(request.Gender);
-            return Ok(new BaseResponseModel<string>(message: "Giới tính đã được cập nhật thành công."));
-        }
-
         [HttpPatch("")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequest request)
         {
@@ -71,3 +49,26 @@ namespace TutorBooking.APIService.Controllers
         }
     }
 }
+
+#region Part Endpoint
+//[HttpPatch("fullname")]
+//public async Task<IActionResult> UpdateFullName([FromBody] UpdateFullNameRequest request)
+//{
+//    await _profileService.UpdateFullNameAsync(request.FullName);
+//    return Ok(new BaseResponseModel<string>(message: "Tên đã được cập nhật thành công."));
+//}
+
+//[HttpPatch("dateofbirth")]
+//public async Task<IActionResult> UpdateDateOfBirth([FromBody] UpdateDateOfBirthRequest request)
+//{
+//    await _profileService.UpdateDateOfBirthAsync(request.DateOfBirth);
+//    return Ok(new BaseResponseModel<string>(message: "Ngày sinh đã được cập nhật thành công."));
+//}
+
+//[HttpPatch("gender")]
+//public async Task<IActionResult> UpdateGender([FromBody] UpdateGenderRequest request)
+//{
+//    await _profileService.UpdateGenderAsync(request.Gender);
+//    return Ok(new BaseResponseModel<string>(message: "Giới tính đã được cập nhật thành công."));
+//}
+#endregion
