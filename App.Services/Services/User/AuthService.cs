@@ -66,14 +66,6 @@ namespace App.Services.Services.User
 
         public async Task RegisterAsync(RegisterRequest model)
         {
-            var existingUser = await _userManager.FindByEmailAsync(model.Email);
-
-            if (existingUser != null && !existingUser.DeletedTime.HasValue)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest,
-                    ErrorCode.BadRequest,
-                    "Email đã được đăng ký!");
-
             if (model.Password != model.ConfirmPassword)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,

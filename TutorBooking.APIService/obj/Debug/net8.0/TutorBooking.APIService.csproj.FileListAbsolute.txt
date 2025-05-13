@@ -25,10 +25,13 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Micros
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Design.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.DependencyModel.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Diagnostics.Abstractions.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Hosting.Abstractions.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.ObjectPool.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
@@ -41,6 +44,10 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Micros
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Microsoft.OpenApi.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\MimeKit.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\MiniProfiler.AspNetCore.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\MiniProfiler.AspNetCore.Mvc.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\MiniProfiler.EntityFrameworkCore.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\MiniProfiler.Shared.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Mono.TextTemplating.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Newtonsoft.Json.dll
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\bin\Debug\net8.0\Npgsql.dll

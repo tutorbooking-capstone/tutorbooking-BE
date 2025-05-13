@@ -1,6 +1,5 @@
 using App.Core.Config;
 using App.Repositories.Context;
-using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Repositories.States;
 using App.Repositories.UoW;
@@ -19,7 +18,7 @@ namespace App.Repositories
         public static IServiceCollection AddAppRepositoriesConfig(
             this IServiceCollection services,
             IConfiguration configuration,
-            string connectionStringName = "DeployConnection")
+            string connectionStringName = "DefaultConnection")
         {
             services.AddAppDbContext(configuration, connectionStringName);
             services.AddModelsValidation();

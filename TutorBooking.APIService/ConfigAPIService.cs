@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Text;
 using App.Core;
-using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 

@@ -29,6 +29,10 @@ namespace TutorBooking.APIService
             services.AddAppAPIConfig(Configuration);
             #endregion
 
+            #region 3rd Party Libraries Config
+            services.AddMiniProfilerConfig();
+            #endregion
+
             #region Add Cors
             services.AddCors(options =>
             {
@@ -54,10 +58,26 @@ namespace TutorBooking.APIService
             app.UseMiddleware<RequestLogSeparatorMiddleware>();
 
             if (env.IsDevelopment())
+            {
                 app.UseDeveloperExceptionPage();
+
+                app.Use(async (context, next) =>
+                {
+                    if (context.Request.Path == "/")
+                    {
+                        context.Response.Redirect("/profiler/results");
+                        return;
+                    }
+                    await next();
+                });
+            }
+
+            #region 3rd Party Libraries
+            app.UseMiniProfiler();
 
             app.UseSwagger();
             app.UseSwaggerUI();
+            #endregion
 
             app.UseHttpsRedirection();
             app.UseRouting();

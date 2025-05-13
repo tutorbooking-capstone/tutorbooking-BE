@@ -68,6 +68,18 @@
             "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.0, )"
+            },
+            "MiniProfiler.AspNetCore": {
+              "target": "Package",
+              "version": "[4.5.4, )"
+            },
+            "MiniProfiler.AspNetCore.Mvc": {
+              "target": "Package",
+              "version": "[4.5.4, )"
+            },
+            "MiniProfiler.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[4.5.4, )"
             }
           },
           "imports": [
