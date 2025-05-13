@@ -435,6 +435,26 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
+    "Method": "GetTutorHashtags",
+    "RelativePath": "api/tutor/hashtags",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
+    "Method": "GetTutorLanguages",
+    "RelativePath": "api/tutor/languages",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "RegisterAsTutor",
     "RelativePath": "api/tutor/register",
     "HttpMethod": "POST",

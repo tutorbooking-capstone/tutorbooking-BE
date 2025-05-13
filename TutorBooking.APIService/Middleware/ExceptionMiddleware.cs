@@ -41,6 +41,18 @@ namespace TutorBooking.APIService.Middleware
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
+            catch (UnauthorizedRoleException ex)
+            {
+                _logger.LogWarning(
+                    "Role mismatch: User ID {UserId} with roles {UserRoles} requires one of {RequiredRoles}", 
+                    ex.ErrorDetail.ErrorMessage,
+                    ex.ErrorDetail.ErrorMessage,
+                    ex.ErrorDetail.ErrorMessage);
+                
+                context.Response.StatusCode = ex.StatusCode;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
+            }
             catch (ErrorException ex)
             {
                 _logger.LogError(ex, "Error: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);

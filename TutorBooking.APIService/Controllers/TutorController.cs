@@ -82,5 +82,27 @@ namespace TutorBooking.APIService.Controllers
                 message: "Cập nhật trạng thái xác minh thành công!"
             ));
         }
+
+        [HttpGet("hashtags")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetTutorHashtags()
+        {
+            var hashtags = await _tutorService.GetTutorHashtagsAsync();
+            return Ok(new BaseResponseModel<List<TutorHashtagDTO>>(
+                data: hashtags,
+                message: "Danh sách hashtag của gia sư."
+            ));
+        }
+
+        [HttpGet("languages")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetTutorLanguages()
+        {
+            var languages = await _tutorService.GetTutorLanguagesAsync();
+            return Ok(new BaseResponseModel<List<TutorLanguageDTO>>(
+                data: languages,
+                message: "Danh sách ngôn ngữ của gia sư."
+            ));
+        }
     }
 }

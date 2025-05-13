@@ -1,12 +1,10 @@
 using App.Repositories.Models.User;
 using FluentValidation;
-using Microsoft.AspNetCore.Http;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs
 {
     public record TutorRegistrationRequest(
         // Step 1: Basic Info Validation
-        //IFormFile? Avatar,
         string FullName,
         DateTime? DateOfBirth,
         Gender? Gender,
@@ -19,7 +17,10 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         string? TeachingMethod = null,
 
         // Step 3: Hashtag Validation
-        List<string>? HashtagIds = null
+        List<string>? HashtagIds = null,
+
+        // Step 4: Languages Validation
+        List<TutorLanguageDTO> Languages = null!
     );
 
     #region Validator
@@ -64,6 +65,15 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 .Must(ids => ids == null || ids.Count <= 10)
                 .WithMessage("Tối đa 10 hashtag được chọn")
                 .When(x => x.HashtagIds != null);
+
+            // Step 4: Languages Validation
+            RuleFor(x => x.Languages)
+                .NotEmpty().WithMessage("Phải chọn ít nhất một ngôn ngữ để dạy")
+                .When(x => x.Languages != null);
+                
+            RuleForEach(x => x.Languages)
+                .SetValidator(new TutorLanguageDTOValidator())
+                .When(x => x.Languages != null);
         }
     }
     #endregion

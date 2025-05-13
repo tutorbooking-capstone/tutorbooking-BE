@@ -11,7 +11,6 @@ using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
 using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
-using App.Core.Provider;
 
 namespace App.Services.Services.User
 {
@@ -199,12 +198,13 @@ namespace App.Services.Services.User
                 _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
 
                 await ProcessHashtags(userId, request.HashtagIds);
+                await UpdateTutorLanguagesAsync(userId, request.Languages);
 
                 var tutorApplication = TutorApplication.Create(userId);
                 _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
 
                 await _unitOfWork.SaveAsync();
-                await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
+                await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
 
                 return newTutor.ToTutorResponse();
             }, 
@@ -268,6 +268,31 @@ namespace App.Services.Services.User
                 _unitOfWork.GetRepository<Tutor>().UpdateFields(tutor, modifiedProperties);
                 await _unitOfWork.SaveAsync();
             }
+        }
+
+        public async Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutor = await GetTutorByIdAsync(userId);
+            var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>()
+                .ExistEntities()
+                .Where(th => th.TutorId == userId)
+                .Include(th => th.Hashtag)
+                .ToListAsync();
+
+            return tutorHashtags.ToDTOs();
+        }
+
+        public async Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutor = await GetTutorByIdAsync(userId);
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tl.TutorId == userId)
+                .ToListAsync();
+
+            return tutorLanguages.ToDTOs();
         }
     }
 }

@@ -36,6 +36,21 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
     #region Mapping
     public static class TutorLanguageDTOExtensions
     {
+        public static TutorLanguageDTO ToDTO(this TutorLanguage tutorLanguage)
+        {
+            return new TutorLanguageDTO
+            {
+                LanguageCode = tutorLanguage.LanguageCode,
+                Proficiency = tutorLanguage.Proficiency,
+                IsPrimary = tutorLanguage.IsPrimary
+            };
+        }
+
+        public static List<TutorLanguageDTO> ToDTOs(this IEnumerable<TutorLanguage> tutorLanguages)
+        {
+            return tutorLanguages.Select(tl => tl.ToDTO()).ToList();
+        }
+
         public static TutorLanguage ToEntity(this TutorLanguageDTO dto, string tutorId)
         {
             return new TutorLanguage

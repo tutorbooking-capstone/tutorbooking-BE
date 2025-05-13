@@ -1,5 +1,4 @@
 ﻿using App.Core.Base;
-using Microsoft.AspNetCore.Identity;
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authorization;
@@ -51,12 +50,12 @@ namespace TutorBooking.APIService.Middleware
             };
         }
 
-        public async Task Invoke(HttpContext context, UserManager<AppUser> userManager)
+        public async Task Invoke(HttpContext context)
         {
             var path = context.Request.Path.Value ?? string.Empty;
             _logger.LogDebug("PermissionMiddleware: Executing for path: {Path}", path);
             var endpoint = context.GetEndpoint();
-            
+
             if (endpoint?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
             {
                 _logger.LogInformation("PermissionMiddleware: [AllowAnonymous] attribute found on endpoint for path [{Path}]. Skipping permission checks.", path);
@@ -64,17 +63,38 @@ namespace TutorBooking.APIService.Middleware
                 return;
             }
 
-            if (endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null)
+            // Chỉ log thông tin về [Authorize] để debug, không thực hiện kiểm tra quyền
+            var authorizeAttribute = endpoint?.Metadata.GetMetadata<AuthorizeAttribute>();
+            if (authorizeAttribute != null)
             {
-                _logger.LogInformation("PermissionMiddleware: [Authorize] attribute found on endpoint for path\n\n [{Path}]\n", path);
-                await _next(context);
-                return;
+                _logger.LogInformation("PermissionMiddleware: [Authorize] attribute found on endpoint for path [{Path}]", path);
+
+                // Log thông tin về role nếu có, nhưng không kiểm tra quyền
+                var rolesAttribute = endpoint?.Metadata.GetMetadata<AuthorizeRolesAttribute>();
+                if (rolesAttribute != null)
+                {
+                    var userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    if (!string.IsNullOrEmpty(userId))
+                    {
+                        var userRoles = context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList() ?? new List<string>();
+                        var requiredRoles = rolesAttribute.Roles?.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                                        .Select(r => r.Trim())
+                                                        .ToHashSet()
+                                                        ?? new HashSet<string>();
+
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation(
+                                "PermissionMiddleware: Role check for user {UserId} - Current roles: [{UserRoles}], Required roles: [{RequiredRoles}]",
+                                userId,
+                                string.Join(", ", userRoles),
+                                string.Join(", ", requiredRoles));
+                        }
+                    }
+                }
             }
 
-            _logger.LogDebug("PermissionMiddleware: No [Authorize] attribute found. Proceeding with custom checks for path {Path}.", path);
-
-            var user = await userManager.GetUserAsync(context.User);
-
+            // Thực hiện kiểm tra quyền tùy chỉnh
             if (await HasPermission(context))
             {
                 _logger.LogInformation("PermissionMiddleware: Custom permission GRANTED for path: {Path}", path);
@@ -83,10 +103,11 @@ namespace TutorBooking.APIService.Middleware
             else
             {
                 _logger.LogWarning("PermissionMiddleware: Custom permission DENIED for path: {Path}. Returning 403.", path);
-                throw new ErrorException(
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                await context.Response.WriteAsJsonAsync(new ErrorException(
                     StatusCodes.Status403Forbidden,
                     ResponseCodeConstants.FORBIDDEN,
-                    "Bạn không có quyền truy cập tài nguyên này.");
+                    "Bạn không có quyền truy cập tài nguyên này.").ErrorDetail);
             }
         }
 
@@ -95,8 +116,9 @@ namespace TutorBooking.APIService.Middleware
             string requestUri = context.Request.Path.Value!.ToLower();
             _logger.LogDebug("PermissionMiddleware.HasPermission: Checking permissions for URI: {RequestUri}", requestUri);
 
-            if (_excludedUris.Any(uri => 
-                requestUri.Equals(uri, StringComparison.OrdinalIgnoreCase) || 
+            // 1. Chỉ cần kiểm tra các URI trong excluded list và trả về true nếu khớp
+            if (_excludedUris.Any(uri =>
+                requestUri.Equals(uri, StringComparison.OrdinalIgnoreCase) ||
                 (uri.EndsWith("/") && requestUri.StartsWith(uri, StringComparison.OrdinalIgnoreCase)) ||
                 requestUri.StartsWith(uri.Replace("{id}", ""))))
             {
@@ -104,28 +126,38 @@ namespace TutorBooking.APIService.Middleware
                 return Task.FromResult(true);
             }
 
-            string? idUser = null;
-            try
+            // 2. Kiểm tra xem endpoint có attribute không
+            var endpoint = context.GetEndpoint();
+            if (endpoint?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
             {
-                idUser = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(idUser))
-                {
-                    _logger.LogWarning("PermissionMiddleware.HasPermission: Could not get User ID from HttpContext.User claims for URI: {RequestUri}. Denying access.", requestUri);
-                    return Task.FromResult(false);
-                }
-                _logger.LogDebug("PermissionMiddleware.HasPermission: User ID {UserId} obtained for URI: {RequestUri}", idUser, requestUri);
+                // AllowAnonymous đã được xử lý, không cần kiểm tra thêm
+                return Task.FromResult(true);
             }
-            catch (Exception ex)
+
+            if (endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null)
             {
-                _logger.LogError(ex, "PermissionMiddleware.HasPermission: Error getting User ID for URI: {RequestUri}", requestUri);
+                // Attribute đã được UseAuthorization() xử lý, không cần kiểm tra thêm
+                // Nếu đến được đây, nghĩa là request đã vượt qua UseAuthorization()
+                return Task.FromResult(true);
+            }
+
+            // 3. Chỉ áp dụng logic tùy chỉnh cho các endpoint KHÔNG có attribute
+            // (Đây là trường hợp đặc biệt mà ASP.NET Core Authorization không xử lý)
+            
+            string? userId = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("PermissionMiddleware.HasPermission: Could not get User ID from HttpContext.User claims for URI: {RequestUri}. Denying access.", requestUri);
                 return Task.FromResult(false);
             }
 
-            var rolesFromClaims = context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList() ?? new List<string>();
-            _logger.LogDebug("PermissionMiddleware.HasPermission: User ID {UserId} has roles from claims: [{Roles}] for URI: {RequestUri}", idUser, string.Join(", ", rolesFromClaims), requestUri);
+            var userRoles = context.User?.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList() ?? new List<string>();
+            _logger.LogDebug("PermissionMiddleware.HasPermission: User ID {UserId} has roles from claims: [{Roles}] for URI: {RequestUri}", 
+                userId, string.Join(", ", userRoles), requestUri);
 
-            bool hasAccessBasedOnCustomLogic = false;
-            foreach (var role in rolesFromClaims)
+            // 4. Áp dụng các quy tắc phân quyền dựa trên pattern URI và role
+            // Đây là logic bổ sung mà ASP.NET Core Authorization không hỗ trợ mặc định
+            foreach (var role in userRoles)
             {
                 if (_rolePermissions.TryGetValue(role, out var allowedPaths))
                 {
@@ -133,22 +165,17 @@ namespace TutorBooking.APIService.Middleware
                     {
                         if (requestUri.StartsWith(allowedPathPattern))
                         {
-                            hasAccessBasedOnCustomLogic = true;
-                            _logger.LogDebug("PermissionMiddleware.HasPermission: User ID {UserId} has role '{Role}' which grants access to path pattern starting with '{PathPattern}' for URI: {RequestUri}", idUser, role, allowedPathPattern, requestUri);
-                            break;
+                            _logger.LogDebug("PermissionMiddleware.HasPermission: User ID {UserId} has role '{Role}' which grants access to path pattern '{PathPattern}' for URI: {RequestUri}", 
+                                userId, role, allowedPathPattern, requestUri);
+                            return Task.FromResult(true);
                         }
                     }
-                    if (hasAccessBasedOnCustomLogic)
-                        break;
                 }
             }
 
-            if (!hasAccessBasedOnCustomLogic)
-            {
-                _logger.LogWarning("PermissionMiddleware.HasPermission: User ID {UserId} with roles [{Roles}] does NOT have custom permission for URI: {RequestUri}", idUser, string.Join(", ", rolesFromClaims), requestUri);
-            }
-
-            return Task.FromResult(hasAccessBasedOnCustomLogic);
+            _logger.LogWarning("PermissionMiddleware.HasPermission: User ID {UserId} with roles [{Roles}] does NOT have custom permission for URI: {RequestUri}", 
+                userId, string.Join(", ", userRoles), requestUri);
+            return Task.FromResult(false);
         }
 
         private static async Task HandleForbiddenRequest(HttpContext context)
