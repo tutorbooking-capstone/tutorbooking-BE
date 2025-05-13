@@ -8,6 +8,7 @@ using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using App.DTOs.AppUserDTOs.TutorDTOs;
 
 namespace App.Services.Services.User
 {
@@ -154,6 +155,14 @@ namespace App.Services.Services.User
                 .FirstOrDefaultAsync(l => l.UserId == userId);
             
             return user.ToUserProfileResponse(learner);
+        }
+
+        public async Task<TutorRegistrationProfileResponse> GetTutorRegistrationProfileAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var user = await _userService.GetUserByIdAsync(userId);
+            
+            return user.ToTutorRegistrationProfileResponse();
         }
     }
 }

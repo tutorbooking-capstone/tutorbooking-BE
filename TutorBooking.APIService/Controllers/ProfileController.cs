@@ -1,4 +1,5 @@
 using App.Core.Base;
+using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.UserDTOs;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,16 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<UserProfileResponse>(
                 data: profileData,
                 message: "Thông tin hồ sơ người dùng."
+            ));
+        }
+
+        [HttpGet("tutor-register-profile")]
+        public async Task<IActionResult> GetTutorRegistrationProfile()
+        {
+            var profileData = await _profileService.GetTutorRegistrationProfileAsync();
+            return Ok(new BaseResponseModel<TutorRegistrationProfileResponse>(
+                data: profileData,
+                message: "Thông tin hồ sơ đăng ký gia sư."
             ));
         }
     }

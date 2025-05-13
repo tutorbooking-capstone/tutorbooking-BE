@@ -1,3 +1,4 @@
+using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Http;
@@ -13,5 +14,6 @@ namespace App.Services.Interfaces.User
         Task UpdateGenderAsync(Gender gender);
         Task UpdateBasicInformationAsync(UpdateBasicInformationRequest request);
         Task<UserProfileResponse> GetUserProfileAsync();
+        Task<TutorRegistrationProfileResponse> GetTutorRegistrationProfileAsync();
     }
 }

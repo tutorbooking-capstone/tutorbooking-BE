@@ -227,6 +227,16 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
+    "Method": "GetAllHashtags",
+    "RelativePath": "api/hashtag/all",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TutorBooking.APIService.Controllers.LearnerController",
     "Method": "UpdateLearningLanguage",
     "RelativePath": "api/learner/language",
@@ -335,6 +345,16 @@
     "Method": "DeleteProfileImage",
     "RelativePath": "api/profile/image",
     "HttpMethod": "DELETE",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "GetTutorRegistrationProfile",
+    "RelativePath": "api/profile/tutor-register-profile",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [],

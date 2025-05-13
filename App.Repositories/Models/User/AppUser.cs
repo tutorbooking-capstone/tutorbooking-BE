@@ -110,16 +110,16 @@ namespace App.Repositories.Models.User
             return updatedFields.ToArray();
         }
 
-        public Tutor BecameTutor(string userId)
-            => new Tutor
-            {
-                UserId = userId,
-                VerificationStatus = VerificationStatus.Basic,
-                BecameTutorAt = DateTime.UtcNow,
-                LastStatusUpdateAt = DateTime.UtcNow,
+        // public Tutor BecameTutor(string userId)
+        //     => new Tutor
+        //     {
+        //         UserId = userId,
+        //         VerificationStatus = VerificationStatus.Basic,
+        //         BecameTutorAt = DateTime.UtcNow,
+        //         LastStatusUpdateAt = DateTime.UtcNow,
 
-                User = this
-            };
+        //         User = this
+        //     };
 
         public Learner BecomeLearner(string userId)
             => new Learner

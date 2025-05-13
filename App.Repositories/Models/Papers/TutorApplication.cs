@@ -8,7 +8,7 @@ namespace App.Repositories.Models.Papers
     {
         public string TutorId { get; set; } = string.Empty;
         public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
-        public ApplicationStatus Status { get; set; } = ApplicationStatus.PendingVerification;
+        public ApplicationStatus Status { get; set; } = ApplicationStatus.UnSubmitted;
         public string RevisionNotes { get; set; } = string.Empty; // Notes for revisions requested by the admin/verifier 
         public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
 
@@ -20,7 +20,7 @@ namespace App.Repositories.Models.Papers
             var newTutorApplication =  new TutorApplication
             {
                 TutorId = tutorId,
-                Status = ApplicationStatus.PendingVerification,
+                Status = ApplicationStatus.UnSubmitted,
                 SubmittedAt = DateTime.UtcNow,
             };
 
@@ -40,19 +40,22 @@ namespace App.Repositories.Models.Papers
 
     public enum ApplicationStatus
     {
+        // Initial status when was tutor create 
+        UnSubmitted = 0,
+
         // Initial status when tutor first submits application
-        PendingVerification = 0,
+        PendingVerification = 1,
         
         // Status when staff has requested changes to the application
-        RevisionRequested = 1,
+        RevisionRequested = 2,
         
         // Status when tutor has submitted revised documents after a revision request
-        PendingReverification = 2,
+        PendingReverification = 3,
         
         // Status when digital documents have been verified, but physical docs still needed
-        VerifiedUpload = 3,
+        VerifiedUpload = 4,
         
         // Final status when both digital and physical documents are verified
-        VerifiedHardcopy = 4
+        VerifiedHardcopy = 5
     }
 }

@@ -1,5 +1,4 @@
-﻿using App.Repositories.Models;
-using App.Repositories.Models.User;
+﻿using App.Repositories.Models.User;
 
 namespace App.DTOs.UserDTOs
 {
@@ -21,6 +20,7 @@ namespace App.DTOs.UserDTOs
         public int LearningProficiencyLevel { get; set; }
     }
 
+    #region Mapping
     public static class UserProfileResponseExtensions
     {
         public static UserProfileResponse ToUserProfileResponse(this AppUser user, Learner? learner = null)
@@ -47,4 +47,5 @@ namespace App.DTOs.UserDTOs
             return response;
         }
     }
+    #endregion
 }

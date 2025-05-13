@@ -2,7 +2,6 @@
 using App.Core.Constants;
 using App.Core.Utils;
 using App.DTOs.AuthDTOs;
-using App.Repositories.Models;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -56,17 +55,13 @@ namespace App.Services.Services.User
         public async Task CreateRoleAsync(CreateRoleRequest model)
         {
             if (await _roleManager.RoleExistsAsync(model.RoleName))
-            {
                 throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Vai trò đã tồn tại!");
-            }
 
             var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName));
 
             if (!result.Succeeded)
-            {
                 throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest,
                     result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo vai trò");
-            }
         }
 
         public async Task RegisterAsync(RegisterRequest model)
@@ -250,9 +245,9 @@ namespace App.Services.Services.User
 
             string greeting = $"Chào {model.Email},";
             string mainMessage = $@"
-Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
-<br>Mã OTP của bạn là: <div class='otp-code'>{OTP}</div>
-<br>Vui lòng sử dụng mã này trong vòng 5 phút để đặt lại mật khẩu.";
+                Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
+                <br>Mã OTP của bạn là: <div class='otp-code'>{OTP}</div>
+                <br>Vui lòng sử dụng mã này trong vòng 5 phút để đặt lại mật khẩu.";
 
             await _emailService.SendEmailAsync(
                 model.Email,
@@ -294,7 +289,10 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
             AppUser? user = await _tokenService.FindUserByRefreshTokenAsync("Default", "RefreshToken", refreshTokenModel.RefreshToken);
 
             if (user == null)
-                throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "Refresh token không hợp lệ hoặc đã hết hạn.");
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized, 
+                    ErrorCode.Unauthorized, 
+                    "Refresh token không hợp lệ hoặc đã hết hạn.");
 
             var roles = await _userManager.GetRolesAsync(user);
             var roleName = roles.FirstOrDefault() ?? "User";
@@ -321,9 +319,7 @@ Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản của mình.
             AppUser? user = await _tokenService.FindUserByRefreshTokenAsync("Default", "RefreshToken", model.RefreshToken);
 
             if (user == null)
-            {
                 return;
-            }
 
             var result = await _userManager.RemoveAuthenticationTokenAsync(user, "Default", "RefreshToken");
 

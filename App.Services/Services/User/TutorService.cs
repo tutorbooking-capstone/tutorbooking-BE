@@ -10,41 +10,59 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
 using App.Repositories.Models.Papers;
+using Microsoft.Extensions.Logging;
+using App.Core.Provider;
 
 namespace App.Services.Services.User
 {
-    public class TutorService : ITutorService
+    public partial class TutorService : ITutorService
     {
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
-            IUserService userService)
+            IUserService userService,
+            ILogger<TutorService> logger)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _logger = logger;
         }
         #endregion
 
-        #region Private Helper
+        #region Private Helpers
         private async Task<AppUser> GetUserToCreateTutor(string userId)
         {
             var appUser = await _userService.GetCurrentUserAsync();
-
-            //Check is Tutor exist with userId
-            var tutorRepo = _unitOfWork.GetRepository<Tutor>();
-            var existingTutor = await tutorRepo.ExistEntities()
+            
+            // Check if tutor already exists
+            var existingTutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
                 .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (existingTutor != null)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
-                    "Người dùng này đã được đăng ký làm gia sư.");
+                    "Người dùng đã đăng ký làm gia sư");
 
             return appUser;
+        }
+
+        private async Task ProcessHashtags(string userId, List<string>? hashtagIds)
+        {
+            if (hashtagIds == null || !hashtagIds.Any()) return;
+
+            await UpdateTutorHashtagsAsync(
+                userId, 
+                new UpdateTutorHashtagListRequest 
+                { 
+                    HashtagIds = hashtagIds 
+                }
+            );
         }
 
         private async Task<Tutor> GetTutorByIdAsync(string tutorId, bool includeUser = false)
@@ -110,7 +128,6 @@ namespace App.Services.Services.User
             
             foreach (var requestedLang in requestedLanguages)
             {
-                // Handle updates for existing languages
                 if (existingLangMap.TryGetValue(requestedLang.LanguageCode, out var existingLang))
                 {
                     UpdateExistingLanguageIfNeeded(existingLang, requestedLang);
@@ -165,28 +182,39 @@ namespace App.Services.Services.User
             var userId = _userService.GetCurrentUserId();
             var appUser = await GetUserToCreateTutor(userId);
 
+            var updatedUserFields = appUser.UpdateBasicInformation(
+                request.FullName,
+                request.DateOfBirth,
+                request.Gender,
+                request.Timezone);
+
+            var newTutor = request.ToTutorProfile(appUser);
+
             return await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                appUser.UpdateBasicInformation(
-                    request.FullName,
-                    request.PhoneNumber);
+                if (updatedUserFields.Length > 0)
+                    _unitOfWork.GetRepository<AppUser>()
+                        .UpdateFields(appUser, updatedUserFields);
 
-                var newTutor = appUser.BecameTutor(userId);
                 _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
-                await _unitOfWork.SaveAsync();
 
-                var tutorApplication = TutorApplication.Create(newTutor.UserId);
+                await ProcessHashtags(userId, request.HashtagIds);
+
+                var tutorApplication = TutorApplication.Create(userId);
                 _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
-                await _unitOfWork.SaveAsync();
 
+                await _unitOfWork.SaveAsync();
                 await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
 
                 return newTutor.ToTutorResponse();
             }, 
             onError: ex => 
             {
-                // Custom error handling (e.g., logging)
-                Console.WriteLine($"Error during tutor registration: {ex.Message}");
+                _logger.LogError(ex, "Tutor registration failed for user {UserId}", userId);
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    "Tutor registration failed: " + ex.Message);
             });
         }
 

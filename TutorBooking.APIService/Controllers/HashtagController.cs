@@ -1,10 +1,14 @@
+using App.Core.Base;
+using App.DTOs.HashtagDTOs;
 using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class HashtagController : ControllerBase
     {
         #region DI Constructor
@@ -16,6 +20,7 @@ namespace TutorBooking.APIService.Controllers
         }
         #endregion
 
+        #region Seed Hashtags
         // [HttpPost("seed")]
         // public async Task<IActionResult> SeedHashtags()
         // {
@@ -29,6 +34,16 @@ namespace TutorBooking.APIService.Controllers
         //     var hashtags = _hashtagService.GetSeedHashtags();
         //     return Ok(new BaseResponseModel<List<Hashtag>>(hashtags));
         // }
+        #endregion
 
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllHashtags()
+        {
+            var hashtags = await _hashtagService.GetAllHashtagsAsync();
+            return Ok(new BaseResponseModel<List<HashtagResponse>>(
+                data: hashtags,
+                message: "Danh sách hashtag"
+            ));
+        }
     }
 }
