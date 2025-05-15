@@ -1,6 +1,8 @@
 using App.Core.Base;
+using App.DTOs.AppUserDTOs.LearnerDTOs;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.UserDTOs;
+using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -14,10 +16,14 @@ namespace TutorBooking.APIService.Controllers
     {
         #region DI Constructor
         private readonly IProfileService _profileService;
+        private readonly ILearnerService _learnerService;
 
-        public ProfileController(IProfileService profileService)
+        public ProfileController(
+            IProfileService profileService,
+            ILearnerService learnerService)
         {
             _profileService = profileService;
+            _learnerService = learnerService;
         }
         #endregion
 
@@ -40,7 +46,7 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPatch("")]
+        [HttpPatch("user")]
         public async Task<IActionResult> UpdateBasicInformation([FromBody] UpdateBasicInformationRequest request)
         {
             await _profileService.UpdateBasicInformationAsync(request);
@@ -49,7 +55,7 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpGet("")]
+        [HttpGet("user")]
         public async Task<IActionResult> GetUserProfile()
         {
             var profileData = await _profileService.GetUserProfileAsync();
@@ -66,6 +72,25 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<TutorRegistrationProfileResponse>(
                 data: profileData,
                 message: "Thông tin hồ sơ đăng ký gia sư."
+            ));
+        }
+
+        [HttpPatch("language")]
+        public async Task<IActionResult> UpdateLearningLanguage([FromBody] UpdateLearnerLanguageRequest request)
+        {
+            await _learnerService.UpdateLearningLanguageAsync(request);
+            return Ok(new BaseResponseModel<string>(
+                message: "Ngôn ngữ học tập đã được cập nhật thành công."
+            ));
+        }
+
+        [HttpGet("language")]
+        public async Task<IActionResult> GetLearningLanguage()
+        {
+            var (languageCode, proficiencyLevel) = await _learnerService.GetLearningLanguageAsync();
+            return Ok(new BaseResponseModel<object>(
+                data: new { LanguageCode = languageCode, ProficiencyLevel = proficiencyLevel },
+                message: "Thông tin ngôn ngữ học tập."
             ));
         }
     }

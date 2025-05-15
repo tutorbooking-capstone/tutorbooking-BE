@@ -257,32 +257,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "TutorBooking.APIService.Controllers.LearnerController",
-    "Method": "UpdateLearningLanguage",
-    "RelativePath": "api/learner/language",
-    "HttpMethod": "PATCH",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "App.DTOs.AppUserDTOs.LearnerDTOs.UpdateLearnerLanguageRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TutorBooking.APIService.Controllers.LearnerController",
-    "Method": "GetLearningLanguage",
-    "RelativePath": "api/learner/language",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "TutorBooking.APIService.Controllers.NgrokController",
     "Method": "GetTunnelInfos",
     "RelativePath": "api/ngrok/tunnel-infos",
@@ -320,32 +294,6 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
-    "Method": "UpdateBasicInformation",
-    "RelativePath": "api/profile",
-    "HttpMethod": "PATCH",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "request",
-        "Type": "App.DTOs.UserDTOs.UpdateBasicInformationRequest",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
-    "Method": "GetUserProfile",
-    "RelativePath": "api/profile",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "UploadProfileImage",
     "RelativePath": "api/profile/image",
     "HttpMethod": "POST",
@@ -372,8 +320,60 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateLearningLanguage",
+    "RelativePath": "api/profile/language",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.AppUserDTOs.LearnerDTOs.UpdateLearnerLanguageRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "GetLearningLanguage",
+    "RelativePath": "api/profile/language",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "GetTutorRegistrationProfile",
     "RelativePath": "api/profile/tutor-register-profile",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateBasicInformation",
+    "RelativePath": "api/profile/user-profile",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.UserDTOs.UpdateBasicInformationRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "GetUserProfile",
+    "RelativePath": "api/profile/user-profile",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

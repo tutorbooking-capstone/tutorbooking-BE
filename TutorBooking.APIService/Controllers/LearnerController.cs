@@ -20,23 +20,23 @@ namespace TutorBooking.APIService.Controllers
         }
         #endregion
 
-        [HttpPatch("language")]
-        public async Task<IActionResult> UpdateLearningLanguage([FromBody] UpdateLearnerLanguageRequest request)
-        {
-            await _learnerService.UpdateLearningLanguageAsync(request);
-            return Ok(new BaseResponseModel<string>(
-                message: "Ngôn ngữ học tập đã được cập nhật thành công."
-            ));
-        }
+        //[HttpPatch("language")]
+        //public async Task<IActionResult> UpdateLearningLanguage([FromBody] UpdateLearnerLanguageRequest request)
+        //{
+        //    await _learnerService.UpdateLearningLanguageAsync(request);
+        //    return Ok(new BaseResponseModel<string>(
+        //        message: "Ngôn ngữ học tập đã được cập nhật thành công."
+        //    ));
+        //}
 
-        [HttpGet("language")]
-        public async Task<IActionResult> GetLearningLanguage()
-        {
-            var (languageCode, proficiencyLevel) = await _learnerService.GetLearningLanguageAsync();
-            return Ok(new BaseResponseModel<object>(
-                data: new { LanguageCode = languageCode, ProficiencyLevel = proficiencyLevel },
-                message: "Thông tin ngôn ngữ học tập."
-            ));
-        }
+        //[HttpGet("language")]
+        //public async Task<IActionResult> GetLearningLanguage()
+        //{
+        //    var (languageCode, proficiencyLevel) = await _learnerService.GetLearningLanguageAsync();
+        //    return Ok(new BaseResponseModel<object>(
+        //        data: new { LanguageCode = languageCode, ProficiencyLevel = proficiencyLevel },
+        //        message: "Thông tin ngôn ngữ học tập."
+        //    ));
+        //}
     }
 }
