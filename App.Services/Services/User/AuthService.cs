@@ -177,37 +177,52 @@ namespace App.Services.Services.User
             var user = await _userManager.FindByNameAsync(model.Username);
 
             if (user == null || user.DeletedTime.HasValue)
+            {
+                _logger.LogWarning("Login attempt for non-existent or deleted user: {Username}", model.Username);
                 throw new ErrorException(
                     StatusCodes.Status401Unauthorized,
-                    ResponseCodeConstants.BADREQUEST,
-                    "Không tìm thấy tài khoản");
+                    ErrorCode.Unauthorized,
+                    "Tên đăng nhập hoặc mật khẩu không đúng.");
+            }
 
-            if (user.EmailConfirmed == false || user.PhoneNumberConfirmed == false)
+            if (user.EmailConfirmed == false)
+            {
+                _logger.LogWarning("Login attempt for unconfirmed email user: {Username}", model.Username);
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ResponseCodeConstants.BADREQUEST,
                     "Tài khoản chưa được xác thực!");
+            }
 
-            var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
-            var hashedInputPassword = passwordHasher.HashPassword(null, model.Password);
-
-            if (hashedInputPassword != user.PasswordHash)
+            if (string.IsNullOrEmpty(user.PasswordHash))
+            {
+                _logger.LogError("User {Username} has no password hash.", model.Username);
                 throw new ErrorException(
-                    StatusCodes.Status400BadRequest,
-                    ErrorCode.BadRequest,
-                    "Không tìm thấy tài khoản");
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCode.Unauthorized,
+                    "Tên đăng nhập hoặc mật khẩu không đúng.");
+            }
+
+            var passwordVerificationResult = _userManager.PasswordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
+            if (passwordVerificationResult == PasswordVerificationResult.Failed)
+            {
+                _logger.LogWarning("Failed login attempt (incorrect password) for user: {Username}", model.Username);
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCode.Unauthorized,
+                    "Tên đăng nhập hoặc mật khẩu không đúng.");
+            }
 
             var roles = await _userManager.GetRolesAsync(user);
-            var roleName = roles.FirstOrDefault() ?? "unknown";
-
-            var tokenResponse = await _tokenService.GenerateTokens(user, roleName);
+            var tokenResponse = await _tokenService.GenerateTokens(user, roles);
+            
             var loginResponse = new LoginResponse
             {
                 Token = tokenResponse,
-                Role = roleName,
+                Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
             };
 
-            return loginResponse;
+            return loginResponse; 
         }
 
         public async Task ForgotPasswordAsync(EmailModel model)
@@ -287,9 +302,8 @@ namespace App.Services.Services.User
                     "Refresh token không hợp lệ hoặc đã hết hạn.");
 
             var roles = await _userManager.GetRolesAsync(user);
-            var roleName = roles.FirstOrDefault() ?? "User";
 
-            var tokenResponse = await _tokenService.GenerateTokens(user, roleName);
+            var tokenResponse = await _tokenService.GenerateTokens(user, roles);
 
             return new ResponseAuthModel
             {

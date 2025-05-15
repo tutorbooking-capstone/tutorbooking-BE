@@ -5,7 +5,7 @@ namespace App.Services.Interfaces.User
 {
     public interface ITokenService
     {
-        Task<TokenResponse> GenerateTokens(AppUser user, string role);
+        Task<TokenResponse> GenerateTokens(AppUser user, IList<string> roles);
         Task<AppUser?> FindUserByRefreshTokenAsync(string provider, string tokenName, string tokenValue);
     }
 }

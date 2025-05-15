@@ -16,22 +16,22 @@ namespace App.Services.Services
             _unitOfWork = unitOfWork;
         }
         #endregion
-        
+
         #region Seed Hashtags
-        // public async Task SeedHashtagsAsync()
-        // {
-        //     var repo = _unitOfWork.GetRepository<Hashtag>();
-        //     var existingCount = await repo.ExistEntities().CountAsync();
-            
-        //     if (existingCount > 0) return;
+        public async Task SeedHashtagsAsync()
+        {
+            var repo = _unitOfWork.GetRepository<Hashtag>();
+            var existingCount = await repo.ExistEntities().CountAsync();
 
-        //     var hashtags = HashtagSeeder.SeedHashtags();
-        //     repo.InsertRange(hashtags);
-        //     await _unitOfWork.SaveAsync();
-        // }
+            if (existingCount > 0) return;
 
-        // public List<Hashtag> GetSeedHashtags()
-        //     => HashtagSeeder.SeedHashtags();
+            var hashtags = HashtagSeeder.SeedHashtags();
+            repo.InsertRange(hashtags);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public List<Hashtag> GetSeedHashtags()
+            => HashtagSeeder.SeedHashtags();
         #endregion
 
         public async Task<List<HashtagResponse>> GetAllHashtagsAsync()

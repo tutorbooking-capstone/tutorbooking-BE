@@ -237,6 +237,26 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
+    "Method": "GetSeededHashtags",
+    "RelativePath": "api/hashtag/get-seed",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
+    "Method": "SeedHashtags",
+    "RelativePath": "api/hashtag/seed",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TutorBooking.APIService.Controllers.LearnerController",
     "Method": "UpdateLearningLanguage",
     "RelativePath": "api/learner/language",

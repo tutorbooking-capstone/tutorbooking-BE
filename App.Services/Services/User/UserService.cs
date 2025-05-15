@@ -128,8 +128,9 @@ namespace App.Services.Services.User
         {
             var user = await GetUserByIdAsync(userId);
             
-            if (await _userManager.IsInRoleAsync(user, roleName))
-                return;
+            // BAD PERFORMANCE!!!
+            // if (await _userManager.IsInRoleAsync(user, roleName))
+            //     return;
         
             var result = await _userManager.AddToRoleAsync(user, roleName);
             if (!result.Succeeded)
@@ -143,8 +144,9 @@ namespace App.Services.Services.User
         {
             var user = await GetUserByIdAsync(userId);
             
-            if (!await _userManager.IsInRoleAsync(user, roleName))
-                return;
+            // BAD PERFORMANCE!!!
+            // if (!await _userManager.IsInRoleAsync(user, roleName))
+            //     return;
         
             var result = await _userManager.RemoveFromRoleAsync(user, roleName);
             if (!result.Succeeded)

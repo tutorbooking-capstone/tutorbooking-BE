@@ -1,5 +1,4 @@
 using App.Core.Base;
-using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
@@ -164,5 +163,7 @@ namespace App.Services.Services.User
             
             return user.ToTutorRegistrationProfileResponse();
         }
+
+
     }
 }
