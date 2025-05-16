@@ -49,5 +49,12 @@ namespace App.Core.Utils
             var hex = BitConverter.ToString(hashBytes).Replace("-", "");
             return hex.Substring(0, Math.Min(14, hex.Length));
         }
+
+        public static string SeedGuid<T>()
+        {
+            var typeName = typeof(T).Name;
+            var halfGuid = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16);
+            return $"[Seed][{typeName}][{halfGuid}]";
+        }
     }
 }

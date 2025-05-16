@@ -361,7 +361,20 @@ namespace App.Services.Services.User
             var patterns = await _scheduleService.GetTutorAvailabilityPatternsAsync(id);
             var bookings = await _scheduleService.GetTutorBookingSlotsAsync(id);
 
-            return tutor.ToDetailedTutorResponse(patterns, bookings);
+            // Get tutor hashtags
+            var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>()
+                .ExistEntities()
+                .Where(th => th.TutorId == id)
+                .Include(th => th.Hashtag)
+                .ToListAsync();
+
+            // Get tutor languages
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tl.TutorId == id)
+                .ToListAsync();
+
+            return tutor.ToDetailedTutorResponse(patterns, bookings, tutorHashtags, tutorLanguages);
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)

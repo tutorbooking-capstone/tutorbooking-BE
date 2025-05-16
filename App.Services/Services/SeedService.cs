@@ -68,16 +68,16 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     $"Tutor with ID {tutorId} not found.");
 
-            // Create weekly pattern starting from today
+            // Create weekly pattern starting from today (using UTC)
             var pattern = new WeeklyAvailabilityPattern
             {
                 TutorId = tutorId,
-                AppliedFrom = DateTime.Today,
+                AppliedFrom = DateTime.UtcNow.Date, // Use UTC date
                 Slots = new List<AvailabilitySlot>()
             };
 
-            // Generate a seed ID for the pattern
-            pattern.Id = pattern.SeedId(x => $"{x.TutorId}_{x.AppliedFrom:yyyyMMdd}");
+            // Generate a seed ID using the new SeedGuid method
+            pattern.Id = HSeed.SeedGuid<WeeklyAvailabilityPattern>();
 
             // Generate availability slots for the pattern
             // For example, available on weekdays from 18:00 to 21:00 (slots 36-42)
@@ -95,8 +95,8 @@ namespace App.Services.Services
                         WeeklyPatternId = pattern.Id
                     };
                     
-                    // Generate seed ID for the slot
-                    availSlot.Id = availSlot.SeedId(x => $"{pattern.Id}_{(int)x.DayInWeek}_{x.SlotIndex}");
+                    // Generate seed ID for the slot using the new SeedGuid method
+                    availSlot.Id = HSeed.SeedGuid<AvailabilitySlot>();
                     slots.Add(availSlot);
                 }
             }
@@ -114,7 +114,7 @@ namespace App.Services.Services
                         WeeklyPatternId = pattern.Id
                     };
                     
-                    availSlot.Id = availSlot.SeedId(x => $"{pattern.Id}_{(int)x.DayInWeek}_{x.SlotIndex}");
+                    availSlot.Id = HSeed.SeedGuid<AvailabilitySlot>();
                     slots.Add(availSlot);
                 }
             }
@@ -136,7 +136,7 @@ namespace App.Services.Services
             }
         }
 
-        public async Task<List<BookingSlot>> SeedTutorBookingsAsync(string tutorId, int count = 3)
+        public async Task<List<BookingSlot>> SeedTutorBookingsAsync(string tutorId, List<string> learnerIds = null, int count = 3)
         {
             // Check if tutor exists
             var tutorExists = await _unitOfWork.GetRepository<Tutor>()
@@ -148,6 +148,21 @@ namespace App.Services.Services
                     StatusCodes.Status404NotFound,
                     ErrorCode.NotFound,
                     $"Tutor with ID {tutorId} not found.");
+
+            // Validate learner IDs if provided
+            if (learnerIds != null && learnerIds.Any())
+            {
+                var validLearnerCount = await _unitOfWork.GetRepository<Learner>()
+                    .ExistEntities()
+                    .Where(l => learnerIds.Contains(l.UserId))
+                    .CountAsync();
+
+                if (validLearnerCount != learnerIds.Count)
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        "One or more provided Learner IDs are invalid.");
+            }
 
             // Get existing weekly pattern to link the booked slots
             var pattern = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
@@ -172,6 +187,11 @@ namespace App.Services.Services
                 .GroupBy(s => s.DayInWeek)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
+            // Use provided learner IDs or null if not provided
+            var learnerIdQueue = learnerIds != null && learnerIds.Any() 
+                ? new Queue<string>(learnerIds) 
+                : null;
+
             // Create booking slots
             for (int i = 0; i < count && availableSlots.Any(); i++)
             {
@@ -187,36 +207,42 @@ namespace App.Services.Services
                 var slotCount = Math.Min(random.Next(1, 4), slotsForDay.Count - startIndex);
                 var slotsToBook = slotsForDay.Skip(startIndex).Take(slotCount).ToList();
                 
-                // Create mock learnerId
-                string learnerId = $"learner_{Guid.NewGuid().ToString().Substring(0, 8)}";
+                // Get a learner ID from the queue, cycling through them if needed
+                string learnerId = null;
+                if (learnerIdQueue != null && learnerIdQueue.Any())
+                {
+                    if (learnerIdQueue.Count == 0)
+                    {
+                        // Refill the queue if we've used all IDs but need more
+                        foreach (var id in learnerIds)
+                            learnerIdQueue.Enqueue(id);
+                    }
+                    learnerId = learnerIdQueue.Dequeue();
+                }
 
-                // Calculate start date (next occurrence of the day of week)
-                var today = DateTime.Today;
-                int daysToAdd = ((int)randomDay - (int)today.DayOfWeek + 7) % 7;
+                // Calculate start date (next occurrence of the day of week) in UTC
+                var todayUtc = DateTime.UtcNow.Date;
+                int daysToAdd = ((int)randomDay - (int)todayUtc.DayOfWeek + 7) % 7;
                 if (daysToAdd == 0) daysToAdd = 7; // Next week if today is the same day
-                var startDate = today.AddDays(daysToAdd);
+                var startDate = todayUtc.AddDays(daysToAdd);
 
                 // Create booking
                 var booking = new BookingSlot
                 {
                     TutorId = tutorId,
-                    LearnerId = learnerId,
+                    LearnerId = learnerId, // Use real learnerId or null
                     Note = $"Seed booking #{i+1}",
-                    StartDate = startDate,
+                    StartDate = startDate, // UTC date
                     RepeatForWeeks = random.Next(0, 4) // 0-3 weeks repeat
                 };
 
-                // Generate seed ID
-                booking.Id = booking.SeedId(x => $"{x.TutorId}_{x.StartDate:yyyyMMdd}_{i}");
-
-                // Update availability slots to point to this booking
-                foreach (var slot in slotsToBook)
-                {
-                    slot.Type = SlotType.Booked;
-                    slot.BookingSlotId = booking.Id;
-                }
+                // Generate seed ID using the new SeedGuid method
+                booking.Id = HSeed.SeedGuid<BookingSlot>();
 
                 bookingSlots.Add(booking);
+                
+                // Store which slots to update for this booking
+                booking.Slots = slotsToBook;
                 
                 // Remove used slots from available slots
                 availableSlots[randomDay] = slotsForDay.Except(slotsToBook).ToList();
@@ -226,12 +252,24 @@ namespace App.Services.Services
 
             try
             {
-                // Update availability slots
-                await _unitOfWork.SaveAsync();
-
-                // Insert bookings
+                // First insert the booking slots without saving yet
                 _unitOfWork.GetRepository<BookingSlot>().InsertRange(bookingSlots);
-                await _unitOfWork.SaveAsync();
+                
+                // IMPORTANT: Execute in a single transaction to maintain referential integrity
+                await _unitOfWork.ExecuteInTransactionAsync(async () => {
+                    // Now update the availability slots to point to the booking slots
+                    foreach (var booking in bookingSlots)
+                    {
+                        foreach (var slot in booking.Slots)
+                        {
+                            slot.Type = SlotType.Booked;
+                            slot.BookingSlotId = booking.Id;
+                        }
+                    }
+                    
+                    await _unitOfWork.SaveAsync();
+                    return bookingSlots;
+                });
                 
                 return bookingSlots;
             }

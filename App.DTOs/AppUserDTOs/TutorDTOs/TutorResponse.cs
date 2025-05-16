@@ -1,4 +1,5 @@
-﻿using App.Repositories.Models.User;
+﻿using App.Repositories.Models;
+using App.Repositories.Models.User;
 using App.Repositories.Models.Scheduling;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs
@@ -18,7 +19,19 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         // Scheduling information
         public List<WeeklyAvailabilityDTO> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityDTO>();
         public List<BookingSlotDTO> BookingSlots { get; set; } = new List<BookingSlotDTO>();
+        
+        // Hashtags and Languages
+        public List<HashtagDTO> Hashtags { get; set; } = new List<HashtagDTO>();
+        public List<TutorLanguageDTO> Languages { get; set; } = new List<TutorLanguageDTO>();
     }
+
+    public class HashtagDTO
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
 
     public class WeeklyAvailabilityDTO
     {
@@ -68,7 +81,9 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public static TutorResponse ToDetailedTutorResponse(
             this Tutor tutor, 
             ICollection<WeeklyAvailabilityPattern>? patterns = null,
-            ICollection<BookingSlot>? bookings = null)
+            ICollection<BookingSlot>? bookings = null,
+            ICollection<TutorHashtag>? tutorHashtags = null,
+            ICollection<TutorLanguage>? tutorLanguages = null)
         {
             var response = tutor.ToTutorResponse();
 
@@ -99,6 +114,28 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                     StartDate = b.StartDate,
                     RepeatForWeeks = b.RepeatForWeeks,
                     AssociatedSlotIds = b.Slots?.Select(s => s.Id).ToList() ?? new List<string>()
+                }).ToList();
+            }
+
+            if (tutorHashtags != null)
+            {
+                response.Hashtags = tutorHashtags
+                    .Where(th => th.Hashtag != null)
+                    .Select(th => new HashtagDTO
+                    {
+                        Id = th.HashtagId,
+                        Name = th.Hashtag?.Name ?? string.Empty,
+                        Description = th.Hashtag?.Description ?? string.Empty
+                    }).ToList();
+            }
+
+            if (tutorLanguages != null)
+            {
+                response.Languages = tutorLanguages.Select(tl => new TutorLanguageDTO
+                {
+                    LanguageCode = tl.LanguageCode,
+                    IsPrimary = tl.IsPrimary,
+                    Proficiency = tl.Proficiency
                 }).ToList();
             }
 

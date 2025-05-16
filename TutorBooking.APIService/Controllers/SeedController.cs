@@ -1,12 +1,14 @@
 using App.Core.Base;
 using App.Repositories.Models;
 using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [AllowAnonymous]
     public class SeedController : ControllerBase
     {
         #region DI Constructor
@@ -41,9 +43,10 @@ namespace TutorBooking.APIService.Controllers
         [HttpPost("tutor/bookings/{tutorId}")]
         public async Task<IActionResult> SeedTutorBookings(
             string tutorId, 
+            [FromBody] List<string> learnerIds,
             [FromQuery] int count = 3)
         {
-            var bookings = await _seedService.SeedTutorBookingsAsync(tutorId, count);
+            var bookings = await _seedService.SeedTutorBookingsAsync(tutorId, learnerIds, count);
             return Ok(new BaseResponseModel<int>(
                 data: bookings.Count, 
                 message: $"Seed {bookings.Count} lịch đặt cho gia sư {tutorId} thành công!"

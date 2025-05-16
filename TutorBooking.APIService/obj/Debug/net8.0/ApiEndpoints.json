@@ -237,26 +237,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
-    "Method": "GetSeededHashtags",
-    "RelativePath": "api/hashtag/get-seed",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "TutorBooking.APIService.Controllers.HashtagController",
-    "Method": "SeedHashtags",
-    "RelativePath": "api/hashtag/seed",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "TutorBooking.APIService.Controllers.NgrokController",
     "Method": "GetTunnelInfos",
     "RelativePath": "api/ngrok/tunnel-infos",
@@ -417,6 +397,11 @@
       {
         "Name": "tutorId",
         "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "learnerIds",
+        "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": true
       },
       {

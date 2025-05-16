@@ -9,6 +9,6 @@ namespace App.Services.Interfaces
         
         // New seed methods
         Task<WeeklyAvailabilityPattern> SeedTutorAvailabilityAsync(string tutorId);
-        Task<List<BookingSlot>> SeedTutorBookingsAsync(string tutorId, int count = 3);
+        Task<List<BookingSlot>> SeedTutorBookingsAsync(string tutorId, List<string> learnerIds = null, int count = 3);
     }
 }
