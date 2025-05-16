@@ -56,7 +56,7 @@ namespace App.Services.Services.User
                 await _unitOfWork.SaveAsync();
             }
 
-            return new ProfileImageResponseDTO { ProfilePictureUrl = newUrl };
+            return new ProfileImageResponseDTO { ProfileImageUrl = newUrl };
         }
 
         public async Task DeleteProfileImageAsync()

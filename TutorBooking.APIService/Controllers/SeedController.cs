@@ -28,6 +28,26 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpPost("tutor/availability/{tutorId}")]
+        public async Task<IActionResult> SeedTutorAvailability(string tutorId)
+        {
+            var pattern = await _seedService.SeedTutorAvailabilityAsync(tutorId);
+            return Ok(new BaseResponseModel<string>(
+                data: pattern.Id, 
+                message: $"Seed lịch sẵn có cho gia sư {tutorId} thành công!"
+            ));
+        }
 
+        [HttpPost("tutor/bookings/{tutorId}")]
+        public async Task<IActionResult> SeedTutorBookings(
+            string tutorId, 
+            [FromQuery] int count = 3)
+        {
+            var bookings = await _seedService.SeedTutorBookingsAsync(tutorId, count);
+            return Ok(new BaseResponseModel<int>(
+                data: bookings.Count, 
+                message: $"Seed {bookings.Count} lịch đặt cho gia sư {tutorId} thành công!"
+            ));
+        }
     }
 }

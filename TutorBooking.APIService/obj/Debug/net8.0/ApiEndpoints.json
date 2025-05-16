@@ -391,6 +391,43 @@
     "ReturnTypes": []
   },
   {
+    "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
+    "Method": "SeedTutorAvailability",
+    "RelativePath": "api/seed/tutor/availability/{tutorId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "tutorId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
+    "Method": "SeedTutorBookings",
+    "RelativePath": "api/seed/tutor/bookings/{tutorId}",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "tutorId",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "count",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "GetById",
     "RelativePath": "api/tutor/{id}",

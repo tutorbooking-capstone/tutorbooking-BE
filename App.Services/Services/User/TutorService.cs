@@ -5,12 +5,14 @@ using App.DTOs.HashtagDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
 using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
+using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services.User
 {
@@ -19,15 +21,18 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly IScheduleService _scheduleService;
         private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
             IUserService userService,
+            IScheduleService scheduleService,
             ILogger<TutorService> logger)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _scheduleService = scheduleService;
             _logger = logger;
         }
         #endregion
@@ -234,16 +239,20 @@ namespace App.Services.Services.User
 
                 // Get top 6 tutors by "rating"
                 var topTutors = languageTutorsWithProficiency
-                    .Select(x => new {
-                        x.Tutor,
-                        MockRating = GetMockRating(x.Tutor, x.Proficiency)
+                    .Select(x => {
+                        var mockRating = GetMockRating(x.Tutor, x.Proficiency);
+                        return new {
+                            x.Tutor,
+                            MockRating = mockRating
+                        };
                     })
                     .OrderByDescending(x => x.MockRating)
                     .Take(6)
                     .Select(x => x.Tutor.ToTutorCardDTO(
                         tutorLanguagesMap.TryGetValue(x.Tutor.UserId, out var languages)
                             ? languages
-                            : new List<TutorLanguage>()
+                            : new List<TutorLanguage>(),
+                        x.MockRating
                     ))
                     .ToList();
 
@@ -274,7 +283,8 @@ namespace App.Services.Services.User
             // Add bonus for language proficiency
             double proficiencyBonus = languageProficiency / 14.0; // Max 0.5 for proficiency 7
             
-            return Math.Min(5.0, baseRating + verificationBonus + proficiencyBonus);
+            double finalRating = Math.Min(5.0, baseRating + verificationBonus + proficiencyBonus);
+            return Math.Round(finalRating, 2);
         }
         #endregion
 
@@ -336,8 +346,22 @@ namespace App.Services.Services.User
 
         public async Task<TutorResponse> GetByIdAsync(string id)
         {
-            var tutor = await GetTutorByIdAsync(id, includeUser: true);
-            return tutor.ToTutorResponse();
+            var tutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.UserId == id.Trim());
+
+            if (tutor == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    $"Tutor with ID {id} not found.");
+
+            // Get availability patterns and booking slots using ScheduleService
+            var patterns = await _scheduleService.GetTutorAvailabilityPatternsAsync(id);
+            var bookings = await _scheduleService.GetTutorBookingSlotsAsync(id);
+
+            return tutor.ToDetailedTutorResponse(patterns, bookings);
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)

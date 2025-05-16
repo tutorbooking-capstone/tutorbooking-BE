@@ -31,6 +31,7 @@ namespace App.Services
 
             #region Another Services
             services.AddScoped<ISeedService, SeedService>();
+            services.AddScoped<IScheduleService, ScheduleService>();
 
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();

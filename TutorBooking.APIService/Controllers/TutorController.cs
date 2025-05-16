@@ -54,11 +54,13 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(string id)
         {
             var tutor = await _tutorService.GetByIdAsync(id);
             return Ok(new BaseResponseModel<TutorResponse>(
-                data: tutor
+                data: tutor,
+                message: "Thông tin chi tiết của gia sư"
             ));
         }
 

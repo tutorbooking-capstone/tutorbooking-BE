@@ -6,10 +6,11 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
     public class TutorCardDTO
     {
         public string TutorId { get; set; } = string.Empty;
-        public string ProfilePictureUrl { get; set; } = string.Empty;
+        public string ProfileImageUrl { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string NickName { get; set; } = string.Empty;
         public bool IsProfessional { get; set; }
+        public double Rating { get; set; }
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
     }
 
@@ -25,15 +26,17 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
     {
         public static TutorCardDTO ToTutorCardDTO(
             this Tutor tutor,
-            List<TutorLanguage> languages)
+            List<TutorLanguage> languages,
+            double rating = 0.0)
         {
             return new TutorCardDTO
             {
                 TutorId = tutor.UserId,
-                ProfilePictureUrl = tutor.User?.ProfilePictureUrl ?? string.Empty,
+                ProfileImageUrl = tutor.User?.ProfilePictureUrl ?? string.Empty,
                 FullName = tutor.User?.FullName ?? string.Empty,
                 NickName = tutor.NickName,
                 IsProfessional = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy,
+                Rating = rating,
                 Languages = languages
                     .OrderByDescending(l => l.IsPrimary)
                     .ThenByDescending(l => l.Proficiency)

@@ -1,5 +1,4 @@
 ﻿using App.Core.Base;
-using System;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
