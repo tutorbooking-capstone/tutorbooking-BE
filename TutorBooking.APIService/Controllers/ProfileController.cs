@@ -90,7 +90,8 @@ namespace TutorBooking.APIService.Controllers
             var (languageCode, proficiencyLevel) = await _learnerService.GetLearningLanguageAsync();
             return Ok(new BaseResponseModel<object>(
                 data: new { LanguageCode = languageCode, ProficiencyLevel = proficiencyLevel },
-                message: "Thông tin ngôn ngữ học tập."
+                message: "Thông tin ngôn ngữ học tập.",
+                additionalData: "For Dev only: Dùng mã ISO, kham khảo tại: https://www.w3schools.com/tags/ref_language_codes.asp"
             ));
         }
     }

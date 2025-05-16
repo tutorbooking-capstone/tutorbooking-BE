@@ -80,6 +80,10 @@
             "MiniProfiler.EntityFrameworkCore": {
               "target": "Package",
               "version": "[4.5.4, )"
+            },
+            "StackifyMiddleware": {
+              "target": "Package",
+              "version": "[3.3.3.4767, )"
             }
           },
           "imports": [

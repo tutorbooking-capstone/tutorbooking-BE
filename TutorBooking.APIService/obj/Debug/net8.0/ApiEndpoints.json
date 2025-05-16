@@ -357,7 +357,7 @@
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "UpdateBasicInformation",
-    "RelativePath": "api/profile/user-profile",
+    "RelativePath": "api/profile/user",
     "HttpMethod": "PATCH",
     "IsController": true,
     "Order": 0,
@@ -373,7 +373,7 @@
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "GetUserProfile",
-    "RelativePath": "api/profile/user-profile",
+    "RelativePath": "api/profile/user",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
@@ -467,6 +467,16 @@
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "GetTutorLanguages",
     "RelativePath": "api/tutor/languages",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
+    "Method": "GetTutorCardList",
+    "RelativePath": "api/tutor/list-card",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,

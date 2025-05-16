@@ -174,6 +174,108 @@ namespace App.Services.Services.User
             if (hashtagsToAdd.Any())
                 tutorHashtagRepo.InsertRange(hashtagsToAdd);
         }
+
+        public async Task<Dictionary<string, List<TutorCardDTO>>> GetTopTutorsByLanguagesAsync()
+        {
+            // Step 1: First get top 7 languages in a single query - push computation to database
+            var popularLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .GroupBy(tl => tl.LanguageCode)
+                .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(7)
+                .Select(x => x.LanguageCode)
+                .ToListAsync();
+
+            // Step 2: Get only tutors that teach these popular languages (with appropriate verification status)
+            var relevantTutors = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Where(t => t.VerificationStatus != VerificationStatus.Basic)
+                .Include(t => t.User)
+                .Where(t => _unitOfWork.GetRepository<TutorLanguage>()
+                    .ExistEntities()
+                    .Any(tl => tl.TutorId == t.UserId && popularLanguages.Contains(tl.LanguageCode)))
+                .ToListAsync();
+
+            var tutorIds = relevantTutors.Select(t => t.UserId).ToList();
+            
+            // Step 3: Get languages only for these tutors and only for popular languages
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tutorIds.Contains(tl.TutorId))
+                .ToListAsync();
+
+            // Build maps once to avoid redundant processing
+            var tutorMap = relevantTutors.ToDictionary(t => t.UserId);
+            var tutorLanguagesMap = tutorLanguages
+                .GroupBy(tl => tl.TutorId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new Dictionary<string, List<TutorCardDTO>>();
+
+            // Process each language in parallel to improve performance
+            Parallel.ForEach(popularLanguages, languageCode =>
+            {
+                var tutorIdsForLanguage = tutorLanguages
+                    .Where(tl => tl.LanguageCode == languageCode)
+                    .Select(tl => tl.TutorId)
+                    .ToList();
+
+                // Get tutors with proficiency info for the current language
+                var languageTutorsWithProficiency = tutorIdsForLanguage
+                    .Select(id => new {
+                        Tutor = tutorMap[id],
+                        Proficiency = tutorLanguages
+                            .Where(tl => tl.TutorId == id && tl.LanguageCode == languageCode)
+                            .Select(tl => tl.Proficiency)
+                            .FirstOrDefault()
+                    })
+                    .ToList();
+
+                // Get top 6 tutors by "rating"
+                var topTutors = languageTutorsWithProficiency
+                    .Select(x => new {
+                        x.Tutor,
+                        MockRating = GetMockRating(x.Tutor, x.Proficiency)
+                    })
+                    .OrderByDescending(x => x.MockRating)
+                    .Take(6)
+                    .Select(x => x.Tutor.ToTutorCardDTO(
+                        tutorLanguagesMap.TryGetValue(x.Tutor.UserId, out var languages)
+                            ? languages
+                            : new List<TutorLanguage>()
+                    ))
+                    .ToList();
+
+                lock(result)
+                {
+                    result[languageCode] = topTutors;
+                }
+            });
+
+            return result;
+        }
+
+        // Remove this method when actual rating system is implemented
+        private double GetMockRating(Tutor tutor, int languageProficiency)
+        {
+            // Mock rating formula:
+            // - Base rating from 3.5 to 4.5
+            // - Add bonus from verification status (0.0 to 0.5)
+            // - Add bonus from language proficiency (0.0 to 0.5)
+            
+            // Generate a stable pseudo-random value based on tutor ID
+            var random = new Random(tutor.UserId.GetHashCode());
+            double baseRating = 3.5 + random.NextDouble();
+            
+            // Add bonus for verification status
+            double verificationBonus = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy ? 0.5 : 0.0;
+            
+            // Add bonus for language proficiency
+            double proficiencyBonus = languageProficiency / 14.0; // Max 0.5 for proficiency 7
+            
+            return Math.Min(5.0, baseRating + verificationBonus + proficiencyBonus);
+        }
         #endregion
 
         public async Task<TutorResponse> RegisterAsTutorAsync(TutorRegistrationRequest request)
@@ -293,6 +395,18 @@ namespace App.Services.Services.User
                 .ToListAsync();
 
             return tutorLanguages.ToDTOs();
+        }
+
+        public async Task<List<TutorCardDTO>> GetTutorCardListAsync()
+        {
+            var tutorsByLanguage = await GetTopTutorsByLanguagesAsync();
+            
+            // Use LINQ for better performance and readability
+            return tutorsByLanguage.Values
+                .SelectMany(tutors => tutors)
+                .GroupBy(t => t.TutorId)
+                .Select(g => g.First())
+                .ToList();
         }
     }
 }

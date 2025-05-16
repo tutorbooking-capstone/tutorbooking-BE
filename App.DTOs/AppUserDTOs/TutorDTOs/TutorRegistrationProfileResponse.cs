@@ -11,6 +11,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string Timezone { get; set; } = "UTC+7";
     }
 
+    #region Mapping
     public static class TutorRegistrationProfileResponseExtensions
     {
         public static TutorRegistrationProfileResponse ToTutorRegistrationProfileResponse(this AppUser user)
@@ -25,4 +26,5 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             };
         }
     }
+    #endregion
 }

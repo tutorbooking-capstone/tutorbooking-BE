@@ -104,5 +104,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách ngôn ngữ của gia sư."
             ));
         }
+
+        [HttpGet("list-card")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTutorCardList()
+        {
+            var tutorCards = await _tutorService.GetTutorCardListAsync();
+            return Ok(new BaseResponseModel<List<TutorCardDTO>>(
+                data: tutorCards,
+                message: "Danh sách gia sư."
+            ));
+        }
     }
 }

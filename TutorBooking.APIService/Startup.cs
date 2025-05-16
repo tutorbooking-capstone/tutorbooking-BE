@@ -65,6 +65,7 @@ namespace TutorBooking.APIService
                 {
                     if (context.Request.Path == "/")
                     {
+
                         context.Response.Redirect("/profiler/results");
                         return;
                     }
