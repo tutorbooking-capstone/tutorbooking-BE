@@ -21,6 +21,7 @@ namespace TutorBooking.APIService
             services.AddAuthenJwt(configuration);
             services.ConfigSwagger();
             services.ConfigureValidation();
+			services.ConfigureSignalR();
 
             return services;
         }
@@ -164,6 +165,19 @@ namespace TutorBooking.APIService
 
             return services;
         }
+
+		public static IServiceCollection ConfigureSignalR(this IServiceCollection services)
+		{
+			// Add SignalR with optional configuration
+			services.AddSignalR(options =>
+			{
+				options.EnableDetailedErrors = true;
+				options.MaximumReceiveMessageSize = 102400; // 100 KB
+				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+			});
+			return services;
+		}
         #endregion
     }
 }

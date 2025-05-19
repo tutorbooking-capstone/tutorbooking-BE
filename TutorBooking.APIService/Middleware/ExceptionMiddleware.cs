@@ -29,28 +29,28 @@ namespace TutorBooking.APIService.Middleware
             }
             catch (InvalidArgumentException ex)
             {
-                _logger.LogWarning("Invalid argument: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
+                _logger.LogWarning("Invalid argument: {ErrorCode}, {TextMessage}", ex.ErrorDetail.ErrorCode, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
             catch (AlreadySeededException ex)
             {
-                _logger.LogWarning("Already seeded: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
+                _logger.LogWarning("Already seeded: {ErrorCode}, {TextMessage}", ex.ErrorDetail.ErrorCode, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
             catch (ErrorException ex)
             {
-                _logger.LogError(ex, "Error: {ErrorCode}, {Message}", ex.ErrorDetail.ErrorCode, ex.Message);
+                _logger.LogError(ex, "Error: {ErrorCode}, {TextMessage}", ex.ErrorDetail.ErrorCode, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(ex.ErrorDetail));
             }
             catch (CoreException ex)
             {
-                _logger.LogError(ex, "Core error: {Code}, {Message}", ex.Code, ex.Message);
+                _logger.LogError(ex, "Core error: {Code}, {TextMessage}", ex.Code, ex.Message);
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(new 
@@ -63,7 +63,7 @@ namespace TutorBooking.APIService.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error: {Message}", ex.Message);
+                _logger.LogError(ex, "Unexpected error: {TextMessage}", ex.Message);
                 context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(JsonSerializer.Serialize(new 

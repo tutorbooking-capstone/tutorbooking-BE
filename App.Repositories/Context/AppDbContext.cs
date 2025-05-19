@@ -1,7 +1,9 @@
 using App.Repositories.Models;
+using App.Repositories.Models.Chat;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace App.Repositories.Context
 {
@@ -25,6 +27,9 @@ namespace App.Repositories.Context
 
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentFileUpload> DocumentFileUploads { get; set; }
+		
+		public DbSet<ChatMessage> ChatMessages { get; set; }
+		public DbSet<ChatConversation> ChatConversations { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -146,8 +151,69 @@ namespace App.Repositories.Context
                 .HasOne(dfu => dfu.FileUpload)
                 .WithMany()
                 .HasForeignKey(dfu => dfu.FileUploadId)
-                .OnDelete(DeleteBehavior.Restrict); 
-            #endregion
-        }
-    }
+                .OnDelete(DeleteBehavior.Restrict);
+			#endregion
+
+			#region Chat Configuration
+			modelBuilder.Entity<ChatMessage>(builder =>
+			{
+				//e.HasOne(m => m.ChatParticipant)
+				// .WithMany(m => m.ChatMessages)
+				// .HasForeignKey(m => m.ChatParticipantId)
+				// .OnDelete(DeleteBehavior.SetNull);
+
+				//e.HasMany(m => m.FileUploads)
+				// .WithOne()
+				// .HasForeignKey(m => m.Id)
+				// .OnDelete(DeleteBehavior.Cascade);
+
+				//e.HasOne(m => m.ChatConversation)
+				// .WithMany(m => m.ChatMessages)
+				// .HasForeignKey(m => m.ChatConversationId)
+				// .OnDelete(DeleteBehavior.SetNull);
+
+				builder.HasKey(m => m.Id);
+
+				builder.Property(m => m.AppUserId)
+					   .IsRequired();
+
+				builder.Property(m => m.ChatConversationId)
+					   .IsRequired();
+
+				builder.Property(m => m.TextMessage)
+					   .IsRequired(false);
+
+				builder.HasOne(m => m.AppUser)
+					   .WithMany()  // No explicit navigation property on AppUser for messages
+					   .HasForeignKey(m => m.AppUserId)
+					   .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
+
+				// Relationship with ChatConversation
+				builder.HasOne(m => m.ChatConversation)
+					   .WithMany(c => c.ChatMessages)
+					   .HasForeignKey(m => m.ChatConversationId)
+					   .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
+			});
+
+			modelBuilder.Entity<ChatConversation>(builder =>
+			{
+				//e.HasMany(c => c.ChatMessages)
+				// .WithOne()
+				// .HasForeignKey(m => m.ChatConversationId)
+				// .OnDelete(DeleteBehavior.Cascade);
+
+				//e.HasMany(c => c.ChatParticipants)
+				// .WithOne()
+				// .HasForeignKey(p => p.ChatConversationId)
+				// .OnDelete(DeleteBehavior.Cascade);
+
+				builder.HasKey(c => c.Id);
+
+				builder.HasMany(c => c.AppUsers)
+					   .WithMany()  // No explicit navigation property on AppUser for conversations
+					   .UsingEntity(j => j.ToTable("UserConversations")); // Configure join table name
+			});
+			#endregion
+		}
+	}
 }
