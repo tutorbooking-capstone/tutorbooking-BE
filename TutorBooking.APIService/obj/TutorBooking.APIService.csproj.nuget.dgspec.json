@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj": {}
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj": {}
   },
   "projects": {
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj",
+        "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj",
         "projectName": "App.Core",
-        "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\obj\\",
+        "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj",
+        "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+        "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Apps\\Visual Studio shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,6 +26,7 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "c:\\program files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -43,7 +44,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -102,24 +104,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj",
+        "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj",
         "projectName": "App.DTOs",
-        "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\obj\\",
+        "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj",
+        "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+        "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Apps\\Visual Studio shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -128,14 +130,15 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "c:\\program files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj"
               }
             }
           }
@@ -149,7 +152,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -170,24 +174,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
+        "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
         "projectName": "App.Repositories",
-        "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\obj\\",
+        "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
+        "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+        "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Apps\\Visual Studio shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -196,14 +200,15 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "c:\\program files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj"
               }
             }
           }
@@ -217,7 +222,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -268,24 +274,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\App.Services.csproj": {
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\App.Services.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\App.Services.csproj",
+        "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\App.Services.csproj",
         "projectName": "App.Services",
-        "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\App.Services.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\obj\\",
+        "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\App.Services.csproj",
+        "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+        "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Apps\\Visual Studio shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -294,17 +300,18 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "c:\\program files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj"
               },
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj"
               }
             }
           }
@@ -318,7 +325,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -327,6 +335,14 @@
             "CloudinaryDotNet": {
               "target": "Package",
               "version": "[1.27.5, )"
+            },
+            "FirebaseAdmin": {
+              "target": "Package",
+              "version": "[3.2.0, )"
+            },
+            "Google.Apis.Auth.AspNetCore3": {
+              "target": "Package",
+              "version": "[1.69.0, )"
             },
             "MailKit": {
               "target": "Package",
@@ -369,24 +385,24 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj": {
+    "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj",
+        "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj",
         "projectName": "TutorBooking.APIService",
-        "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj",
-        "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-        "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\TutorBooking.APIService\\obj\\",
+        "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\TutorBooking.APIService\\TutorBooking.APIService.csproj",
+        "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+        "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\TutorBooking.APIService\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+          "C:\\Apps\\Visual Studio shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -395,17 +411,18 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+          "c:\\program files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.DTOs\\App.DTOs.csproj"
               },
-              "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\App.Services.csproj": {
-                "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Services\\App.Services.csproj"
+              "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\App.Services.csproj": {
+                "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Services\\App.Services.csproj"
               }
             }
           }
@@ -419,7 +436,8 @@
           "enableAudit": "true",
           "auditLevel": "low",
           "auditMode": "direct"
-        }
+        },
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -459,7 +477,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

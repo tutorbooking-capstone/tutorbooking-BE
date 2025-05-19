@@ -10665,23 +10665,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Admin\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\johns\\.nuget\\packages\\": {},
+    "C:\\Apps\\Visual Studio shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
+      "projectUniqueName": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
       "projectName": "App.Repositories",
-      "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
-      "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Repositories\\obj\\",
+      "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\App.Repositories.csproj",
+      "packagesPath": "C:\\Users\\johns\\.nuget\\packages\\",
+      "outputPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Repositories\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
+        "C:\\Apps\\Visual Studio shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Admin\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\johns\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -10690,14 +10690,15 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "c:\\program files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
-              "projectPath": "D:\\FFF\\Sem_9\\_\\_\\TutorBookingAPI\\App.Core\\App.Core.csproj"
+            "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj": {
+              "projectPath": "D:\\Onlinestudy\\Documents\\S9_2025_SUMMER\\SEP490\\Project\\TutorBookingAPI\\App.Core\\App.Core.csproj"
             }
           }
         }
@@ -10711,7 +10712,8 @@
         "enableAudit": "true",
         "auditLevel": "low",
         "auditMode": "direct"
-      }
+      },
+      "SdkAnalysisLevel": "9.0.200"
     },
     "frameworks": {
       "net8.0": {
@@ -10762,7 +10764,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.200/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "c:\\program files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
       }
     }
   }
