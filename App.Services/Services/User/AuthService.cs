@@ -11,6 +11,10 @@ using System.Data;
 using Microsoft.Extensions.Logging;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System;
+using System.Net.Http.Json;
 
 namespace App.Services.Services.User
 {
@@ -24,6 +28,7 @@ namespace App.Services.Services.User
         private readonly ITokenService _tokenService;
         private readonly ILogger<AuthService> _logger;
         private readonly IUnitOfWork _unitOfWork;
+		
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -355,6 +360,67 @@ namespace App.Services.Services.User
 
             return roleNames;
         }
+
+		public async Task<object> LoginGoogleAsync(string email, string password)
+		{
+			string WEB_API_KEY = "AIzaSyABId0f0DwXduAECd_G6OXzqOYRVTTOY1k";
+			string uri = $"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={WEB_API_KEY}";
+
+			FireBaseLoginInfo loginInfo = new FireBaseLoginInfo()
+			{
+				Email = email,
+				Password = password,
+			};
+
+			using (HttpClient client = new HttpClient())
+			{			
+				var result = await client.PostAsJsonAsync(uri, loginInfo, new JsonSerializerOptions()
+				{ WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
+
+				var encoded = await result.Content.ReadFromJsonAsync<GoogleToken>();
+				Token token = new Token
+				{
+					token_type = "Bearer",
+					access_token = encoded.idToken,
+					id_token = encoded.idToken,
+					expires_in = int.Parse(encoded.expiresIn),
+					refresh_token = encoded.refreshToken
+				};
+			return token;
+			}
+		}
+
+		//public async Task<object> LoginGoogleV2Async(string credential)
     }
+
+	public class Token
+	{
+		internal string refresh_token;
+		public string token_type { get; set; }
+		public int expires_in { get; set; }
+		public int ext_expires_in { get; set; }
+		public string access_token { get; set; }
+		public string id_token { get; set; }
+	}
+
+
+	public class GoogleToken
+	{
+		public string kind { get; set; }
+		public string localId { get; set; }
+		public string email { get; set; }
+		public string displayName { get; set; }
+		public string idToken { get; set; }
+		public bool registered { get; set; }
+		public string refreshToken { get; set; }
+		public string expiresIn { get; set; }
+	}
+
+	public class FireBaseLoginInfo
+	{
+		public string Email { get; set; }
+		public string Password { get; set; }
+		public bool ReturnSecureToken { get; set; } = true;
+	}
 
 }

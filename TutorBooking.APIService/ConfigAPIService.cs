@@ -8,6 +8,13 @@ using App.Core;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using TutorBooking.APIService.Middleware;
+using Microsoft.AspNetCore.Identity;
+using App.Repositories.Models.User;
+using App.Core.Utils;
+using Microsoft.Extensions.Options;
+using Microsoft.CodeAnalysis;
+using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi.Interfaces;
 
 namespace TutorBooking.APIService
 {
@@ -84,8 +91,79 @@ namespace TutorBooking.APIService
                         return Task.CompletedTask;
                     }
                 };
-            });
+            })
 
+			// firebase
+			.AddJwtBearer("Firebase ", options =>
+			{
+				var projectId = "nnn-capstone";
+				var client = new HttpClient();
+				var keys = client
+					.GetStringAsync(
+						"https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com")
+					.Result;
+				var originalKeys = new JsonWebKeySet(keys).GetSigningKeys();
+				var additionalkeys = client
+					.GetStringAsync(
+						"https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com")
+					.Result;
+				var morekeys = new JsonWebKeySet(additionalkeys).GetSigningKeys();
+				var totalkeys = originalKeys.Concat(morekeys);
+
+
+				options.IncludeErrorDetails = true;
+				options.Authority = $"https://securetoken.google.com/{projectId}";
+				options.TokenValidationParameters = new TokenValidationParameters
+				{
+					ValidateIssuer = true,
+					ValidIssuer = $"https://securetoken.google.com/{projectId}",
+					ValidateAudience = true,
+					ValidAudience = projectId,
+					ValidateLifetime = true,
+					ValidateIssuerSigningKey = true,
+					IssuerSigningKeys = totalkeys
+				};
+
+				options.Events = new JwtBearerEvents
+				{
+					OnTokenValidated = async context =>
+					{
+						// Receive the JWT token that firebase has provided
+						var firebaseToken = context.SecurityToken as Microsoft.IdentityModel.JsonWebTokens.JsonWebToken;
+						// Get the Firebase UID of this user
+						var firebaseUid = firebaseToken?.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
+						if (!string.IsNullOrEmpty(firebaseUid))
+						{
+							// Use the Firebase UID to find or create the user in your Identity system
+							var userManager = context.HttpContext.RequestServices
+								.GetRequiredService<UserManager<AppUser>>();
+							var user = await userManager.FindByNameAsync(firebaseUid);
+
+							if (user == null)
+							{
+								var newUser = new AppUser
+								{
+									Id = Guid.NewGuid().ToString("N"),
+									FirebaseUserId = firebaseUid,
+									Email = firebaseToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value,
+									UserName = firebaseUid,
+									NormalizedEmail = userManager.KeyNormalizer.NormalizeEmail(firebaseToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value),
+									NormalizedUserName = userManager.KeyNormalizer.NormalizeName(firebaseToken.Claims.FirstOrDefault(c => c.Type == "email")?.Value),
+									FullName = firebaseToken.Claims.FirstOrDefault(c => c.Type == "name")?.Value ??
+										   $"Firebase {firebaseUid}",
+									SecurityStamp = Guid.NewGuid().ToString(),
+									PasswordHash = "",
+									PhoneNumberConfirmed = true,
+									EmailConfirmed = true,
+									CreatedTime = DateTime.UtcNow,
+									CodeGeneratedTime = DateTime.UtcNow
+								};
+								await userManager.CreateAsync(user);
+							}
+						}
+					}
+				};
+			});
             return services;
         }
 
@@ -118,18 +196,54 @@ namespace TutorBooking.APIService
                                 Type = ReferenceType.SecurityScheme,
                                 Id = "Bearer"
                             }
-                        },
-                        new string[] { }
-                    }
-                });
+						},
+						new string[] { }
+					}
+				});
 
-                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+				var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 if (File.Exists(xmlPath))
                 {
                     c.IncludeXmlComments(xmlPath);
                 }
-            });
+
+				//Firebase
+				c.AddSecurityDefinition("Firebase", new OpenApiSecurityScheme
+				{
+					Type = SecuritySchemeType.OAuth2,
+
+					Flows = new OpenApiOAuthFlows
+					{
+						Password = new OpenApiOAuthFlow
+						{
+							TokenUrl = new Uri("/api/auth/login-google", UriKind.Relative),
+							Extensions = new Dictionary<string, IOpenApiExtension>
+				{
+					{ "returnSecureToken", new OpenApiBoolean(true) },
+							},
+						}
+					}
+				});
+
+				c.AddSecurityRequirement(new OpenApiSecurityRequirement
+				{
+					{
+						new OpenApiSecurityScheme
+						{
+							Reference = new OpenApiReference
+							{
+								Type = ReferenceType.SecurityScheme,
+								Id = JwtBearerDefaults.AuthenticationScheme
+							},
+							Scheme = "oauth2",
+							Name = JwtBearerDefaults.AuthenticationScheme,
+							In = ParameterLocation.Header,
+						},
+						new List<string> { "openid", "email", "profile" }
+					}
+				});
+			});
 
             services.AddAuthorization(options =>
             {

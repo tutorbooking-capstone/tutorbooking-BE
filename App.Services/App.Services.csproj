@@ -14,7 +14,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="CloudinaryDotNet" Version="1.27.5" />
+		<PackageReference Include="FirebaseAdmin" Version="3.2.0" />
 		<PackageReference Include="MailKit" Version="4.11.0" />
+		<PackageReference Include="Google.Apis.Auth.AspNetCore3" Version="1.69.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.1" />

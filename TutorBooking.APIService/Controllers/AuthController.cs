@@ -2,6 +2,11 @@
 using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -11,14 +16,16 @@ namespace TutorBooking.APIService.Controllers
     {
         #region DI Constructor
         private readonly IAuthService _authService;
+		private IHttpContextAccessor _contextAccessor;
 
-        public AuthController(IAuthService authService)
-        {
-            _authService = authService;
-        }
-        #endregion  
+		public AuthController(IAuthService authService, IHttpContextAccessor contextAccessor)
+		{
+			_authService = authService;
+			_contextAccessor = contextAccessor;
+		}
+		#endregion
 
-        [HttpPost("sync-roles")]
+		[HttpPost("sync-roles")]
         public async Task<IActionResult> SyncRoles()
         {
             var roleNames = await _authService.SyncRolesAsync();
@@ -110,6 +117,20 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+		[HttpPost("login-google")]
+		public async Task<IActionResult> LoginGoogle([FromForm] string email, [FromForm]string password)
+		{
+			return Ok(await _authService.LoginGoogleAsync(email, password));
+		}
 
+		[HttpPost("get-auth-detail")]
+		public async Task<IActionResult> GetAuthDetails()
+		{
+			var claimsPrincipal = _contextAccessor.HttpContext.User;
+			var firebaseId = claimsPrincipal.Claims.First(x => x.Type == "user_id").Value;
+			var email = claimsPrincipal.Claims.First(x => x.Type == ClaimTypes.Email).Value;
+
+			return Ok();
+		}
     }
 }

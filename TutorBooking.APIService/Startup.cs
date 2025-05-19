@@ -92,7 +92,7 @@ namespace TutorBooking.APIService
             // Authorization checks if the authenticated user has permission based on standard policies/roles.
             app.UseAuthorization(); // Correct: Must follow UseAuthentication.
             // Custom Permission middleware performs additional checks, relying on the authenticated user.
-            app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
+            //app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
 
 
             app.UseEndpoints(endpoints =>
