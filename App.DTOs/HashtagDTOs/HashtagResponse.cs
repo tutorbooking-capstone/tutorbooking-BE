@@ -1,31 +1,23 @@
 ﻿using App.Repositories.Models;
+using System.Linq.Expressions;
 
 namespace App.DTOs.HashtagDTOs
 {
-    public record HashtagResponse(
-        string Id = "",
-        string Name = "",
-        string Description = "",
-        int UsageCount = 0
-    );
-
-    #region Mapping
-    public static class HashtagResponseExtensions
+    public class HashtagResponse
     {
-        public static HashtagResponse ToHashtagResponse(this Hashtag entity)
-        {
-            return new HashtagResponse(
-                Id: entity.Id,
-                Name: entity.Name,
-                Description: entity.Description,
-                UsageCount: entity.UsageCount
-            );
-        }
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public int UsageCount { get; set; } = 0;
 
-        public static List<HashtagResponse> ToHashtagResponseList(this IEnumerable<Hashtag> entities)
-        {
-            return entities.Select(e => e.ToHashtagResponse()).ToList();
-        }
+        public static Expression<Func<Hashtag, HashtagResponse>> ProjectionExpression
+        => h => new HashtagResponse
+            {
+                Id = h.Id,
+                Name = h.Name,
+                Description = h.Description,
+                UsageCount = h.UsageCount
+            };
     }
-    #endregion
 }
+

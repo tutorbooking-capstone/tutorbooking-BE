@@ -1,6 +1,5 @@
 using App.Core.Base;
 using App.DTOs.HashtagDTOs;
-using App.Repositories.Models;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

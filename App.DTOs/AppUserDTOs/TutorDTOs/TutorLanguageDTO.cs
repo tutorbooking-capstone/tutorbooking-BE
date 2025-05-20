@@ -1,4 +1,6 @@
-﻿using App.Repositories.Models;
+﻿using System.Linq.Expressions;
+using App.Core.Mapper;
+using App.Repositories.Models;
 using FluentValidation;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs
@@ -8,6 +10,14 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string LanguageCode { get; set; } = string.Empty;
         public int Proficiency { get; set; }
         public bool IsPrimary { get; set; }
+
+        public static Expression<Func<TutorLanguage, TutorLanguageDTO>> ProjectionExpression => tl 
+        => new TutorLanguageDTO
+            {
+                LanguageCode = tl.LanguageCode,
+                IsPrimary = tl.IsPrimary,
+                Proficiency = tl.Proficiency
+            };
     }
 
     #region Validator

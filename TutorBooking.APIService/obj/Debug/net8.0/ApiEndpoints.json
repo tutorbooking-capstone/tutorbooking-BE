@@ -477,6 +477,27 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
+    "Method": "GetAllTutors",
+    "RelativePath": "api/tutor/all",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "page",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "size",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "GetTutorHashtags",
     "RelativePath": "api/tutor/hashtags",
     "HttpMethod": "GET",
@@ -498,7 +519,7 @@
   {
     "ContainingType": "TutorBooking.APIService.Controllers.TutorController",
     "Method": "GetTutorCardList",
-    "RelativePath": "api/tutor/list-card",
+    "RelativePath": "api/tutor/recommended-tutors",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
