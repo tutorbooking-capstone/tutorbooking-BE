@@ -444,5 +444,27 @@ namespace App.Services.Services.User
                 .Select(g => g.First())
                 .ToList();
         }
+
+		// TODO: Add Sorting & Filtering, may let Chiyu handle this task
+		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page =1, int size =20)
+		{
+			var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+				.Include(t => t.User)
+				.OrderByDescending(t => t.BecameTutorAt)
+				.Skip((page-1) * size).Take(size)
+				.ToListAsync();
+
+			var tutorResponses = new List<TutorCardDTO>();
+			foreach (var tutor in tutors)
+			{
+				tutorResponses.Add(tutor.ToTutorCardDTO(
+					await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
+					.Where(t => t.TutorId.Equals(tutor.UserId))
+					.ToListAsync(), 
+					GetMockRating(tutor, 4)));	
+			}	
+
+			return tutorResponses;
+		}
     }
 }
