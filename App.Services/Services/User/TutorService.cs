@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
 using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
-using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services.User
 {

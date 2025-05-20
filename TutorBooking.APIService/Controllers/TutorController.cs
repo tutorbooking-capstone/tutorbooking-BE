@@ -107,7 +107,7 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpGet("list-card")]
+        [HttpGet("recommend-card")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTutorCardList()
         {

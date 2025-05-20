@@ -220,6 +220,7 @@ namespace App.Services.Services.User
             {
                 Token = tokenResponse,
                 Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
+                Roles = roles.ToList()
             };
 
             return loginResponse; 
