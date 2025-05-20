@@ -14,7 +14,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string Brief { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string TeachingMethod { get; set; } = string.Empty;
-        public VerificationStatus VerificationStatus { get; set; }
+		public string ProfilePictureUrl { get; set; } = string.Empty;
+		public VerificationStatus VerificationStatus { get; set; }
         public DateTime? BecameTutorAt { get; set; }
         
         // Scheduling information
@@ -187,6 +188,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 Brief = tutor.Brief,
                 Description = tutor.Description,
                 TeachingMethod = tutor.TeachingMethod,
+				ProfilePictureUrl = tutor.User != null ? tutor.User.ProfilePictureUrl : string.Empty,
                 VerificationStatus = tutor.VerificationStatus,
                 BecameTutorAt = tutor.BecameTutorAt
             };
