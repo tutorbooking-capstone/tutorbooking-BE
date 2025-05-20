@@ -15,18 +15,18 @@ namespace TutorBooking.APIService.Controllers
 	[ApiController]
 	public class ChatController : ControllerBase
 	{
-		private IHubContext<ChatHub> _hubContext;
+		private IHubContext<ChatHub, IChatClient> _hubContext;
 		private IChatService _chatService;
 
-		public ChatController(IChatService chatService, IHubContext<ChatHub> hubContext)
+		public ChatController(IChatService chatService, IHubContext<ChatHub, IChatClient> hubContext)
 		{
 			_chatService = chatService;
 			_hubContext = hubContext;
 		}
 
 		[HttpGet("conversations")]
-		//[Authorize]
-		[AllowAnonymous] // for quick testing only
+		[Authorize]
+		
 		public async Task<IActionResult> GetConversations([FromQuery] string userId, int page = 1, int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
@@ -35,8 +35,8 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpGet("conversations/{id}")]
-		[AllowAnonymous]
-		public async Task<IActionResult> GetConversationById([FromRoute]string id, [FromQuery]int page =1 , int size = 20)
+		[Authorize]
+		public async Task<IActionResult> GetConversationById([FromRoute]string id, [FromQuery]int page = 1 , int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
 				data: await _chatService.GetConversationAsync(id, page, size)
@@ -48,9 +48,13 @@ namespace TutorBooking.APIService.Controllers
 		[AllowAnonymous]
 		public async Task<IActionResult> SendMessage(SendMessageRequest request)
 		{
+			if(!ModelState.IsValid)
+				return BadRequest(ModelState);
+
 			var response = await _chatService.SendMessageAsync(request);
-			_hubContext.Clients.Client(ConnectionMapper.GetConnectedUser(request.ReceiverUserId).ConnectionId)
-				.SendAsync("ReceiveMessage", response);
+			Task.Run(() => _hubContext.Clients.Client(ConnectionMapper.GetConnectedUser(request.ReceiverUserId).ConnectionId)
+				.ReceiveMessage(true, response));
+			
 			return Ok(new BaseResponseModel<object>()
 			{
 				Data = response

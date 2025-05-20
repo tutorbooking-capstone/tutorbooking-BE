@@ -9,7 +9,7 @@ using System.Security.Claims;
 namespace TutorBooking.APIService.Hubs.ChatHubs
 {
 	
-	public class ChatHub : Hub<IChatClient>, IChatHub
+	public class ChatHub : Hub<IChatClient>
 	{
 		private IChatService _chatService;
 
@@ -18,66 +18,85 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			_chatService = chatService;
 		}
 
-		public async Task SendMessage(string senderUserId, string receiverUserId, string textMessage)
+		public async Task SendMessage(string receiverUserId, string textMessage)
 		{
 			try
 			{
-				var response = await _chatService.SendMessageAsync(new()
+				var userId = GetUserId();
+				if (userId != null)
 				{
-					SenderUserId = senderUserId,
-					ReceiverUserId = receiverUserId,
-					TextMessage = textMessage
-				});
+					var response = await _chatService.SendMessageAsync(new()
+					{
+						SenderUserId = userId,
+						ReceiverUserId = receiverUserId,
+						TextMessage = textMessage
+					});
 
-				var receiver = ConnectionMapper.GetConnectedUser(receiverUserId);
-				if (receiver != null)
-					await Clients.Client(receiver.ConnectionId).ReceiveMessage(true, response);
+					var receiver = ConnectionMapper.GetConnectedUser(receiverUserId);
+					if (receiver != null)
+						await Clients.Client(receiver.ConnectionId).ReceiveMessage(true, response);
+				}
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.ToString());
-				await Clients.Client(ConnectionMapper.GetConnectedUser(senderUserId).ConnectionId).ReceiveMessage(false, ex.Message);
+				await Clients.Client(ConnectionMapper.GetConnectedUser(GetUserId()).ConnectionId).ReceiveMessage(false, ex.Message);
 			}
 		}
 
 		public override async Task OnConnectedAsync()
 		{
-			var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("jwt")).Value;
-			var handler = new JwtSecurityTokenHandler();
-			var securityToken = handler.ReadJwtToken(token);
-
-			//var identity = Context.User.Claims as ClaimsIdentity;
-			//var userId = identity.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-			var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-			Console.WriteLine($"Client {userId} has connected");
-			var user = new ConnectedUser()
+			var userId = GetUserId();
+			if (userId != null)
 			{
+				Console.WriteLine($"Client {userId} has connected");
+				var user = new ConnectedUser()
+				{
 					UserId = userId,
 					ConnectionId = Context.ConnectionId,
 					//Role = identity.RoleClaimType.ToRoleEnum()
 				};
 				ConnectionMapper.SetConnectedUser(userId, user);
 				await Clients.Client(Context.ConnectionId).OnConnected("CONNECTED_TO_CHATHUB");
+			}
 			await base.OnConnectedAsync();
 		}
 
 		public override async Task OnDisconnectedAsync(Exception? exception)
 		{
-
-			//var identity = Context.User.Claims as ClaimsIdentity;
-			//var userId = identity.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-			var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("jwt")).Value;
-			var handler = new JwtSecurityTokenHandler();
-			var securityToken = handler.ReadJwtToken(token);
-			var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-
-			var user = ConnectionMapper.GetConnectedUser(userId);
-			if (user != null)
+				
+			var userId = GetUserId();
+			if (userId != null)
 			{
-				ConnectionMapper.RemoveConnectedUser(userId);
+				var user = ConnectionMapper.GetConnectedUser(userId);
+				if (user != null)
+				{
+					ConnectionMapper.RemoveConnectedUser(userId);
+				}
 			}
 			await base.OnDisconnectedAsync(exception);
 		}
+
+		private string? GetUserId()
+		{
+			try
+			{
+				var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("access_token")).Value;
+				var handler = new JwtSecurityTokenHandler();
+				var securityToken = handler.ReadJwtToken(token);
+				var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
+
+				return userId;
+			}
+			catch (Exception ex) 
+			{
+				Console.WriteLine(ex.ToString());
+				return null;
+			}
+			
+		}
+
+
 	}
 
 

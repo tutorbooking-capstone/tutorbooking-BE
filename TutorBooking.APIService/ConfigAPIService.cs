@@ -83,8 +83,21 @@ namespace TutorBooking.APIService
                         logger.LogDebug("[TOKEN VALIDATED] Roles found in token: [{Roles}]", string.Join(", ", roles));
 
                         return Task.CompletedTask;
-                    }
-                };
+                    },
+					OnMessageReceived = context =>
+					{
+						var accessToken = context.Request.Headers.Authorization;
+
+						// If the request is for our hub...
+						if (!string.IsNullOrEmpty(accessToken))
+						{
+							// Read the token out of the query string
+
+							context.Token = accessToken;
+						}
+						return Task.CompletedTask;
+					}
+				};
             });
 
             return services;

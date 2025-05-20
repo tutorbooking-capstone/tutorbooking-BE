@@ -22,7 +22,7 @@ namespace App.DTOs.ChatDTOs
 			=> new()
 			{
 				Id = entity.Id,
-				UserId = entity.AppUser.Id,
+				UserId = entity.AppUserId,
 				ChatConversationId = entity.ChatConversationId,
 				TextMessage = entity.TextMessage,
 				CreatedTime = entity.CreatedTime,

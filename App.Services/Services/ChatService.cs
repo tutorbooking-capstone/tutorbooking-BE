@@ -65,7 +65,7 @@ namespace App.Services.Services
 				.Include(c => c.AppUsers)
 				.FirstOrDefaultAsync(e => e.Id.Equals(id));
 			if (conversation == null)
-				throw new ErrorException(404, ErrorCode.NotFound, "User Not Found");
+				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
 			return conversation.ToChatConversationDTO();
 		}
 
@@ -77,25 +77,15 @@ namespace App.Services.Services
 		/// <exception cref="ErrorException"></exception>
 		public async Task<ChatMessageDTO> SendMessageAsync(SendMessageRequest request)
 		{
-			ChatConversation conversation;
-			try
-			{
-				conversation = await _unitOfWork.GetRepository<ChatConversation>()
-				.FindAsync(e => e.AppUsers.Any(x => x.Id.Equals(request.SenderUserId)
-							&& e.AppUsers.Any(x => x.Id.Equals(request.ReceiverUserId)
-							)));
-			} 
-			catch (ErrorException e) // Not a good idea to throw an exception when an entity's not found
-			{
-				if (e.StatusCode != (int)StatusCode.NotFound)
-					throw;
+			var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
+				.FirstOrDefaultAsync(e => e.AppUsers.Any(x => x.Id.Equals(request.SenderUserId)
+						&& e.AppUsers.Any(x => x.Id.Equals(request.ReceiverUserId)
+						)));
+			if(conversation == null)
 				conversation = await CreateConversation(new CreateConversationRequest()
 				{
 					ParticipantUserIds = new[] { request.SenderUserId, request.ReceiverUserId },
 				});
-				if (conversation == null) 
-					throw new ErrorException(404, ErrorCode.NotFound, "User Not Found");
-			}
 
 			var message = new ChatMessage()
 			{
@@ -115,13 +105,14 @@ namespace App.Services.Services
 				AppUsers = new List<AppUser>(),
 				ChatMessages = new List<ChatMessage>()
 			};
-			
-			foreach (string userId in request.ParticipantUserIds)
-			{
-				var user = await _unitOfWork.GetRepository<AppUser>().FindAsync(u => u.Id.Equals(userId));
-				if (user == null) return null;
-				conversation.AppUsers.Add(user);
-			}
+
+			var users = await _unitOfWork.GetRepository<AppUser>().ExistEntities()
+				.Where(x => request.ParticipantUserIds.Contains(x.Id))
+				.ToListAsync();
+			if (users.Count != 2)
+				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
+
+			conversation.AppUsers = users;
 			_unitOfWork.GetRepository<ChatConversation>().Insert(conversation);
 			await _unitOfWork.SaveAsync();
 			return conversation;
