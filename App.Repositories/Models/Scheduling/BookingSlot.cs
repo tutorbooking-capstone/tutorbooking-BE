@@ -15,33 +15,37 @@ namespace App.Repositories.Models.Scheduling
         public virtual Learner? Learner { get; set; }
         public virtual ICollection<AvailabilitySlot>? Slots { get; set; }
 
-        #region Behavior
-        public int TotalOccurrences => (RepeatForWeeks ?? 0) + 1;
 
-        public bool OccursOn(DateTime date)
-        {
-            var daysDiff = (date.Date - StartDate.Date).Days;
-            if (daysDiff < 0) return false;
-
-            if (RepeatForWeeks == null || RepeatForWeeks == 0)
-                return date.Date == StartDate.Date;
-
-            if (daysDiff % 7 == 0)
-            {
-                var weekIndex = daysDiff / 7;
-                return weekIndex >= 0 && weekIndex < TotalOccurrences; // weekIndex is 0-based
-            }
-            return false;
-        }
-
-        public bool IsSlotBookedOn(DateTime date, DayInWeek dayInWeek, int slotIndex)
-        {
-            if (!OccursOn(date)) return false;
-            return Slots != null && Slots.Any(s => 
-                s.DayInWeek == dayInWeek 
-                && s.SlotIndex == slotIndex 
-                && s.BookingSlotId == Id);
-        }
-        #endregion
     }
 }
+
+
+
+        // #region Behavior
+        // public int TotalOccurrences => (RepeatForWeeks ?? 0) + 1;
+
+        // public bool OccursOn(DateTime date)
+        // {
+        //     var daysDiff = (date.Date - StartDate.Date).Days;
+        //     if (daysDiff < 0) return false;
+
+        //     if (RepeatForWeeks == null || RepeatForWeeks == 0)
+        //         return date.Date == StartDate.Date;
+
+        //     if (daysDiff % 7 == 0)
+        //     {
+        //         var weekIndex = daysDiff / 7;
+        //         return weekIndex >= 0 && weekIndex < TotalOccurrences; // weekIndex is 0-based
+        //     }
+        //     return false;
+        // }
+
+        // public bool IsSlotBookedOn(DateTime date, DayInWeek dayInWeek, int slotIndex)
+        // {
+        //     if (!OccursOn(date)) return false;
+        //     return Slots != null && Slots.Any(s => 
+        //         s.DayInWeek == dayInWeek 
+        //         && s.SlotIndex == slotIndex 
+        //         && s.BookingSlotId == Id);
+        // }
+        // #endregion

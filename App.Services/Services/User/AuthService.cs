@@ -129,6 +129,57 @@ namespace App.Services.Services.User
                 mainMessage);
         }
 
+        public async Task SeedRegisterAsync(RegisterRequest model)
+        {
+            if (model.Password != model.ConfirmPassword)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Xác nhận mật khẩu không đúng!");
+
+            var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
+
+            var newUser = new AppUser
+            {
+                Id = Guid.NewGuid().ToString("N"),
+                Email = model.Email,
+                UserName = model.Email,
+                NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(model.Email),
+                NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(model.Email),
+                SecurityStamp = Guid.NewGuid().ToString(),
+                PasswordHash = passwordHasher.HashPassword(null, model.Password),
+                PhoneNumberConfirmed = true,
+                EmailConfirmed = true, // Set to true directly, no verification needed
+                CreatedTime = DateTime.UtcNow
+                // No EmailCode or CodeGeneratedTime needed
+            };
+
+            var result = await _userManager.CreateAsync(newUser);
+            newUser.TrackCreate(newUser.Id);
+            if (!result.Succeeded)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
+
+            result = await _userManager.AddToRoleAsync(newUser, Role.Learner.ToString());
+            if (!result.Succeeded)
+            {
+                await _userManager.DeleteAsync(newUser);
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
+            }
+
+            // Create Learner entity
+            var learner = newUser.BecomeLearner(newUser.Id);
+            _unitOfWork.GetRepository<Learner>().Insert(learner);
+            await _unitOfWork.SaveAsync();
+            
+            // No email sending
+        }
+
         public async Task VerifyOtpAsync(ConfirmOTPRequest model, bool isResetPassword)
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)

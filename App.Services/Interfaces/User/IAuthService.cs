@@ -13,5 +13,6 @@ namespace App.Services.Interfaces.User
         Task ResetPasswordAsync(ResetPasswordRequest model);
         Task<ResponseAuthModel> RefreshTokenAsync(RefreshTokenRequest refreshTokenModel);
         Task LogoutAsync(RefreshTokenRequest model);
+        Task SeedRegisterAsync(RegisterRequest model);
     }
 }

@@ -388,6 +388,37 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
+    "Method": "SeedAllTutorDetails",
+    "RelativePath": "api/seed/tutor-details",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "tutorPrefix",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "learnerPrefix",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "tutorCount",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "learnerCount",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
     "Method": "SeedTutorAvailability",
     "RelativePath": "api/seed/tutor/availability/{tutorId}",
     "HttpMethod": "POST",
@@ -419,6 +450,48 @@
         "Name": "learnerIds",
         "Type": "System.Collections.Generic.List\u00601[[System.String, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
         "IsRequired": true
+      },
+      {
+        "Name": "count",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
+    "Method": "SeedTutors",
+    "RelativePath": "api/seed/tutors",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "prefix",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "count",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.SeedController",
+    "Method": "SeedUsers",
+    "RelativePath": "api/seed/users",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "prefix",
+        "Type": "System.String",
+        "IsRequired": false
       },
       {
         "Name": "count",

@@ -68,16 +68,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             Name = th.Hashtag != null ? th.Hashtag.Name : string.Empty,
             Description = th.Hashtag != null ? th.Hashtag.Description : string.Empty
         };
-
-        public static HashtagDTO FromEntity(TutorHashtag entity)
-        {
-            return new HashtagDTO
-            {
-                Id = entity.HashtagId,
-                Name = entity.Hashtag?.Name ?? string.Empty,
-                Description = entity.Hashtag?.Description ?? string.Empty
-            };
-        }
     }
 
     public class WeeklyAvailabilityDTO
@@ -85,12 +75,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string Id { get; set; } = string.Empty;
         public DateTime AppliedFrom { get; set; }
         public List<AvailabilitySlotDTO> Slots { get; set; } = new List<AvailabilitySlotDTO>();
-
-        public static Expression<Func<WeeklyAvailabilityPattern, WeeklyAvailabilityDTO>> ProjectionExpression => p => new WeeklyAvailabilityDTO
-        {
-            Id = p.Id,
-            AppliedFrom = p.AppliedFrom
-        };
 
         public static WeeklyAvailabilityDTO FromEntity(WeeklyAvailabilityPattern entity)
         {
@@ -115,15 +99,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public int SlotIndex { get; set; }
         public string? BookingSlotId { get; set; }
 
-        public static Expression<Func<AvailabilitySlot, AvailabilitySlotDTO>> ProjectionExpression => s => new AvailabilitySlotDTO
-        {
-            Id = s.Id,
-            Type = s.Type,
-            DayInWeek = s.DayInWeek,
-            SlotIndex = s.SlotIndex,
-            BookingSlotId = s.BookingSlotId
-        };
-
         public static AvailabilitySlotDTO FromEntity(AvailabilitySlot entity)
         {
             return new AvailabilitySlotDTO
@@ -145,15 +120,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public DateTime StartDate { get; set; }
         public int? RepeatForWeeks { get; set; }
         public List<string> AssociatedSlotIds { get; set; } = new List<string>();
-
-        public static Expression<Func<BookingSlot, BookingSlotDTO>> ProjectionExpression => b => new BookingSlotDTO
-        {
-            Id = b.Id,
-            LearnerId = b.LearnerId,
-            Note = b.Note,
-            StartDate = b.StartDate,
-            RepeatForWeeks = b.RepeatForWeeks
-        };
 
         public static BookingSlotDTO FromEntity(BookingSlot entity)
         {
@@ -178,7 +144,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
     {
         public static TutorResponse ToTutorResponse(this Tutor tutor)
         {
-            // Sử dụng phương thức ánh xạ trực tiếp thay vì MapTo
             return new TutorResponse
             {
                 UserId = tutor.UserId,

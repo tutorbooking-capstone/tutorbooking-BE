@@ -113,6 +113,7 @@ namespace App.Repositories.UoW
 
         public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default)
         {
+            //openconnection
             await BeginTransactionAsync(cancellationToken);
             try
             {

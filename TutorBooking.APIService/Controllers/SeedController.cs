@@ -3,6 +3,7 @@ using App.Repositories.Models;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using App.DTOs.AuthDTOs;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -50,6 +51,68 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<int>(
                 data: bookings.Count, 
                 message: $"Seed {bookings.Count} lịch đặt cho gia sư {tutorId} thành công!"
+            ));
+        }
+
+        [HttpPost("users")]
+        public async Task<IActionResult> SeedUsers(
+            [FromQuery] string prefix,
+            [FromQuery] int count = 10)
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+                return BadRequest(new BaseResponseModel<string>(
+                    message: "Email prefix is required"
+                ));
+
+            if (count <= 0)
+                return BadRequest(new BaseResponseModel<string>(
+                    message: "Count must be greater than 0"
+                ));
+
+            var emails = await _seedService.SeedUsersAsync(prefix, count);
+            
+            return Ok(new BaseResponseModel<List<string>>(
+                data: emails,
+                message: $"Seed {emails.Count} user accounts with prefix '{prefix}' successfully!"
+            ));
+        }
+
+        [HttpPost("tutors")]
+        public async Task<IActionResult> SeedTutors(
+            [FromQuery] string prefix,
+            [FromQuery] int count = 5)
+        {
+            if (string.IsNullOrWhiteSpace(prefix))
+                return BadRequest(new BaseResponseModel<string>(
+                    message: "Email prefix is required"
+                ));
+
+            if (count <= 0)
+                return BadRequest(new BaseResponseModel<string>(
+                    message: "Count must be greater than 0"
+                ));
+
+            var tutorEmails = await _seedService.SeedTutorsAsync(prefix, count);
+            
+            return Ok(new BaseResponseModel<List<string>>(
+                data: tutorEmails,
+                message: $"Successfully registered {tutorEmails.Count} users as tutors with prefix '{prefix}'!"
+            ));
+        }
+
+        [HttpPost("tutor-details")]
+        public async Task<IActionResult> SeedAllTutorDetails(
+            [FromQuery] string tutorPrefix = "tutor",
+            [FromQuery] string learnerPrefix = "learner",
+            [FromQuery] int tutorCount = 70,
+            [FromQuery] int learnerCount = 70)
+        {
+            var processedCount = await _seedService.SeedAllTutorDetailsAsync(
+                tutorPrefix, learnerPrefix, tutorCount, learnerCount);
+            
+            return Ok(new BaseResponseModel<int>(
+                data: processedCount,
+                message: $"Successfully seeded details for {processedCount} tutors!"
             ));
         }
     }

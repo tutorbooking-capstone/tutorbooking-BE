@@ -3,12 +3,16 @@ using App.Repositories.Models.Scheduling;
 using App.Repositories.UoW;
 using Microsoft.EntityFrameworkCore;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using App.Core.Base;
 using System.Linq.Expressions;
 using App.Core.Utils;
 using App.Repositories.Models.User;
 using App.Core.Constants;
 using Microsoft.AspNetCore.Http;
+using App.DTOs.AuthDTOs;
+using Microsoft.Extensions.Logging;
+using App.DTOs.AppUserDTOs.TutorDTOs;
 
 namespace App.Services.Services
 {
@@ -16,10 +20,23 @@ namespace App.Services.Services
     {
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IAuthService _authService;
+        private readonly ILogger<SeedService> _logger;
+        private readonly ITutorService _tutorService;
+        private readonly IUserService _userService;
 
-        public SeedService(IUnitOfWork unitOfWork)
+        public SeedService(
+            IUnitOfWork unitOfWork,
+            IAuthService authService,
+            ILogger<SeedService> logger,
+            ITutorService tutorService,
+            IUserService userService)
         {
             _unitOfWork = unitOfWork;
+            _authService = authService;
+            _logger = logger;
+            _tutorService = tutorService;
+            _userService = userService;
         }
         #endregion
 
@@ -280,6 +297,266 @@ namespace App.Services.Services
                     seededData: bookingSlots
                 );
             }
+        }
+    
+        public async Task<List<string>> SeedUsersAsync(string emailPrefix, int count)
+        {
+            if (string.IsNullOrWhiteSpace(emailPrefix))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Email prefix cannot be empty");
+
+            if (count <= 0)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Count must be greater than 0");
+
+            var createdEmails = new List<string>();
+            // Standard password for all seeded accounts - should match validation requirements
+            const string defaultPassword = "Password123!";
+
+            for (int i = 1; i <= count; i++)
+            {
+                string email = $"{emailPrefix}{i}@gmail.com";
+                
+                try
+                {
+                    var registerRequest = new RegisterRequest
+                    {
+                        Email = email,
+                        Password = defaultPassword,
+                        ConfirmPassword = defaultPassword
+                    };
+
+                    await _authService.SeedRegisterAsync(registerRequest);
+                    createdEmails.Add(email);
+                    
+                    // Log to console as requested
+                    _logger.LogInformation($"Seeded user account: {email}");
+                    Console.WriteLine($"Seeded user account: {email}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to seed user account: {email}");
+                    Console.WriteLine($"Failed to seed user account: {email} - Error: {ex.Message}");
+                }
+            }
+
+            return createdEmails;
+        }
+
+        public async Task<List<string>> SeedTutorsAsync(string emailPrefix, int count)
+        {
+            if (string.IsNullOrWhiteSpace(emailPrefix))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Email prefix cannot be empty");
+
+            if (count <= 0)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Count must be greater than 0");
+
+            // Find existing users with the given prefix instead of creating new ones
+            var existingEmails = Enumerable.Range(1, count)
+                .Select(i => $"{emailPrefix}{i}@gmail.com")
+                .ToList();
+            
+            var existingUsers = await _unitOfWork.GetRepository<AppUser>()
+                .ExistEntities()
+                .Where(u => existingEmails.Contains(u.Email))
+                .ToListAsync();
+            
+            if (!existingUsers.Any())
+            {
+                _logger.LogWarning($"No users found with email prefix '{emailPrefix}'");
+                return new List<string>();
+            }
+            
+            var registeredTutors = new List<string>();
+            
+            // Get hashtags for use in tutor registration
+            var hashtags = HashtagSeeder.SeedHashtags();
+            var hashtagIds = hashtags.Select(h => h.Id).ToList();
+            
+            // Define some common languages with their ISO codes
+            var languageCodes = new List<string> { "en", "vi", "zh", "ja", "ko", "fr", "de", "es" };
+            var random = new Random();
+
+            foreach (var user in existingUsers)
+            {
+                try
+                {
+                    // Check if user is already a tutor
+                    var existingTutor = await _unitOfWork.GetRepository<Tutor>()
+                        .ExistEntities()
+                        .AnyAsync(t => t.UserId == user.Id);
+                        
+                    if (existingTutor)
+                    {
+                        _logger.LogInformation($"User {user.Email} is already a tutor, skipping");
+                        continue;
+                    }
+
+                    // Prepare tutor registration data
+                    var nickName = $"Tutor{user.Email.Split('@')[0].Replace(emailPrefix, "")}";
+                    var request = new TutorRegistrationRequest(
+                        // Basic info
+                        FullName: $"Tutor {nickName}",
+                        DateOfBirth: DateTime.UtcNow.AddYears(-random.Next(25, 50)),
+                        Gender: (Gender)(random.Next(0, 3)),
+                        Timezone: "UTC+7",
+                        
+                        // Tutor info
+                        NickName: nickName,
+                        Brief: $"I am {nickName}, an experienced tutor ready to help you learn.",
+                        Description: $"As {nickName}, I have been teaching for {random.Next(1, 10)} years. I specialize in creating engaging lessons tailored to student needs.",
+                        TeachingMethod: "Interactive, student-centered approach with regular progress assessments.",
+                        
+                        // Hashtags - select 2-5 random hashtags
+                        HashtagIds: hashtagIds
+                            .OrderBy(_ => random.Next())
+                            .Take(random.Next(2, 6))
+                            .ToList(),
+                        
+                        // Languages - select 1-3 random languages
+                        Languages: GenerateRandomLanguages(languageCodes, random.Next(1, 4), random)
+                    );
+
+                    // Use the tutor service to register the tutor using the seed method
+                    await _tutorService.SeedRegisterAsTutorAsync(user.Id, request);
+                    registeredTutors.Add(user.Email);
+                    
+                    // Log success
+                    _logger.LogInformation($"Registered user as tutor: {user.Email}");
+                    Console.WriteLine($"Registered user as tutor: {user.Email}");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to register user as tutor: {user.Email}");
+                    Console.WriteLine($"Failed to register user as tutor: {user.Email} - Error: {ex.Message}");
+                }
+            }
+
+            return registeredTutors;
+        }
+
+        // Helper method to generate random language proficiencies
+        private List<TutorLanguageDTO> GenerateRandomLanguages(List<string> languageCodes, int count, Random random)
+        {
+            var selectedCodes = languageCodes
+                .OrderBy(_ => random.Next())
+                .Take(count)
+                .ToList();
+            
+            var languages = new List<TutorLanguageDTO>();
+            bool hasPrimary = false;
+            
+            foreach (var code in selectedCodes)
+            {
+                // Decide if this should be the primary language (only one can be primary)
+                bool isPrimary = !hasPrimary && random.Next(2) == 1;
+                if (isPrimary) hasPrimary = true;
+                
+                languages.Add(new TutorLanguageDTO
+                {
+                    LanguageCode = code,
+                    Proficiency = random.Next(3, 8), // 3-7 proficiency level
+                    IsPrimary = isPrimary
+                });
+            }
+            
+            // Ensure at least one language is marked as primary
+            if (!hasPrimary && languages.Any())
+            {
+                languages[0].IsPrimary = true;
+            }
+            
+            return languages;
+        }
+
+        public async Task<int> SeedAllTutorDetailsAsync(string tutorPrefix, string learnerPrefix, int tutorCount, int learnerCount)
+        {
+            if (string.IsNullOrWhiteSpace(tutorPrefix) || string.IsNullOrWhiteSpace(learnerPrefix))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Prefix values cannot be empty");
+
+            if (tutorCount <= 0 || learnerCount <= 0)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Count values must be greater than 0");
+            
+            // Generate tutor and learner emails
+            var tutorEmails = Enumerable.Range(1, tutorCount)
+                .Select(i => $"{tutorPrefix}{i}@gmail.com")
+                .ToList();
+            
+            var learnerEmails = Enumerable.Range(1, learnerCount)
+                .Select(i => $"{learnerPrefix}{i}@gmail.com")
+                .ToList();
+            
+            // Get tutor and learner IDs from the database
+            var tutors = await _unitOfWork.GetRepository<AppUser>()
+                .ExistEntities()
+                .Where(u => tutorEmails.Contains(u.Email))
+                .Join(_unitOfWork.GetRepository<Tutor>().ExistEntities(),
+                    user => user.Id,
+                    tutor => tutor.UserId,
+                    (user, tutor) => new { User = user, Tutor = tutor })
+                .ToListAsync();
+            
+            var learners = await _unitOfWork.GetRepository<AppUser>()
+                .ExistEntities()
+                .Where(u => learnerEmails.Contains(u.Email))
+                .Join(_unitOfWork.GetRepository<Learner>().ExistEntities(),
+                    user => user.Id,
+                    learner => learner.UserId,
+                    (user, learner) => new { User = user, Learner = learner })
+                .ToListAsync();
+            
+            int tutorsProcessed = 0;
+            var random = new Random();
+            
+            foreach (var tutor in tutors)
+            {
+                try
+                {
+                    // Seed availability pattern
+                    await SeedTutorAvailabilityAsync(tutor.Tutor.UserId);
+                    
+                    // Select random 3-7 learners
+                    var selectedLearnerCount = random.Next(3, Math.Min(8, learners.Count + 1));
+                    var selectedLearnerIds = learners
+                        .OrderBy(_ => random.Next())
+                        .Take(selectedLearnerCount)
+                        .Select(l => l.Learner.UserId)
+                        .ToList();
+                    
+                    // Seed bookings with these learners
+                    var bookingCount = random.Next(3, 7); // Random 3-6 bookings
+                    await SeedTutorBookingsAsync(tutor.Tutor.UserId, selectedLearnerIds, bookingCount);
+                    
+                    tutorsProcessed++;
+                    
+                    // Log progress
+                    Console.WriteLine($"Seeded details for tutor: {tutor.User.Email} ({tutorsProcessed}/{tutors.Count})");
+                    _logger.LogInformation($"Seeded details for tutor: {tutor.User.Email} ({tutorsProcessed}/{tutors.Count})");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to seed details for tutor: {tutor.User.Email}");
+                    Console.WriteLine($"Failed to seed details for tutor: {tutor.User.Email} - Error: {ex.Message}");
+                }
+            }
+            
+            return tutorsProcessed;
         }
     }
 } 

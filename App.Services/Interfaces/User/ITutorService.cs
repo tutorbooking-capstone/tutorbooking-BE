@@ -8,6 +8,7 @@ namespace App.Services.Interfaces.User
     {
         // Tutor Registration
         Task<TutorResponse> RegisterAsTutorAsync(TutorRegistrationRequest request);
+        Task<TutorResponse> SeedRegisterAsTutorAsync(string userId, TutorRegistrationRequest request);
 
         // Profile Updates 
         Task UpdateLanguagesAsync(List<TutorLanguageDTO> languages);
