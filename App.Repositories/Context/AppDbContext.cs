@@ -121,7 +121,7 @@ namespace App.Repositories.Context
             // TutorLanguage -> Tutor (M:1)
             modelBuilder.Entity<TutorLanguage>()
                 .HasOne(tl => tl.Tutor)
-                .WithMany()
+                .WithMany(t => t.Languages)
                 .HasForeignKey(tl => tl.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
             #endregion
@@ -134,7 +134,7 @@ namespace App.Repositories.Context
             // TutorHashtag -> Tutor (M:1) - CASCADE DELETE
             modelBuilder.Entity<TutorHashtag>()
                 .HasOne(th => th.Tutor)
-                .WithMany()
+                .WithMany(t => t.Hashtags)
                 .HasForeignKey(th => th.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
@@ -187,14 +187,14 @@ namespace App.Repositories.Context
             // WeeklyAvailabilityPattern -> Tutor (M:1)
             modelBuilder.Entity<WeeklyAvailabilityPattern>()
                 .HasOne(w => w.Tutor)
-                .WithMany()
+                .WithMany(t => t.AvailabilityPatterns)
                 .HasForeignKey(w => w.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // BookingSlot -> Tutor (M:1)
             modelBuilder.Entity<BookingSlot>()
                 .HasOne(b => b.Tutor)
-                .WithMany()
+                .WithMany(t => t.BookingSlots)
                 .HasForeignKey(b => b.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
