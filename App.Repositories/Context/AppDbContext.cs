@@ -226,29 +226,10 @@ namespace App.Repositories.Context
                 .HasForeignKey(a => a.BookingSlotId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
-            #endregion
-
-        }
-    }
-
+			#endregion
 			#region Chat Configuration
 			modelBuilder.Entity<ChatMessage>(builder =>
 			{
-				//e.HasOne(m => m.ChatParticipant)
-				// .WithMany(m => m.ChatMessages)
-				// .HasForeignKey(m => m.ChatParticipantId)
-				// .OnDelete(DeleteBehavior.SetNull);
-
-				//e.HasMany(m => m.FileUploads)
-				// .WithOne()
-				// .HasForeignKey(m => m.Id)
-				// .OnDelete(DeleteBehavior.Cascade);
-
-				//e.HasOne(m => m.ChatConversation)
-				// .WithMany(m => m.ChatMessages)
-				// .HasForeignKey(m => m.ChatConversationId)
-				// .OnDelete(DeleteBehavior.SetNull);
-
 				builder.HasKey(m => m.Id);
 
 				builder.Property(m => m.AppUserId)
@@ -274,16 +255,6 @@ namespace App.Repositories.Context
 
 			modelBuilder.Entity<ChatConversation>(builder =>
 			{
-				//e.HasMany(c => c.ChatMessages)
-				// .WithOne()
-				// .HasForeignKey(m => m.ChatConversationId)
-				// .OnDelete(DeleteBehavior.Cascade);
-
-				//e.HasMany(c => c.ChatParticipants)
-				// .WithOne()
-				// .HasForeignKey(p => p.ChatConversationId)
-				// .OnDelete(DeleteBehavior.Cascade);
-
 				builder.HasKey(c => c.Id);
 
 				builder.HasMany(c => c.AppUsers)

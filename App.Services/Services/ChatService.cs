@@ -3,6 +3,7 @@ using App.Core.Constants;
 using App.DTOs.ChatDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Chat;
+using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using CloudinaryDotNet.Actions;
@@ -109,7 +110,7 @@ namespace App.Services.Services
 			var users = await _unitOfWork.GetRepository<AppUser>().ExistEntities()
 				.Where(x => request.ParticipantUserIds.Contains(x.Id))
 				.ToListAsync();
-			if (users.Count != 2)
+			if (users.Count() != 2)
 				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
 
 			conversation.AppUsers = users;

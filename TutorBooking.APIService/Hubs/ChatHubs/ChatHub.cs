@@ -8,7 +8,6 @@ using System.Security.Claims;
 
 namespace TutorBooking.APIService.Hubs.ChatHubs
 {
-	
 	public class ChatHub : Hub<IChatClient>
 	{
 		private IChatService _chatService;
@@ -28,9 +27,8 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 				{
 					UserId = userId,
 					ConnectionId = Context.ConnectionId,
-					//Role = identity.RoleClaimType.ToRoleEnum()
 				};
-				ConnectionMapper.SetConnectedUser(userId, user);
+				ConnectionMapper.Set(userId, user);
 				await Clients.Client(Context.ConnectionId).OnConnected("CONNECTED_TO_CHATHUB");
 			}
 			await base.OnConnectedAsync();
@@ -41,7 +39,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			var userId = GetUserId();
 			if (userId != null)
 			{
-				var user = ConnectionMapper.GetConnectedUser(userId);
+				var user = ConnectionMapper.Get(userId);
 				if (user != null)
 					ConnectionMapper.RemoveConnectedUser(userId);
 			}
@@ -53,27 +51,24 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			try
 			{
 				var userId = GetUserId();
-				if (userId != null)
+				if (userId == null) return;
+				var response = await _chatService.SendMessageAsync(new()
 				{
-					var response = await _chatService.SendMessageAsync(new()
-					{
-						SenderUserId = userId,
-						ReceiverUserId = receiverUserId,
-						TextMessage = textMessage
-					});
+					SenderUserId = userId,
+					ReceiverUserId = receiverUserId,
+					TextMessage = textMessage
+				});
 
-					var receiver = ConnectionMapper.GetConnectedUser(receiverUserId);
-					if (receiver != null)
-						Task.Run(() => Clients.Client(receiver.ConnectionId).ReceiveMessage(true, response));
-				}
+				if (ConnectionMapper.Contains(receiverUserId))
+					Task.Run(() => Clients.Client(ConnectionMapper.Get(receiverUserId).ConnectionId).ReceiveMessage(true, response));
+			
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.ToString());
-				await Clients.Client(ConnectionMapper.GetConnectedUser(GetUserId()).ConnectionId).ReceiveMessage(false, ex.Message);
+				await Clients.Client(ConnectionMapper.Get(GetUserId()).ConnectionId).ReceiveMessage(false, ex.Message);
 			}
 		}
-
 
 		private string? GetUserId()
 		{
@@ -92,9 +87,5 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 				return null;
 			}	
 		}
-
-
 	}
-
-
 }

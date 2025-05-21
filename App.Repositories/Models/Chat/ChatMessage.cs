@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Utils;
+using App.Repositories.Models.User;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

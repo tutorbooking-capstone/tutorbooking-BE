@@ -9,6 +9,7 @@ namespace App.DTOs.ChatDTOs
 {
 	public class ChatConversationDTO
 	{
+		public string Id { get; set; } = string.Empty;
 		public ICollection<ChatMessageDTO> Messages { get; set; } = new List<ChatMessageDTO>();
 		public ICollection<ChatParticipantDTO> Participants { get; set; } = new List<ChatParticipantDTO>();
 	}
@@ -18,7 +19,7 @@ namespace App.DTOs.ChatDTOs
 		public static ChatConversationDTO ToChatConversationDTO(this ChatConversation entity)
 		{
 			var response = new ChatConversationDTO();
-
+			response.Id = entity.Id;
 			foreach (var message in entity.ChatMessages)
 			{
 				response.Messages.Add(message.ToChatMessageDTO());

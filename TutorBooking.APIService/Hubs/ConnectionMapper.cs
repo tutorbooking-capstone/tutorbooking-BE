@@ -6,15 +6,26 @@ namespace TutorBooking.APIService.Hubs
 	{
 		public static Dictionary<string, ConnectedUser> _connectionMap = new Dictionary<string, ConnectedUser>();
 
-
-		public static ConnectedUser? GetConnectedUser(string userId)
+		public static ConnectedUser? Get(string userId)
 		{
-			return _connectionMap[userId];
+			try
+			{
+				return _connectionMap[userId];
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
 		}
 
-		public static void SetConnectedUser(string userId, ConnectedUser connectedUser)
+		public static void Set(string userId, ConnectedUser connectedUser)
 		{
 			_connectionMap[userId] = connectedUser;
+		}
+
+		public static bool Contains(string userId)
+		{
+			return _connectionMap.ContainsKey(userId);
 		}
 
 		public static void RemoveConnectedUser(string userId)
@@ -28,6 +39,5 @@ namespace TutorBooking.APIService.Hubs
 	{
 		public string UserId { get; set; }
 		public string ConnectionId { get; set; }
-		public Role Role { get; set; }
 	}
 }
