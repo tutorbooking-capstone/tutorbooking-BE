@@ -326,6 +326,22 @@
   },
   {
     "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
+    "Method": "UpdateTutorInfo",
+    "RelativePath": "api/profile/tutor-info",
+    "HttpMethod": "PATCH",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "App.DTOs.AppUserDTOs.TutorDTOs.UpdateTutorInfoDTO",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "TutorBooking.APIService.Controllers.ProfileController",
     "Method": "GetTutorRegistrationProfile",
     "RelativePath": "api/profile/tutor-register-profile",
     "HttpMethod": "GET",

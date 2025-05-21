@@ -164,6 +164,36 @@ namespace App.Services.Services.User
             return user.ToTutorRegistrationProfileResponse();
         }
 
+        private async Task<Tutor> GetCurrentTutor()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutorRepository = _unitOfWork.GetRepository<Tutor>();
+            var tutor = await tutorRepository.ExistEntities()
+                .FirstOrDefaultAsync(t => t.UserId == userId);
 
+            if (tutor == null)
+                throw new InvalidOperationException("User is not a tutor");
+
+            return tutor;
+        }
+
+        public async Task UpdateTutorInfoAsync(UpdateTutorInfoDTO request)
+        {
+            var tutor = await GetCurrentTutor();
+            
+            var updatedFields = tutor.UpdateTutorProfile(
+                request.NickName,
+                request.Brief,
+                request.Description,
+                request.TeachingMethod
+            );
+
+            if (updatedFields.Length > 0)
+            {
+                var tutorRepository = _unitOfWork.GetRepository<Tutor>();
+                tutorRepository.UpdateFields(tutor, updatedFields);
+                await _unitOfWork.SaveAsync();
+            }
+        }
     }
 }
