@@ -60,13 +60,13 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 				});
 
 				if (ConnectionMapper.Contains(receiverUserId))
-					Task.Run(() => Clients.Client(ConnectionMapper.Get(receiverUserId).ConnectionId).ReceiveMessage(true, response));
+					Task.Run(() => Clients.Client(ConnectionMapper.Get(receiverUserId).ConnectionId).ReceiveMessage(200, response));
 			
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.ToString());
-				await Clients.Client(ConnectionMapper.Get(GetUserId()).ConnectionId).ReceiveMessage(false, ex.Message);
+				await Clients.Client(ConnectionMapper.Get(GetUserId()).ConnectionId).ReceiveMessage(500, ex.Message);
 			}
 		}
 
