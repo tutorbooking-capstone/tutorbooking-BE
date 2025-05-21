@@ -1,4 +1,6 @@
-﻿namespace App.DTOs.AuthDTOs
+﻿using App.Repositories.Models.User;
+
+namespace App.DTOs.AuthDTOs
 {
     public class TokenResponse
     {
@@ -16,6 +18,8 @@
         public string PhoneNumber { get; set; } = string.Empty;
         public string ProfileImageUrl { get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
+        public DateTime? DateOfBirth { get; set; }
+        public Gender Gender { get; set; } 
         public DateTimeOffset CreatedTime { get; set; }
     }
 }

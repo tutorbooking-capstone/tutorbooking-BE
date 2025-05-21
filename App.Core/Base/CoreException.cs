@@ -120,4 +120,22 @@ namespace App.Core.Base
             };
         }
     }
+
+    public class UnauthorizedRoleException : ErrorException
+    {
+        public UnauthorizedRoleException(string userId, IEnumerable<string> userRoles, IEnumerable<string> requiredRoles)
+            : base(
+                statusCode: StatusCodes.Status403Forbidden,
+                errorCode: "unauthorized_role",
+                message: "Bạn không có quyền truy cập tài nguyên này.")
+        {
+            this.ErrorDetail.ErrorMessage = new Dictionary<string, object>
+            {
+                { "userId", userId },
+                { "userRoles", userRoles },
+                { "requiredRoles", requiredRoles },
+                { "message", $"Người dùng có vai trò {string.Join(", ", userRoles)} nhưng yêu cầu vai trò {string.Join(", ", requiredRoles)}." }
+            };
+        }
+    }
 }

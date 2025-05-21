@@ -5,46 +5,68 @@ using App.DTOs.HashtagDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
-using App.Services.Interfaces;
+using App.Repositories.Models.Papers;
+using Microsoft.Extensions.Logging;
+using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services.User
 {
-    public class TutorService : ITutorService
+    public partial class TutorService : ITutorService
     {
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly IScheduleService _scheduleService;
+        private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
-            IUserService userService)
+            IUserService userService,
+            IScheduleService scheduleService,
+            ILogger<TutorService> logger)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _scheduleService = scheduleService;
+            _logger = logger;
         }
         #endregion
 
-        #region Private Helper
+        #region Private Helpers
         private async Task<AppUser> GetUserToCreateTutor(string userId)
         {
             var appUser = await _userService.GetCurrentUserAsync();
-
-            //Check is Tutor exist with userId
-            var tutorRepo = _unitOfWork.GetRepository<Tutor>();
-            var existingTutor = await tutorRepo.ExistEntities()
+            
+            // Check if tutor already exists
+            var existingTutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
                 .FirstOrDefaultAsync(t => t.UserId == userId);
 
             if (existingTutor != null)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
-                    "Người dùng này đã được đăng ký làm gia sư.");
+                    "Người dùng đã đăng ký làm gia sư");
 
             return appUser;
+        }
+
+        private async Task ProcessHashtags(string userId, List<string>? hashtagIds)
+        {
+            if (hashtagIds == null || !hashtagIds.Any()) return;
+
+            await UpdateTutorHashtagsAsync(
+                userId, 
+                new UpdateTutorHashtagListRequest 
+                { 
+                    HashtagIds = hashtagIds 
+                }
+            );
         }
 
         private async Task<Tutor> GetTutorByIdAsync(string tutorId, bool includeUser = false)
@@ -110,7 +132,6 @@ namespace App.Services.Services.User
             
             foreach (var requestedLang in requestedLanguages)
             {
-                // Handle updates for existing languages
                 if (existingLangMap.TryGetValue(requestedLang.LanguageCode, out var existingLang))
                 {
                     UpdateExistingLanguageIfNeeded(existingLang, requestedLang);
@@ -158,6 +179,113 @@ namespace App.Services.Services.User
             if (hashtagsToAdd.Any())
                 tutorHashtagRepo.InsertRange(hashtagsToAdd);
         }
+
+        public async Task<Dictionary<string, List<TutorCardDTO>>> GetTopTutorsByLanguagesAsync()
+        {
+            // Step 1: First get top 7 languages in a single query - push computation to database
+            var popularLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .GroupBy(tl => tl.LanguageCode)
+                .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(7)
+                .Select(x => x.LanguageCode)
+                .ToListAsync();
+
+            // Step 2: Get only tutors that teach these popular languages (with appropriate verification status)
+            var relevantTutors = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Where(t => t.VerificationStatus != VerificationStatus.Basic)
+                .Include(t => t.User)
+                .Where(t => _unitOfWork.GetRepository<TutorLanguage>()
+                    .ExistEntities()
+                    .Any(tl => tl.TutorId == t.UserId && popularLanguages.Contains(tl.LanguageCode)))
+                .ToListAsync();
+
+            var tutorIds = relevantTutors.Select(t => t.UserId).ToList();
+            
+            // Step 3: Get languages only for these tutors and only for popular languages
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tutorIds.Contains(tl.TutorId))
+                .ToListAsync();
+
+            // Build maps once to avoid redundant processing
+            var tutorMap = relevantTutors.ToDictionary(t => t.UserId);
+            var tutorLanguagesMap = tutorLanguages
+                .GroupBy(tl => tl.TutorId)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new Dictionary<string, List<TutorCardDTO>>();
+
+            // Process each language in parallel to improve performance
+            Parallel.ForEach(popularLanguages, languageCode =>
+            {
+                var tutorIdsForLanguage = tutorLanguages
+                    .Where(tl => tl.LanguageCode == languageCode)
+                    .Select(tl => tl.TutorId)
+                    .ToList();
+
+                // Get tutors with proficiency info for the current language
+                var languageTutorsWithProficiency = tutorIdsForLanguage
+                    .Select(id => new {
+                        Tutor = tutorMap[id],
+                        Proficiency = tutorLanguages
+                            .Where(tl => tl.TutorId == id && tl.LanguageCode == languageCode)
+                            .Select(tl => tl.Proficiency)
+                            .FirstOrDefault()
+                    })
+                    .ToList();
+
+                // Get top 6 tutors by "rating"
+                var topTutors = languageTutorsWithProficiency
+                    .Select(x => {
+                        var mockRating = GetMockRating(x.Tutor, x.Proficiency);
+                        return new {
+                            x.Tutor,
+                            MockRating = mockRating
+                        };
+                    })
+                    .OrderByDescending(x => x.MockRating)
+                    .Take(6)
+                    .Select(x => x.Tutor.ToTutorCardDTO(
+                        tutorLanguagesMap.TryGetValue(x.Tutor.UserId, out var languages)
+                            ? languages
+                            : new List<TutorLanguage>(),
+                        x.MockRating
+                    ))
+                    .ToList();
+
+                lock(result)
+                {
+                    result[languageCode] = topTutors;
+                }
+            });
+
+            return result;
+        }
+
+        // Remove this method when actual rating system is implemented
+        private double GetMockRating(Tutor tutor, int languageProficiency)
+        {
+            // Mock rating formula:
+            // - Base rating from 3.5 to 4.5
+            // - Add bonus from verification status (0.0 to 0.5)
+            // - Add bonus from language proficiency (0.0 to 0.5)
+            
+            // Generate a stable pseudo-random value based on tutor ID
+            var random = new Random(tutor.UserId.GetHashCode());
+            double baseRating = 3.5 + random.NextDouble();
+            
+            // Add bonus for verification status
+            double verificationBonus = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy ? 0.5 : 0.0;
+            
+            // Add bonus for language proficiency
+            double proficiencyBonus = languageProficiency / 14.0; // Max 0.5 for proficiency 7
+            
+            double finalRating = Math.Min(5.0, baseRating + verificationBonus + proficiencyBonus);
+            return Math.Round(finalRating, 2);
+        }
         #endregion
 
         public async Task<TutorResponse> RegisterAsTutorAsync(TutorRegistrationRequest request)
@@ -165,28 +293,40 @@ namespace App.Services.Services.User
             var userId = _userService.GetCurrentUserId();
             var appUser = await GetUserToCreateTutor(userId);
 
+            var updatedUserFields = appUser.UpdateBasicInformation(
+                request.FullName,
+                request.DateOfBirth,
+                request.Gender,
+                request.Timezone);
+
+            var newTutor = request.ToTutorProfile(appUser);
+
             return await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                appUser.UpdateProfile(
-                    request.FullName,
-                    request.PhoneNumber);
+                if (updatedUserFields.Length > 0)
+                    _unitOfWork.GetRepository<AppUser>()
+                        .UpdateFields(appUser, updatedUserFields);
 
-                var newTutor = appUser.BecameTutor(userId);
                 _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
-                await _unitOfWork.SaveAsync();
 
-                var tutorApplication = TutorApplication.Create(newTutor.UserId);
+                await ProcessHashtags(userId, request.HashtagIds);
+                await UpdateTutorLanguagesAsync(userId, request.Languages);
+
+                var tutorApplication = TutorApplication.Create(userId);
                 _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
-                await _unitOfWork.SaveAsync();
 
-                await _userService.AssignRoleAsync(userId, Role.Tutor.ToStringRole());
+                await _unitOfWork.SaveAsync();
+                await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
 
                 return newTutor.ToTutorResponse();
             }, 
             onError: ex => 
             {
-                // Custom error handling (e.g., logging)
-                Console.WriteLine($"Error during tutor registration: {ex.Message}");
+                _logger.LogError(ex, "Tutor registration failed for user {UserId}", userId);
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    "Tutor registration failed: " + ex.Message);
             });
         }
 
@@ -206,8 +346,35 @@ namespace App.Services.Services.User
 
         public async Task<TutorResponse> GetByIdAsync(string id)
         {
-            var tutor = await GetTutorByIdAsync(id, includeUser: true);
-            return tutor.ToTutorResponse();
+            var tutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(t => t.UserId == id.Trim());
+
+            if (tutor == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    $"Tutor with ID {id} not found.");
+
+            // Get availability patterns and booking slots using ScheduleService
+            var patterns = await _scheduleService.GetTutorAvailabilityPatternsAsync(id);
+            var bookings = await _scheduleService.GetTutorBookingSlotsAsync(id);
+
+            // Get tutor hashtags
+            var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>()
+                .ExistEntities()
+                .Where(th => th.TutorId == id)
+                .Include(th => th.Hashtag)
+                .ToListAsync();
+
+            // Get tutor languages
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tl.TutorId == id)
+                .ToListAsync();
+
+            return tutor.ToDetailedTutorResponse(patterns, bookings, tutorHashtags, tutorLanguages);
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
@@ -240,6 +407,43 @@ namespace App.Services.Services.User
                 _unitOfWork.GetRepository<Tutor>().UpdateFields(tutor, modifiedProperties);
                 await _unitOfWork.SaveAsync();
             }
+        }
+
+        public async Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutor = await GetTutorByIdAsync(userId);
+            var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>()
+                .ExistEntities()
+                .Where(th => th.TutorId == userId)
+                .Include(th => th.Hashtag)
+                .ToListAsync();
+
+            return tutorHashtags.ToDTOs();
+        }
+
+        public async Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync()
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutor = await GetTutorByIdAsync(userId);
+            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .Where(tl => tl.TutorId == userId)
+                .ToListAsync();
+
+            return tutorLanguages.ToDTOs();
+        }
+
+        public async Task<List<TutorCardDTO>> GetTutorCardListAsync()
+        {
+            var tutorsByLanguage = await GetTopTutorsByLanguagesAsync();
+            
+            // Use LINQ for better performance and readability
+            return tutorsByLanguage.Values
+                .SelectMany(tutors => tutors)
+                .GroupBy(t => t.TutorId)
+                .Select(g => g.First())
+                .ToList();
         }
     }
 }

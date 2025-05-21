@@ -1,3 +1,4 @@
+using App.DTOs.HashtagDTOs;
 using App.Repositories.Models;
 using App.Repositories.UoW;
 using Microsoft.EntityFrameworkCore;
@@ -15,20 +16,31 @@ namespace App.Services.Services
             _unitOfWork = unitOfWork;
         }
         #endregion
-        
-        // public async Task SeedHashtagsAsync()
-        // {
-        //     var repo = _unitOfWork.GetRepository<Hashtag>();
-        //     var existingCount = await repo.ExistEntities().CountAsync();
-            
-        //     if (existingCount > 0) return;
 
-        //     var hashtags = HashtagSeeder.SeedHashtags();
-        //     repo.InsertRange(hashtags);
-        //     await _unitOfWork.SaveAsync();
-        // }
+        #region Seed Hashtags
+        public async Task SeedHashtagsAsync()
+        {
+            var repo = _unitOfWork.GetRepository<Hashtag>();
+            var existingCount = await repo.ExistEntities().CountAsync();
 
-        // public List<Hashtag> GetSeedHashtags()
-        //     => HashtagSeeder.SeedHashtags();
+            if (existingCount > 0) return;
+
+            var hashtags = HashtagSeeder.SeedHashtags();
+            repo.InsertRange(hashtags);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public List<Hashtag> GetSeedHashtags()
+            => HashtagSeeder.SeedHashtags();
+        #endregion
+
+        public async Task<List<HashtagResponse>> GetAllHashtagsAsync()
+        {
+            var hashtags = await _unitOfWork.GetRepository<Hashtag>()
+                .ExistEntities()
+                .ToListAsync();
+
+            return hashtags.ToHashtagResponseList();
+        }
     }
 } 

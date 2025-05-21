@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text.Json.Serialization;
 using System.Text;
 using App.Core;
-using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
+using TutorBooking.APIService.Middleware;
 
 namespace TutorBooking.APIService
 {
@@ -22,6 +22,7 @@ namespace TutorBooking.APIService
             services.ConfigSwagger();
             services.ConfigureValidation();
 			services.ConfigureSignalR();
+            services.ConfigureControllers();
 
             return services;
         }
@@ -173,6 +174,32 @@ namespace TutorBooking.APIService
         {
             services.AddControllers()
                 .ConfigureValidation();
+
+            return services;
+        }
+
+        public static IServiceCollection ConfigureFilters(this IServiceCollection services)
+        {
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<AuthorizationLogFilter>();
+            });
+
+            return services;
+        }
+
+        public static IServiceCollection ConfigureControllers(this IServiceCollection services)
+        {
+            services.AddControllers(options =>
+            {
+                options.Filters.Add<AuthorizationLogFilter>();
+            })
+            .ConfigureValidation()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                options.JsonSerializerOptions.WriteIndented = true;
+            });
 
             return services;
         }

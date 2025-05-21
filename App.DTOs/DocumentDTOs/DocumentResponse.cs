@@ -1,4 +1,4 @@
-﻿using App.Repositories.Models;
+﻿using App.Repositories.Models.Papers;
 using System;
 using System.Collections.Generic;
 

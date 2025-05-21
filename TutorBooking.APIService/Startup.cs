@@ -32,19 +32,29 @@ namespace TutorBooking.APIService
             services.AddAppAPIConfig(Configuration);
             #endregion
 
+            #region 3rd Party Libraries Config
+            services.AddMiniProfilerConfig();
+            #endregion
+
             #region Add Cors
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", builder =>
+                options.AddPolicy("AllowFrontend", builder =>
                 {
-                    builder.WithOrigins("https://localhost:7259")
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
+                    builder
+                        .WithOrigins(
+                            "http://localhost:5173", // Local development
+                            "https://ngoai-ngu-ngay.vercel.app" // Deployed frontend
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
                 });
             });
             #endregion
-		 }
 
+        }
+        //testd sadf
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             // Middleware handle logging, better for debug engineering :>>>
@@ -53,31 +63,40 @@ namespace TutorBooking.APIService
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI();
+
+                app.Use(async (context, next) =>
+                {
+                    if (context.Request.Path == "/")
+                    {
+
+                        context.Response.Redirect("/profiler/results");
+                        return;
+                    }
+                    await next();
+                });
             }
+
+            #region 3rd Party Libraries
+            app.UseMiniProfiler();
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            #endregion
 
             app.UseHttpsRedirection();
             app.UseRouting();
-            app.UseCors("AllowAll");
+            app.UseCors("AllowFrontend");
 
-			
-
-			app.UseRouting();
-			
-
-			// Exception handling middleware should come first to catch exceptions from subsequent middleware.
-			app.UseMiddleware<ExceptionMiddleware>(); // Correct: Placed early to handle exceptions globally.
-
+            // Exception handling middleware should come first to catch exceptions from subsequent middleware.
+            app.UseMiddleware<ExceptionMiddleware>(); // Correct: Placed early to handle exceptions globally.
             // Authentication must come before Authorization and custom permission checks.
             app.UseAuthentication(); // Correct: Establishes user identity.
-
+            
             // Authorization checks if the authenticated user has permission based on standard policies/roles.
             app.UseAuthorization(); // Correct: Must follow UseAuthentication.
+            // Custom Permission middleware performs additional checks, relying on the authenticated user.
+            app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
 
-			// Custom Permission middleware performs additional checks, relying on the authenticated user.
-			app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
-			
 
             app.UseEndpoints(endpoints =>
             {

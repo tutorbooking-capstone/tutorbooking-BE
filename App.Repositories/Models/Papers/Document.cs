@@ -2,19 +2,22 @@
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
 
-namespace App.Repositories.Models
+namespace App.Repositories.Models.Papers
 {
     public class Document : BaseEntity
     {
         public string ApplicationId { get; set; } = string.Empty;
         public string? StaffId { get; set; } = null; //Exist if the hardcopy document is uploaded by staff
+        public string? HardcopySubmitId { get; set; } = null; //Exist if the hardcopy document is uploaded by hardcopy submit
         public string Description { get; set; } = string.Empty; //Description of document by Tutor
         public bool IsVisibleToLearner { get; set; } = false; // Whether the document is visible to learners
 
+        public virtual Staff? Staff { get; set; }
+        public virtual TutorApplication? Application { get; set; }
+        public virtual HardcopySubmit? HardcopySubmit { get; set; }
         public virtual ICollection<DocumentFileUpload> DocumentFileUploads { get; set; } = new List<DocumentFileUpload>();
 
-        public virtual TutorApplication? Application { get; set; }
-        public virtual Staff? Staff { get; set; }
+
 
         #region Behavior
         public Expression<Func<Document, object>>[] UpdateVisibility(bool isVisibleToLearner)
@@ -43,7 +46,7 @@ namespace App.Repositories.Models
                 IsVisibleToLearner = isVisibleToLearner;
                 modifiedProperties.Add(x => x.IsVisibleToLearner);
             }
-                
+
             return modifiedProperties.ToArray();
         }
         #endregion

@@ -53,7 +53,9 @@ namespace App.Services.Services.User
                 <div>{{MainMessage}}</div>
                 <div class=""footer"">
                     <p>Nếu bạn không yêu cầu email này, vui lòng bỏ qua.</p>
-                    <p>© {{Year}} YourAppName. All rights reserved.</p>
+                    <p>© {{Year}} Ngoại Ngữ Ngay. All rights reserved.</p>
+                    <p>Địa chỉ: 123 Đường ABC, Quận XYZ, TP.HCM</p>
+                    <p><a href=""mailto:contact@yourdomain.com"">Liên hệ</a> | <a href=""https://yourdomain.com/unsubscribe?email={{EmailAddress}}"">Hủy đăng ký</a></p>
                 </div>
             </div>
         </body>
@@ -62,17 +64,24 @@ namespace App.Services.Services.User
         public async Task SendEmailAsync(string email, string subject, string greeting, string mainMessage)
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_emailSettings.SenderName ?? "App", _emailSettings.SenderEmail)); // Use SenderName from settings if available
-            message.To.Add(new MailboxAddress("Member", email)); // Consider using recipient name if available
+            message.From.Add(new MailboxAddress("Ngoại Ngữ Ngay", _emailSettings.SenderEmail));
+            message.To.Add(new MailboxAddress("Member", email));
             message.Subject = subject;
-
+            
+            // KHÔNG thêm Message-ID thủ công - MailKit đã tự tạo
+            // ĐÚNG: Thêm các header khác
+            message.Headers.Add("List-Unsubscribe", $"<mailto:unsubscribe@{_emailSettings.SenderEmail.Split('@')[1]}>");
+            message.Headers.Add("X-Priority", "1");
+            message.Headers.Add("Importance", "High");
+            
             var bodyBuilder = new BodyBuilder();
             string htmlBody = HtmlEmailTemplate
                 .Replace("{{Subject}}", subject)
                 .Replace("{{Greeting}}", greeting)
                 .Replace("{{MainMessage}}", mainMessage)
-                .Replace("{{Year}}", DateTime.UtcNow.Year.ToString()); // Replace dynamic year
-
+                .Replace("{{Year}}", DateTime.UtcNow.Year.ToString())
+                .Replace("{{EmailAddress}}", email); // Thêm biến email cho link unsubscribe
+        
             bodyBuilder.HtmlBody = htmlBody;
             message.Body = bodyBuilder.ToMessageBody();
 
@@ -85,8 +94,8 @@ namespace App.Services.Services.User
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error sending email to {email}: {ex.Message}"); // Basic console logging
-                throw; // Re-throw the original exception for now
+                Console.WriteLine($"Error sending email to {email}: {ex.Message}");
+                throw;
             }
             finally
             {

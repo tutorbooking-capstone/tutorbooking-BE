@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.Repositories.Models.Papers;
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
 

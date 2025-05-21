@@ -23,12 +23,15 @@ namespace App.Services
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserService, UserService>();
-
+            services.AddScoped<IProfileService, ProfileService>();
+            
             services.AddScoped<ITutorService, TutorService>();
+            services.AddScoped<ILearnerService, LearnerService>();
             #endregion
 
             #region Another Services
             services.AddScoped<ISeedService, SeedService>();
+            services.AddScoped<IScheduleService, ScheduleService>();
 
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();
@@ -41,6 +44,7 @@ namespace App.Services
             #region Provider Services
             services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
             services.AddScoped<ICloudinaryProvider, CloudinaryProvider>();
+            services.AddScoped<IDatabaseService, DatabaseService>();
             #endregion
 
             services.AddHttpContextAccessor();

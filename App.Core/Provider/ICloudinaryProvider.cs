@@ -6,5 +6,6 @@ namespace App.Core.Provider
     {
         Task<string> UploadDocumentAsync(IFormFile file);
         Task<bool> DeleteImageAsync(string publicId);
+        Task<(string Url, string PublicId)> UploadImageAsync(IFormFile file, string? existingPublicId = null);
     }
 }

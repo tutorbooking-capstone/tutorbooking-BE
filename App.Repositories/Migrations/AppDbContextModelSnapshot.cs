@@ -22,123 +22,6 @@ namespace App.Repositories.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("App.Repositories.Models.AppUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("access_failed_count");
-
-                    b.Property<DateTime?>("CodeGeneratedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("code_generated_time");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text")
-                        .HasColumnName("concurrency_stamp");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("email");
-
-                    b.Property<int?>("EmailCode")
-                        .HasColumnType("integer")
-                        .HasColumnName("email_code");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("email_confirmed");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("full_name");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("lockout_enabled");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("lockout_end");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_email");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_user_name");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("text")
-                        .HasColumnName("password_hash");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("text")
-                        .HasColumnName("phone_number");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("phone_number_confirmed");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("text")
-                        .HasColumnName("security_stamp");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("two_factor_enabled");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("user_name");
-
-                    b.HasKey("Id")
-                        .HasName("pk___users");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("email_index");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("user_name_index");
-
-                    b.ToTable("__users", (string)null);
-                });
-
             modelBuilder.Entity("App.Repositories.Models.ApplicationRevision", b =>
                 {
                     b.Property<string>("Id")
@@ -265,99 +148,82 @@ namespace App.Repositories.Migrations
                     b.ToTable("blogs");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>
+            modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
+                {
+                    b.Property<string>("DocumentId")
+                        .HasColumnType("text")
+                        .HasColumnName("document_id");
+
+                    b.Property<string>("FileUploadId")
+                        .HasColumnType("text")
+                        .HasColumnName("file_upload_id");
+
+                    b.HasKey("DocumentId", "FileUploadId");
+
+                    b.HasIndex("FileUploadId")
+                        .HasDatabaseName("ix_document_file_uploads_file_upload_id");
+
+                    b.ToTable("document_file_uploads");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<string>("CreatedBy")
+                    b.Property<string>("CloudinaryUrl")
+                        .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("created_by");
+                        .HasColumnName("cloudinary_url");
 
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
+                    b.Property<string>("ContentType")
+                        .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("deleted_by");
+                        .HasColumnName("content_type");
 
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
 
-                    b.Property<string>("LastUpdatedBy")
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
+                        .HasColumnName("original_file_name");
 
                     b.HasKey("Id")
-                        .HasName("pk_chat_conversations");
+                        .HasName("pk_file_upload");
 
-                    b.ToTable("chat_conversations");
+                    b.ToTable("file_upload");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
+            modelBuilder.Entity("App.Repositories.Models.Hashtag", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<string>("AppUserId")
+                    b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("app_user_id");
+                        .HasColumnName("description");
 
-                    b.Property<string>("ChatConversationId")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("chat_conversation_id");
+                        .HasColumnName("name");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<string>("TextMessage")
-                        .HasColumnType("text")
-                        .HasColumnName("text_message");
+                    b.Property<int>("UsageCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("usage_count");
 
                     b.HasKey("Id")
-                        .HasName("pk_chat_messages");
+                        .HasName("pk_hashtags");
 
-                    b.HasIndex("AppUserId")
-                        .HasDatabaseName("ix_chat_messages_app_user_id");
-
-                    b.HasIndex("ChatConversationId")
-                        .HasDatabaseName("ix_chat_messages_chat_conversation_id");
-
-                    b.ToTable("chat_messages");
+                    b.ToTable("hashtags");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Document", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.Document", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
@@ -389,6 +255,10 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("description");
 
+                    b.Property<string>("HardcopySubmitId")
+                        .HasColumnType("text")
+                        .HasColumnName("hardcopy_submit_id");
+
                     b.Property<bool>("IsVisibleToLearner")
                         .HasColumnType("boolean")
                         .HasColumnName("is_visible_to_learner");
@@ -411,94 +281,72 @@ namespace App.Repositories.Migrations
                     b.HasIndex("ApplicationId")
                         .HasDatabaseName("ix_documents_application_id");
 
+                    b.HasIndex("HardcopySubmitId")
+                        .HasDatabaseName("ix_documents_hardcopy_submit_id");
+
                     b.HasIndex("StaffId");
 
                     b.ToTable("documents");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
-                {
-                    b.Property<string>("DocumentId")
-                        .HasColumnType("text")
-                        .HasColumnName("document_id");
-
-                    b.Property<string>("FileUploadId")
-                        .HasColumnType("text")
-                        .HasColumnName("file_upload_id");
-
-                    b.HasKey("DocumentId", "FileUploadId");
-
-                    b.HasIndex("FileUploadId")
-                        .HasDatabaseName("ix_document_file_uploads_file_upload_id");
-
-                    b.ToTable("document_file_uploads");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.HardcopySubmit", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<string>("ChatMessageId")
-                        .HasColumnType("text")
-                        .HasColumnName("chat_message_id");
-
-                    b.Property<string>("CloudinaryUrl")
+                    b.Property<string>("ApplicationId")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("cloudinary_url");
+                        .HasColumnName("application_id");
 
-                    b.Property<string>("ContentType")
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<string>("StaffNotes")
                         .IsRequired()
                         .HasColumnType("text")
-                        .HasColumnName("content_type");
+                        .HasColumnName("staff_notes");
 
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_size");
-
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("original_file_name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_file_upload");
-
-                    b.HasIndex("ChatMessageId")
-                        .HasDatabaseName("ix_file_upload_chat_message_id");
-
-                    b.ToTable("file_upload");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Hashtag", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<int>("UsageCount")
+                    b.Property<int>("Status")
                         .HasColumnType("integer")
-                        .HasColumnName("usage_count");
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_hashtags");
+                        .HasName("pk_hardcopy_submits");
 
-                    b.ToTable("hashtags");
+                    b.HasIndex("ApplicationId")
+                        .HasDatabaseName("ix_hardcopy_submits_application_id");
+
+                    b.ToTable("hardcopy_submits");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.TutorApplication", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.TutorApplication", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
@@ -559,6 +407,104 @@ namespace App.Repositories.Migrations
                     b.ToTable("tutor_applications");
                 });
 
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("BookingSlotId")
+                        .HasColumnType("text")
+                        .HasColumnName("booking_slot_id");
+
+                    b.Property<int>("DayInWeek")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_in_week");
+
+                    b.Property<int>("SlotIndex")
+                        .HasColumnType("integer")
+                        .HasColumnName("slot_index");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<string>("WeeklyPatternId")
+                        .HasColumnType("text")
+                        .HasColumnName("weekly_pattern_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_availability_slots");
+
+                    b.HasIndex("BookingSlotId")
+                        .HasDatabaseName("ix_availability_slots_booking_slot_id");
+
+                    b.HasIndex("WeeklyPatternId")
+                        .HasDatabaseName("ix_availability_slots_weekly_pattern_id");
+
+                    b.ToTable("availability_slots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("LearnerId")
+                        .HasColumnType("text")
+                        .HasColumnName("learner_id");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text")
+                        .HasColumnName("note");
+
+                    b.Property<int?>("RepeatForWeeks")
+                        .HasColumnType("integer")
+                        .HasColumnName("repeat_for_weeks");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("start_date");
+
+                    b.Property<string>("TutorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_booking_slots");
+
+                    b.HasIndex("LearnerId");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("booking_slots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("AppliedFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("applied_from");
+
+                    b.Property<string>("TutorId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("tutor_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_weekly_availability_patterns");
+
+                    b.HasIndex("TutorId");
+
+                    b.ToTable("weekly_availability_patterns");
+                });
+
             modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
                 {
                     b.Property<string>("TutorId")
@@ -609,6 +555,166 @@ namespace App.Repositories.Migrations
                     b.ToTable("tutor_languages");
                 });
 
+            modelBuilder.Entity("App.Repositories.Models.User.AppUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("access_failed_count");
+
+                    b.Property<DateTime?>("CodeGeneratedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("code_generated_time");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text")
+                        .HasColumnName("concurrency_stamp");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("email");
+
+                    b.Property<int?>("EmailCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("email_code");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email_confirmed");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
+
+                    b.Property<int>("Gender")
+                        .HasColumnType("integer")
+                        .HasColumnName("gender");
+
+                    b.Property<string>("LastUpdatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("lockout_enabled");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lockout_end");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_email");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("normalized_user_name");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("text")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("text")
+                        .HasColumnName("phone_number");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("phone_number_confirmed");
+
+                    b.Property<string>("ProfilePicturePublicId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("profile_picture_public_id");
+
+                    b.Property<string>("ProfilePictureUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("profile_picture_url");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("text")
+                        .HasColumnName("security_stamp");
+
+                    b.Property<string>("Timezone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("timezone");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("boolean")
+                        .HasColumnName("two_factor_enabled");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("user_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk___users");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("email_index");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("user_name_index");
+
+                    b.ToTable("__users", (string)null);
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Learner", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("LanguageCode")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("language_code");
+
+                    b.Property<int>("ProficiencyLevel")
+                        .HasColumnType("integer")
+                        .HasColumnName("proficiency_level");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("learners");
+                });
+
             modelBuilder.Entity("App.Repositories.Models.User.Staff", b =>
                 {
                     b.Property<string>("UserId")
@@ -630,9 +736,29 @@ namespace App.Repositories.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("became_tutor_at");
 
+                    b.Property<string>("Brief")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("brief");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
                     b.Property<DateTime>("LastStatusUpdateAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_status_update_at");
+
+                    b.Property<string>("NickName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("nick_name");
+
+                    b.Property<string>("TeachingMethod")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("teaching_method");
 
                     b.Property<int>("VerificationStatus")
                         .HasColumnType("integer")
@@ -641,21 +767,6 @@ namespace App.Repositories.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("tutors");
-                });
-
-            modelBuilder.Entity("AppUserChatConversation", b =>
-                {
-                    b.Property<string>("AppUsersId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChatConversationId")
-                        .HasColumnType("text");
-
-                    b.HasKey("AppUsersId", "ChatConversationId");
-
-                    b.HasIndex("ChatConversationId");
-
-                    b.ToTable("UserConversations", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -824,7 +935,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.ApplicationRevision", b =>
                 {
-                    b.HasOne("App.Repositories.Models.TutorApplication", "Application")
+                    b.HasOne("App.Repositories.Models.Papers.TutorApplication", "Application")
                         .WithMany()
                         .HasForeignKey("ApplicationId")
                         .OnDelete(DeleteBehavior.SetNull)
@@ -845,7 +956,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", "AppUser")
+                    b.HasOne("App.Repositories.Models.User.AppUser", "AppUser")
                         .WithMany()
                         .HasForeignKey("AppUserId")
                         .HasConstraintName("fk_blogs___users_app_user_id");
@@ -853,55 +964,14 @@ namespace App.Repositories.Migrations
                     b.Navigation("AppUser");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
-                {
-                    b.HasOne("App.Repositories.Models.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_chat_messages___users_app_user_id");
-
-                    b.HasOne("App.Repositories.Models.Chat.ChatConversation", "ChatConversation")
-                        .WithMany("ChatMessages")
-                        .HasForeignKey("ChatConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_chat_messages_chat_conversations_chat_conversation_id");
-
-                    b.Navigation("AppUser");
-
-                    b.Navigation("ChatConversation");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Document", b =>
-                {
-                    b.HasOne("App.Repositories.Models.TutorApplication", "Application")
-                        .WithMany()
-                        .HasForeignKey("ApplicationId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired()
-                        .HasConstraintName("fk_documents__tutor_applications_application_id");
-
-                    b.HasOne("App.Repositories.Models.User.Staff", "Staff")
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_documents__staffs_staff_temp_id1");
-
-                    b.Navigation("Application");
-
-                    b.Navigation("Staff");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
                 {
-                    b.HasOne("App.Repositories.Models.Document", "Document")
+                    b.HasOne("App.Repositories.Models.Papers.Document", "Document")
                         .WithMany("DocumentFileUploads")
                         .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_document_file_uploads_documents_document_id");
+                        .HasConstraintName("fk_document_file_uploads__documents_document_id");
 
                     b.HasOne("App.Repositories.Models.FileUpload", "FileUpload")
                         .WithMany()
@@ -915,22 +985,105 @@ namespace App.Repositories.Migrations
                     b.Navigation("FileUpload");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.Document", b =>
                 {
-                    b.HasOne("App.Repositories.Models.Chat.ChatMessage", null)
-                        .WithMany("FileUploads")
-                        .HasForeignKey("ChatMessageId")
-                        .HasConstraintName("fk_file_upload_chat_messages_chat_message_id");
+                    b.HasOne("App.Repositories.Models.Papers.TutorApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_documents__tutor_applications_application_id");
+
+                    b.HasOne("App.Repositories.Models.Papers.HardcopySubmit", "HardcopySubmit")
+                        .WithMany("Documents")
+                        .HasForeignKey("HardcopySubmitId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_documents__hardcopy_submits_hardcopy_submit_id");
+
+                    b.HasOne("App.Repositories.Models.User.Staff", "Staff")
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_documents__staffs_staff_temp_id1");
+
+                    b.Navigation("Application");
+
+                    b.Navigation("HardcopySubmit");
+
+                    b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.TutorApplication", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.HardcopySubmit", b =>
+                {
+                    b.HasOne("App.Repositories.Models.Papers.TutorApplication", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired()
+                        .HasConstraintName("fk_hardcopy_submits__tutor_applications_application_id");
+
+                    b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Papers.TutorApplication", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany()
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_applications__tutors_tutor_temp_id");
+                        .HasConstraintName("fk_tutor_applications__tutors_tutor_temp_id1");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
+                {
+                    b.HasOne("App.Repositories.Models.Scheduling.BookingSlot", "BookingSlot")
+                        .WithMany("Slots")
+                        .HasForeignKey("BookingSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_availability_slots__booking_slots_booking_slot_id");
+
+                    b.HasOne("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", "WeeklyPattern")
+                        .WithMany("Slots")
+                        .HasForeignKey("WeeklyPatternId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_availability_slots__weekly_availability_patterns_weekly_patter~");
+
+                    b.Navigation("BookingSlot");
+
+                    b.Navigation("WeeklyPattern");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
+                {
+                    b.HasOne("App.Repositories.Models.User.Learner", "Learner")
+                        .WithMany("BookingSlots")
+                        .HasForeignKey("LearnerId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_booking_slots__learners_learner_temp_id");
+
+                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_booking_slots__tutors_tutor_temp_id");
+
+                    b.Navigation("Learner");
+
+                    b.Navigation("Tutor");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
+                {
+                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
+                        .WithMany()
+                        .HasForeignKey("TutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_weekly_availability_patterns__tutors_tutor_temp_id4");
 
                     b.Navigation("Tutor");
                 });
@@ -949,7 +1102,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id1");
+                        .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id2");
 
                     b.Navigation("Hashtag");
 
@@ -963,14 +1116,26 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id2");
+                        .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id3");
 
                     b.Navigation("Tutor");
                 });
 
+            modelBuilder.Entity("App.Repositories.Models.User.Learner", b =>
+                {
+                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
+                        .WithOne()
+                        .HasForeignKey("App.Repositories.Models.User.Learner", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_learners___users_user_id");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("App.Repositories.Models.User.Staff", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", "User")
+                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
                         .WithOne()
                         .HasForeignKey("App.Repositories.Models.User.Staff", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -982,7 +1147,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.User.Tutor", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", "User")
+                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
                         .WithOne()
                         .HasForeignKey("App.Repositories.Models.User.Tutor", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -990,21 +1155,6 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk_tutors___users_user_id");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AppUserChatConversation", b =>
-                {
-                    b.HasOne("App.Repositories.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("AppUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("App.Repositories.Models.Chat.ChatConversation", null)
-                        .WithMany()
-                        .HasForeignKey("ChatConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1019,7 +1169,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", null)
+                    b.HasOne("App.Repositories.Models.User.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1029,7 +1179,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", null)
+                    b.HasOne("App.Repositories.Models.User.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1046,7 +1196,7 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasConstraintName("fk___user_roles___roles_role_id");
 
-                    b.HasOne("App.Repositories.Models.AppUser", null)
+                    b.HasOne("App.Repositories.Models.User.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1056,7 +1206,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("App.Repositories.Models.AppUser", null)
+                    b.HasOne("App.Repositories.Models.User.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1064,19 +1214,29 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk___user_tokens___users_user_id");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>
-                {
-                    b.Navigation("ChatMessages");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
-                {
-                    b.Navigation("FileUploads");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Document", b =>
+            modelBuilder.Entity("App.Repositories.Models.Papers.Document", b =>
                 {
                     b.Navigation("DocumentFileUploads");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Papers.HardcopySubmit", b =>
+                {
+                    b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
+                {
+                    b.Navigation("Slots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
+                {
+                    b.Navigation("Slots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Learner", b =>
+                {
+                    b.Navigation("BookingSlots");
                 });
 #pragma warning restore 612, 618
         }

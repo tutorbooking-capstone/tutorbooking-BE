@@ -54,11 +54,13 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(string id)
         {
             var tutor = await _tutorService.GetByIdAsync(id);
             return Ok(new BaseResponseModel<TutorResponse>(
-                data: tutor
+                data: tutor,
+                message: "Thông tin chi tiết của gia sư"
             ));
         }
 
@@ -80,6 +82,39 @@ namespace TutorBooking.APIService.Controllers
             await _tutorService.UpdateVerificationStatusAsync(tutorId, status, updatedBy);
             return Ok(new BaseResponseModel<string>(
                 message: "Cập nhật trạng thái xác minh thành công!"
+            ));
+        }
+
+        [HttpGet("hashtags")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetTutorHashtags()
+        {
+            var hashtags = await _tutorService.GetTutorHashtagsAsync();
+            return Ok(new BaseResponseModel<List<TutorHashtagDTO>>(
+                data: hashtags,
+                message: "Danh sách hashtag của gia sư."
+            ));
+        }
+
+        [HttpGet("languages")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetTutorLanguages()
+        {
+            var languages = await _tutorService.GetTutorLanguagesAsync();
+            return Ok(new BaseResponseModel<List<TutorLanguageDTO>>(
+                data: languages,
+                message: "Danh sách ngôn ngữ của gia sư."
+            ));
+        }
+
+        [HttpGet("list-card")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTutorCardList()
+        {
+            var tutorCards = await _tutorService.GetTutorCardListAsync();
+            return Ok(new BaseResponseModel<List<TutorCardDTO>>(
+                data: tutorCards,
+                message: "Danh sách gia sư."
             ));
         }
     }

@@ -1,5 +1,7 @@
 using App.Repositories.Models;
 using App.Repositories.Models.Chat;
+using App.Repositories.Models.Papers;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -13,11 +15,13 @@ namespace App.Repositories.Context
 
         // User related DbSets
         public DbSet<Tutor> Tutors { get; set; }
+        public DbSet<Learner> Learners { get; set; }
         public DbSet<Staff> Staffs { get; set; }
 
         // Main entity DbSets
         public DbSet<TutorApplication> TutorApplications { get; set; }
         public DbSet<ApplicationRevision> ApplicationRevisions { get; set; }
+        public DbSet<HardcopySubmit> HardcopySubmits { get; set; }
 
         public DbSet<TutorLanguage> TutorLanguages { get; set; }
         public DbSet<Blog> Blogs { get; set; }
@@ -27,6 +31,10 @@ namespace App.Repositories.Context
 
         public DbSet<Document> Documents { get; set; }
         public DbSet<DocumentFileUpload> DocumentFileUploads { get; set; }
+
+        public DbSet<WeeklyAvailabilityPattern> WeeklyAvailabilityPatterns { get; set; }
+        public DbSet<BookingSlot> BookingSlots { get; set; }
+        public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
 		
 		public DbSet<ChatMessage> ChatMessages { get; set; }
 		public DbSet<ChatConversation> ChatConversations { get; set; }
@@ -36,6 +44,7 @@ namespace App.Repositories.Context
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.UseSnakeCaseNames();
+
 
             #region Delete Behavior
                 // Cascade Delete được áp dụng khi xóa bản ghi chính sẽ xóa tất cả bản ghi phụ thuộc (vd: xóa Tutor sẽ xóa tất cả TutorLanguage)
@@ -61,6 +70,15 @@ namespace App.Repositories.Context
                 .HasOne(t => t.User)
                 .WithOne()
                 .HasForeignKey<Staff>(s => s.UserId);
+
+            // AppUser -> Learner (1:1)
+            modelBuilder.Entity<Learner>()
+                .HasKey(l => l.UserId);
+
+            modelBuilder.Entity<Learner>()
+                .HasOne(l => l.User)
+                .WithOne()
+                .HasForeignKey<Learner>(l => l.UserId);
             #endregion
 
             #region TutorApplication Configuration
@@ -151,8 +169,67 @@ namespace App.Repositories.Context
                 .HasOne(dfu => dfu.FileUpload)
                 .WithMany()
                 .HasForeignKey(dfu => dfu.FileUploadId)
-                .OnDelete(DeleteBehavior.Restrict);
-			#endregion
+                .OnDelete(DeleteBehavior.Restrict); 
+            #endregion
+
+            #region HardcopySubmit Configuration
+            // HardcopySubmit -> TutorApplication (M:1)
+            modelBuilder.Entity<HardcopySubmit>()
+                .HasOne(hs => hs.Application)
+                .WithMany()
+                .HasForeignKey(hs => hs.ApplicationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // HardcopySubmit -> Documents (1:N)
+            modelBuilder.Entity<HardcopySubmit>()
+                .HasMany(hs => hs.Documents)
+                .WithOne(d => d.HardcopySubmit)
+                .HasForeignKey(d => d.HardcopySubmitId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
+            #region Scheduling Configuration
+            // WeeklyAvailabilityPattern -> Tutor (M:1)
+            modelBuilder.Entity<WeeklyAvailabilityPattern>()
+                .HasOne(w => w.Tutor)
+                .WithMany()
+                .HasForeignKey(w => w.TutorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // BookingSlot -> Tutor (M:1)
+            modelBuilder.Entity<BookingSlot>()
+                .HasOne(b => b.Tutor)
+                .WithMany()
+                .HasForeignKey(b => b.TutorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // BookingSlot -> Learner (M:1) optional
+            modelBuilder.Entity<BookingSlot>()
+                .HasOne(b => b.Learner)
+                .WithMany(l => l.BookingSlots)
+                .HasForeignKey(b => b.LearnerId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // AvailabilitySlot relationships
+            modelBuilder.Entity<AvailabilitySlot>()
+                .HasOne(a => a.WeeklyPattern)
+                .WithMany(w => w.Slots)
+                .HasForeignKey(a => a.WeeklyPatternId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AvailabilitySlot>()
+                .HasOne(a => a.BookingSlot)
+                .WithMany(b => b.Slots)
+                .HasForeignKey(a => a.BookingSlotId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+            #endregion
+
+        }
+    }
 
 			#region Chat Configuration
 			modelBuilder.Entity<ChatMessage>(builder =>

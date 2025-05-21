@@ -1,4 +1,4 @@
-﻿using App.Repositories.Models;
+﻿using App.Repositories.Models.Papers;
 using FluentValidation;
 
 namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs

@@ -1,5 +1,4 @@
 ﻿using App.Core.Base;
-using System;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
@@ -49,6 +48,13 @@ namespace App.Core.Utils
             var hashBytes = md5.ComputeHash(Encoding.UTF8.GetBytes(json));
             var hex = BitConverter.ToString(hashBytes).Replace("-", "");
             return hex.Substring(0, Math.Min(14, hex.Length));
+        }
+
+        public static string SeedGuid<T>()
+        {
+            var typeName = typeof(T).Name;
+            var halfGuid = Guid.NewGuid().ToString().Replace("-", "").Substring(0, 16);
+            return $"[Seed][{typeName}][{halfGuid}]";
         }
     }
 }

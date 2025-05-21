@@ -11,12 +11,12 @@ namespace App.Repositories.Models.User
         Staff
     }
 
+    #region Extensions
     public static class RoleExtensions
     {
         public static string ToStringRole(this Role role)
-        {
-            return Enum.GetName(typeof(Role), role) ?? throw new ArgumentOutOfRangeException(nameof(role), $"Unexpected role value: {role}");
-        }
+            => Enum.GetName(typeof(Role), role) 
+                ?? throw new ArgumentOutOfRangeException(nameof(role), $"Unexpected role value: {role}");
 
         public static Role ToRoleEnum(this string roleString)
         {
@@ -45,5 +45,6 @@ namespace App.Repositories.Models.User
             Roles = string.Join(",", roles.Select(r => Enum.GetName(typeof(Role), r)));
         }
     }
+    #endregion
 }
 
