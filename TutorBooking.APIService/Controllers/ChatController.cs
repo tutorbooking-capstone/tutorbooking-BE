@@ -25,8 +25,6 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpGet("conversations")]
-		[Authorize]
-		
 		public async Task<IActionResult> GetConversations([FromQuery] string userId, int page = 1, int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
@@ -35,7 +33,6 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpGet("conversations/{id}")]
-		[Authorize]
 		public async Task<IActionResult> GetConversationById([FromRoute]string id, [FromQuery]int page = 1 , int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
@@ -44,16 +41,15 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpPost("message")]
-		//[Authorize]
-		[AllowAnonymous]
 		public async Task<IActionResult> SendMessage(SendMessageRequest request)
 		{
-			if(!ModelState.IsValid)
-				return BadRequest(ModelState);
-
 			var response = await _chatService.SendMessageAsync(request);
-			Task.Run(() => _hubContext.Clients.Client(ConnectionMapper.GetConnectedUser(request.ReceiverUserId).ConnectionId)
-				.ReceiveMessage(true, response));
+			Task.Run(() =>
+			{
+				var connectedUser = ConnectionMapper.GetConnectedUser(request.ReceiverUserId);
+				if(connectedUser != null) 
+					_hubContext.Clients.Client(connectedUser.ConnectionId).ReceiveMessage(true, response);
+			});
 			
 			return Ok(new BaseResponseModel<object>()
 			{

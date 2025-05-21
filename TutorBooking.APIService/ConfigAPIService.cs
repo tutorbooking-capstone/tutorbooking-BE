@@ -91,8 +91,6 @@ namespace TutorBooking.APIService
 						// If the request is for our hub...
 						if (!string.IsNullOrEmpty(accessToken))
 						{
-							// Read the token out of the query string
-
 							context.Token = accessToken;
 						}
 						return Task.CompletedTask;

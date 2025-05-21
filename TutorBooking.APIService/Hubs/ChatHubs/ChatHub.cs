@@ -18,6 +18,36 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			_chatService = chatService;
 		}
 
+		public override async Task OnConnectedAsync()
+		{
+			var userId = GetUserId();
+			if (userId != null)
+			{
+				Console.WriteLine($"{userId}_CONNECTED");
+				var user = new ConnectedUser()
+				{
+					UserId = userId,
+					ConnectionId = Context.ConnectionId,
+					//Role = identity.RoleClaimType.ToRoleEnum()
+				};
+				ConnectionMapper.SetConnectedUser(userId, user);
+				await Clients.Client(Context.ConnectionId).OnConnected("CONNECTED_TO_CHATHUB");
+			}
+			await base.OnConnectedAsync();
+		}
+
+		public override async Task OnDisconnectedAsync(Exception? exception)
+		{	
+			var userId = GetUserId();
+			if (userId != null)
+			{
+				var user = ConnectionMapper.GetConnectedUser(userId);
+				if (user != null)
+					ConnectionMapper.RemoveConnectedUser(userId);
+			}
+			await base.OnDisconnectedAsync(exception);
+		}
+
 		public async Task SendMessage(string receiverUserId, string textMessage)
 		{
 			try
@@ -34,7 +64,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 
 					var receiver = ConnectionMapper.GetConnectedUser(receiverUserId);
 					if (receiver != null)
-						await Clients.Client(receiver.ConnectionId).ReceiveMessage(true, response);
+						Task.Run(() => Clients.Client(receiver.ConnectionId).ReceiveMessage(true, response));
 				}
 			}
 			catch (Exception ex)
@@ -44,38 +74,6 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			}
 		}
 
-		public override async Task OnConnectedAsync()
-		{
-			var userId = GetUserId();
-			if (userId != null)
-			{
-				Console.WriteLine($"Client {userId} has connected");
-				var user = new ConnectedUser()
-				{
-					UserId = userId,
-					ConnectionId = Context.ConnectionId,
-					//Role = identity.RoleClaimType.ToRoleEnum()
-				};
-				ConnectionMapper.SetConnectedUser(userId, user);
-				await Clients.Client(Context.ConnectionId).OnConnected("CONNECTED_TO_CHATHUB");
-			}
-			await base.OnConnectedAsync();
-		}
-
-		public override async Task OnDisconnectedAsync(Exception? exception)
-		{
-				
-			var userId = GetUserId();
-			if (userId != null)
-			{
-				var user = ConnectionMapper.GetConnectedUser(userId);
-				if (user != null)
-				{
-					ConnectionMapper.RemoveConnectedUser(userId);
-				}
-			}
-			await base.OnDisconnectedAsync(exception);
-		}
 
 		private string? GetUserId()
 		{
@@ -92,8 +90,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 			{
 				Console.WriteLine(ex.ToString());
 				return null;
-			}
-			
+			}	
 		}
 
 
