@@ -12,6 +12,7 @@ namespace App.DTOs.ChatDTOs
 	{
 		public string Id { get; set; }
 		public string FullName { get; set; }
+		public string ProfilePictureUrl { get; set; } = string.Empty;
 	}
 
 	public static class ChatParticipantDTOExtenstions
@@ -21,6 +22,7 @@ namespace App.DTOs.ChatDTOs
 			{
 				Id = appUser.Id,
 				FullName = appUser.FullName,
+				ProfilePictureUrl = appUser.ProfilePictureUrl,
 			};
 
 		public static ICollection<ChatParticipantDTO> ToChatParticipantDTOs(this ICollection<AppUser> entities)
