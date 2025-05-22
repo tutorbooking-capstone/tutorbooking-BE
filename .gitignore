@@ -51,3 +51,8 @@ artifacts/
 plan.txt
 /.plan
 /.know
+/App.Core/obj/Debug/net8.0
+/TutorBooking.APIService/obj/Debug/net8.0
+/TutorBooking.APIService/obj
+/TutorBooking.APIService/obj
+/TutorBooking.APIService
