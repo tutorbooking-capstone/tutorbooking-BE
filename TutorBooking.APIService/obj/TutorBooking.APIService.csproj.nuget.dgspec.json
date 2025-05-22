@@ -68,6 +68,22 @@
             "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
               "target": "Package",
               "version": "[8.0.0, )"
+            },
+            "MiniProfiler.AspNetCore": {
+              "target": "Package",
+              "version": "[4.5.4, )"
+            },
+            "MiniProfiler.AspNetCore.Mvc": {
+              "target": "Package",
+              "version": "[4.5.4, )"
+            },
+            "MiniProfiler.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[4.5.4, )"
+            },
+            "StackifyMiddleware": {
+              "target": "Package",
+              "version": "[3.3.3.4767, )"
             }
           },
           "imports": [
@@ -410,6 +426,18 @@
           "targetAlias": "net8.0",
           "dependencies": {
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.AspNetCore.SignalR": {
+              "target": "Package",
+              "version": "[1.2.0, )"
+            },
+            "Microsoft.AspNetCore.SignalR.Client": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.AspNetCore.SignalR.Common": {
               "target": "Package",
               "version": "[8.0.0, )"
             },
