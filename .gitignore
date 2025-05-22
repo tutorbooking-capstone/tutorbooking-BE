@@ -13,6 +13,7 @@
 .vs/
 *.userprefs
 *.usertasks
+_ReSharper.*
 
 # Build results
 [Bb]in/
