@@ -38,6 +38,7 @@ namespace App.Services
             services.AddScoped<IDocumentService, DocumentService>();
 
             services.AddScoped<ITutorApplicationService, TutorApplicationService>();
+			services.AddScoped<IChatService, ChatService>();
             #endregion
 
             #region Provider Services

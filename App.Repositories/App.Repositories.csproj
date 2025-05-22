@@ -42,4 +42,9 @@
 
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Migrations\" />
+	  <Folder Include="Models\Notification\" />
+	</ItemGroup>
+
 </Project>
