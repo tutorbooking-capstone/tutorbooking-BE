@@ -43,14 +43,14 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public TutorResponse WithRelatedData(
             List<HashtagDTO> hashtags,
             List<TutorLanguageDTO> languages,
-            ICollection<WeeklyAvailabilityPattern> patterns,
-            ICollection<BookingSlot> bookings)
+            List<WeeklyAvailabilityPattern> patterns,
+            ICollection<BookingSlotDTO> bookings)
         {
             this.Hashtags = hashtags;
             this.Languages = languages;
             
-            this.AvailabilityPatterns = patterns.Select(WeeklyAvailabilityDTO.FromEntity).ToList();
-            this.BookingSlots = bookings.Select(BookingSlotDTO.FromEntity).ToList();
+            this.AvailabilityPatterns = patterns.Select(p => WeeklyAvailabilityDTO.FromEntity(p)).ToList();
+            this.BookingSlots = bookings.ToList();
             
             return this;
         }

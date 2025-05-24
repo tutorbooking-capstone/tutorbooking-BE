@@ -7,6 +7,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Models\Notification\**" />
+	  <EmbeddedResource Remove="Models\Notification\**" />
+	  <None Remove="Models\Notification\**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\App.Core\App.Core.csproj" />
 	</ItemGroup>
 
@@ -44,7 +50,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Migrations\" />
-	  <Folder Include="Models\Notification\" />
 	</ItemGroup>
 
 </Project>

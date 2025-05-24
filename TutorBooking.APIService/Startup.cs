@@ -3,7 +3,6 @@ using App.Services;
 using App.DTOs;
 using TutorBooking.APIService.Middleware;
 using App.Core;
-using Microsoft.AspNetCore.SignalR;
 using TutorBooking.APIService.Hubs.ChatHubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 

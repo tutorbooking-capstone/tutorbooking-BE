@@ -87,13 +87,11 @@ namespace TutorBooking.APIService
                     },
 					OnMessageReceived = context =>
 					{
-						var accessToken = context.Request.Headers.Authorization;
+						var authHeader = context.Request.Headers.Authorization.ToString();
 
-						// If the request is for our hub...
-						if (!string.IsNullOrEmpty(accessToken))
-						{
-							context.Token = accessToken;
-						}
+						if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+							context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                            
 						return Task.CompletedTask;
 					}
 				};

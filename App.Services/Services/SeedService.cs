@@ -23,20 +23,17 @@ namespace App.Services.Services
         private readonly IAuthService _authService;
         private readonly ILogger<SeedService> _logger;
         private readonly ITutorService _tutorService;
-        private readonly IUserService _userService;
 
         public SeedService(
             IUnitOfWork unitOfWork,
             IAuthService authService,
             ILogger<SeedService> logger,
-            ITutorService tutorService,
-            IUserService userService)
+            ITutorService tutorService)
         {
             _unitOfWork = unitOfWork;
             _authService = authService;
             _logger = logger;
             _tutorService = tutorService;
-            _userService = userService;
         }
         #endregion
 

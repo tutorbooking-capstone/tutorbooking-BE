@@ -19,7 +19,7 @@ namespace App.Repositories.Models.User
         public DateTime? BecameTutorAt { get; set; }
 
         public virtual AppUser User { get; set; } = null!;
-        
+
         // Navigation properties
         public virtual ICollection<TutorLanguage> Languages { get; set; } = new List<TutorLanguage>();
         public virtual ICollection<TutorHashtag> Hashtags { get; set; } = new List<TutorHashtag>();

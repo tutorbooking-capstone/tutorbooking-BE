@@ -13,6 +13,7 @@ using App.Core.Constants;
 using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
 using App.Core.Mapper;
+using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services.User
 {
@@ -432,7 +433,8 @@ namespace App.Services.Services.User
         {
             string trimmedId = id.Trim();
             
-            var (tutor, tutorHashtags, tutorLanguages) = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => {
+            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => {
+                // Get tutor with basic info
                 var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Include(t => t.User)
                     .Where(t => t.UserId == trimmedId)
@@ -445,24 +447,49 @@ namespace App.Services.Services.User
                         ErrorCode.NotFound, 
                         $"Tutor with ID {id} not found.");
 
+                // Get tutor hashtags
                 var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>().ExistEntities()
                     .Where(th => th.TutorId == trimmedId)
                     .Include(th => th.Hashtag)
                     .Select(HashtagDTO.ProjectionExpression)
                     .ToListAsync();
                     
+                // Get tutor languages
                 var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
                     .Where(tl => tl.TutorId == trimmedId)
                     .Select(TutorLanguageDTO.ProjectionExpression)
                     .ToListAsync();
                 
-                return (tutor, tutorHashtags, tutorLanguages);
+                // Get availability patterns
+                var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>().ExistEntities()
+                    .Where(p => p.TutorId == trimmedId)
+                    .Include(p => p.Slots)
+                    .OrderByDescending(p => p.AppliedFrom)
+                    .ToListAsync();
+                    
+                // Get booking slots
+                var bookings = await _unitOfWork.GetRepository<BookingSlot>().ExistEntities()
+                    .Where(b => b.TutorId == trimmedId)
+                    .Include(b => b.Slots)
+                    .Select(b => new BookingSlotDTO
+                    {
+                        Id = b.Id,
+                        LearnerId = b.LearnerId,
+                        Note = b.Note,
+                        StartDate = b.StartDate,
+                        RepeatForWeeks = b.RepeatForWeeks,
+                        AssociatedSlotIds = b.Slots != null ? b.Slots.Select(s => s.Id).ToList() : new List<string>()
+                    })
+                    .ToListAsync();
+                
+                return (tutor, tutorHashtags, tutorLanguages, patterns, bookings);
             });
             
-            var patterns = await _scheduleService.GetTutorAvailabilityPatternsAsync(trimmedId);
-            var bookings = await _scheduleService.GetTutorBookingSlotsAsync(trimmedId);
-            
-            return tutor.WithRelatedData(tutorHashtags, tutorLanguages, patterns, bookings);
+            return result.tutor.WithRelatedData(
+                result.tutorHashtags, 
+                result.tutorLanguages, 
+                result.patterns, 
+                result.bookings);
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
