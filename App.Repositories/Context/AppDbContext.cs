@@ -258,9 +258,9 @@ namespace App.Repositories.Context
 				builder.HasKey(c => c.Id);
 
 				builder.HasMany(c => c.AppUsers)
-					   .WithMany()  // No explicit navigation property on AppUser for conversations
-					   .UsingEntity(j => j.ToTable("UserConversations")); // Configure join table name
-			});
+					   .WithMany()// No explicit navigation property on AppUser for conversations	
+					   .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
+			}); 
 			#endregion
 		}
 	}
