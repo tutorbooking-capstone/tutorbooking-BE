@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250602102940_UpdateTableName")]
-    partial class UpdateTableName
+    [Migration("20250604192957_ReplaceCheckTableName")]
+    partial class ReplaceCheckTableName
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -515,10 +515,6 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<string>("BookingSlotId")
-                        .HasColumnType("text")
-                        .HasColumnName("booking_slot_id");
-
                     b.Property<int>("DayInWeek")
                         .HasColumnType("integer")
                         .HasColumnName("day_in_week");
@@ -538,13 +534,50 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_availability_slots");
 
-                    b.HasIndex("BookingSlotId")
-                        .HasDatabaseName("ix_availability_slots_booking_slot_id");
-
                     b.HasIndex("WeeklyPatternId")
                         .HasDatabaseName("ix_availability_slots_weekly_pattern_id");
 
                     b.ToTable("availability_slots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookedSlot", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AvailabilitySlotId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("availability_slot_id");
+
+                    b.Property<DateTime>("BookedDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("booked_date");
+
+                    b.Property<string>("BookingSlotId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("booking_slot_id");
+
+                    b.Property<string>("SlotNote")
+                        .HasColumnType("text")
+                        .HasColumnName("slot_note");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_booked_slots");
+
+                    b.HasIndex("AvailabilitySlotId")
+                        .HasDatabaseName("ix_booked_slots_availability_slot_id");
+
+                    b.HasIndex("BookingSlotId")
+                        .HasDatabaseName("ix_booked_slots_booking_slot_id");
+
+                    b.ToTable("booked_slots");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
@@ -560,14 +593,6 @@ namespace App.Repositories.Migrations
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
-
-                    b.Property<int?>("RepeatForWeeks")
-                        .HasColumnType("integer")
-                        .HasColumnName("repeat_for_weeks");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("start_date");
 
                     b.Property<string>("TutorId")
                         .IsRequired()
@@ -883,7 +908,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("ChatConversationId");
 
-                    b.ToTable("AppUserChatConversation");
+                    b.ToTable("user_conversations", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -1185,21 +1210,34 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
                 {
-                    b.HasOne("App.Repositories.Models.Scheduling.BookingSlot", "BookingSlot")
-                        .WithMany("Slots")
-                        .HasForeignKey("BookingSlotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_availability_slots__booking_slots_booking_slot_id");
-
                     b.HasOne("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", "WeeklyPattern")
                         .WithMany("Slots")
                         .HasForeignKey("WeeklyPatternId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_availability_slots__weekly_availability_patterns_weekly_patter~");
 
-                    b.Navigation("BookingSlot");
-
                     b.Navigation("WeeklyPattern");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookedSlot", b =>
+                {
+                    b.HasOne("App.Repositories.Models.Scheduling.AvailabilitySlot", "AvailabilitySlot")
+                        .WithMany()
+                        .HasForeignKey("AvailabilitySlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_booked_slots_availability_slots_availability_slot_id");
+
+                    b.HasOne("App.Repositories.Models.Scheduling.BookingSlot", "BookingSlot")
+                        .WithMany("BookedSlots")
+                        .HasForeignKey("BookingSlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_booked_slots__booking_slots_booking_slot_id");
+
+                    b.Navigation("AvailabilitySlot");
+
+                    b.Navigation("BookingSlot");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
@@ -1397,7 +1435,7 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingSlot", b =>
                 {
-                    b.Navigation("Slots");
+                    b.Navigation("BookedSlots");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>

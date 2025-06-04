@@ -235,39 +235,40 @@ namespace App.Repositories.Context
             #endregion
 
             #region Chat Configuration
-            modelBuilder.Entity<ChatMessage>()
-                .HasKey(m => m.Id);
+            modelBuilder.Entity<ChatMessage>(builder =>
+            {
+                builder.HasKey(m => m.Id);
 
-				builder.Property(m => m.AppUserId)
-					   .IsRequired();
+                builder.Property(m => m.AppUserId)
+                       .IsRequired();
 
-				builder.Property(m => m.ChatConversationId)
-					   .IsRequired();
+                builder.Property(m => m.ChatConversationId)
+                       .IsRequired();
 
-				builder.Property(m => m.TextMessage)
-					   .IsRequired(false);
+                builder.Property(m => m.TextMessage)
+                       .IsRequired(false);
 
-				builder.HasOne(m => m.AppUser)
-					   .WithMany()  // No explicit navigation property on AppUser for messages
-					   .HasForeignKey(m => m.AppUserId)
-					   .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
+                builder.HasOne(m => m.AppUser)
+                       .WithMany()  // No explicit navigation property on AppUser for messages
+                       .HasForeignKey(m => m.AppUserId)
+                       .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
 
-				// Relationship with ChatConversation
-				builder.HasOne(m => m.ChatConversation)
-					   .WithMany(c => c.ChatMessages)
-					   .HasForeignKey(m => m.ChatConversationId)
-					   .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
-			});
+                // Relationship with ChatConversation
+                builder.HasOne(m => m.ChatConversation)
+                       .WithMany(c => c.ChatMessages)
+                       .HasForeignKey(m => m.ChatConversationId)
+                       .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
+            });
 
-			modelBuilder.Entity<ChatConversation>(builder =>
-			{
-				builder.HasKey(c => c.Id);
+            modelBuilder.Entity<ChatConversation>(builder =>
+            {
+                builder.HasKey(c => c.Id);
 
-				builder.HasMany(c => c.AppUsers)
-					   .WithMany()// No explicit navigation property on AppUser for conversations	
-					   .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
-			}); 
-			#endregion
-		}
-	}
+                builder.HasMany(c => c.AppUsers)
+                       .WithMany()// No explicit navigation property on AppUser for conversations	
+                       .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
+            });
+            #endregion
+        }
+    }
 }
