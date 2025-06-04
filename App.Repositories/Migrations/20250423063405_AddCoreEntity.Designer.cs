@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250515141314_AddChatServiceEntities")]
-    partial class AddChatServiceEntities
+    [Migration("20250423063405_AddCoreEntity")]
+    partial class AddCoreEntity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -268,98 +268,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("blogs");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.HasKey("Id")
-                        .HasName("pk_chat_conversations");
-
-                    b.ToTable("chat_conversations");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AppUserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("app_user_id");
-
-                    b.Property<string>("ChatConversationId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("chat_conversation_id");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<string>("TextMessage")
-                        .HasColumnType("text")
-                        .HasColumnName("text_message");
-
-                    b.HasKey("Id")
-                        .HasName("pk_chat_messages");
-
-                    b.HasIndex("AppUserId")
-                        .HasDatabaseName("ix_chat_messages_app_user_id");
-
-                    b.HasIndex("ChatConversationId")
-                        .HasDatabaseName("ix_chat_messages_chat_conversation_id");
-
-                    b.ToTable("chat_messages");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Document", b =>
                 {
                     b.Property<string>("Id")
@@ -370,6 +278,11 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("application_id");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content_type");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text")
@@ -391,6 +304,15 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
+
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("download_url");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
 
                     b.Property<bool>("IsVisibleToLearner")
                         .HasColumnType("boolean")
@@ -408,6 +330,15 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("staff_id");
 
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("storage_path");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("uploaded_at");
+
                     b.HasKey("Id")
                         .HasName("pk_documents");
 
@@ -419,77 +350,40 @@ namespace App.Repositories.Migrations
                     b.ToTable("documents");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
-                {
-                    b.Property<string>("DocumentId")
-                        .HasColumnType("text")
-                        .HasColumnName("document_id");
-
-                    b.Property<string>("FileUploadId")
-                        .HasColumnType("text")
-                        .HasColumnName("file_upload_id");
-
-                    b.HasKey("DocumentId", "FileUploadId");
-
-                    b.HasIndex("FileUploadId")
-                        .HasDatabaseName("ix_document_file_uploads_file_upload_id");
-
-                    b.ToTable("document_file_uploads");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("ChatMessageId")
-                        .HasColumnType("text")
-                        .HasColumnName("chat_message_id");
-
-                    b.Property<string>("CloudinaryUrl")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("cloudinary_url");
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("content_type");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_size");
-
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("original_file_name");
-
-                    b.HasKey("Id")
-                        .HasName("pk_file_upload");
-
-                    b.HasIndex("ChatMessageId")
-                        .HasDatabaseName("ix_file_upload_chat_message_id");
-
-                    b.ToTable("file_upload");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Hashtag", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("text")
                         .HasColumnName("id");
 
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTimeOffset>("CreatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_time");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("deleted_by");
+
+                    b.Property<DateTimeOffset?>("DeletedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_time");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("description");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("LastUpdatedBy")
                         .HasColumnType("text")
-                        .HasColumnName("name");
+                        .HasColumnName("last_updated_by");
+
+                    b.Property<DateTimeOffset>("LastUpdatedTime")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_updated_time");
 
                     b.Property<int>("UsageCount")
                         .HasColumnType("integer")
@@ -644,21 +538,6 @@ namespace App.Repositories.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("tutors");
-                });
-
-            modelBuilder.Entity("AppUserChatConversation", b =>
-                {
-                    b.Property<string>("AppUsersId")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ChatConversationId")
-                        .HasColumnType("text");
-
-                    b.HasKey("AppUsersId", "ChatConversationId");
-
-                    b.HasIndex("ChatConversationId");
-
-                    b.ToTable("UserConversations", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -856,27 +735,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("AppUser");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
-                {
-                    b.HasOne("App.Repositories.Models.AppUser", "AppUser")
-                        .WithMany()
-                        .HasForeignKey("AppUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_chat_messages___users_app_user_id");
-
-                    b.HasOne("App.Repositories.Models.Chat.ChatConversation", "ChatConversation")
-                        .WithMany("ChatMessages")
-                        .HasForeignKey("ChatConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_chat_messages_chat_conversations_chat_conversation_id");
-
-                    b.Navigation("AppUser");
-
-                    b.Navigation("ChatConversation");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Document", b =>
                 {
                     b.HasOne("App.Repositories.Models.TutorApplication", "Application")
@@ -897,35 +755,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
-                {
-                    b.HasOne("App.Repositories.Models.Document", "Document")
-                        .WithMany("DocumentFileUploads")
-                        .HasForeignKey("DocumentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_document_file_uploads_documents_document_id");
-
-                    b.HasOne("App.Repositories.Models.FileUpload", "FileUpload")
-                        .WithMany()
-                        .HasForeignKey("FileUploadId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_document_file_uploads__file_upload_file_upload_id");
-
-                    b.Navigation("Document");
-
-                    b.Navigation("FileUpload");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
-                {
-                    b.HasOne("App.Repositories.Models.Chat.ChatMessage", null)
-                        .WithMany("FileUploads")
-                        .HasForeignKey("ChatMessageId")
-                        .HasConstraintName("fk_file_upload_chat_messages_chat_message_id");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.TutorApplication", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
@@ -943,14 +772,14 @@ namespace App.Repositories.Migrations
                     b.HasOne("App.Repositories.Models.Hashtag", "Hashtag")
                         .WithMany()
                         .HasForeignKey("HashtagId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("fk_tutor_hashtags_hashtags_hashtag_id");
 
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany()
                         .HasForeignKey("TutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id1");
 
@@ -964,7 +793,7 @@ namespace App.Repositories.Migrations
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany()
                         .HasForeignKey("TutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.SetNull)
                         .IsRequired()
                         .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id2");
 
@@ -993,21 +822,6 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk_tutors___users_user_id");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("AppUserChatConversation", b =>
-                {
-                    b.HasOne("App.Repositories.Models.AppUser", null)
-                        .WithMany()
-                        .HasForeignKey("AppUsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("App.Repositories.Models.Chat.ChatConversation", null)
-                        .WithMany()
-                        .HasForeignKey("ChatConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1065,21 +879,6 @@ namespace App.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk___user_tokens___users_user_id");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>
-                {
-                    b.Navigation("ChatMessages");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
-                {
-                    b.Navigation("FileUploads");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Document", b =>
-                {
-                    b.Navigation("DocumentFileUploads");
                 });
 #pragma warning restore 612, 618
         }

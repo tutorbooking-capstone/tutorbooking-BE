@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250521092523_init")]
-    partial class init
+    [Migration("20250528170344_AddChatSession")]
+    partial class AddChatSession
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1211,7 +1211,7 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk_booking_slots__learners_learner_temp_id");
 
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
-                        .WithMany()
+                        .WithMany("BookingSlots")
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1225,7 +1225,7 @@ namespace App.Repositories.Migrations
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
-                        .WithMany()
+                        .WithMany("AvailabilityPatterns")
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1244,7 +1244,7 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk_tutor_hashtags_hashtags_hashtag_id");
 
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
-                        .WithMany()
+                        .WithMany("Hashtags")
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1258,7 +1258,7 @@ namespace App.Repositories.Migrations
             modelBuilder.Entity("App.Repositories.Models.TutorLanguage", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
-                        .WithMany()
+                        .WithMany("Languages")
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -1408,6 +1408,17 @@ namespace App.Repositories.Migrations
             modelBuilder.Entity("App.Repositories.Models.User.Learner", b =>
                 {
                     b.Navigation("BookingSlots");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.User.Tutor", b =>
+                {
+                    b.Navigation("AvailabilityPatterns");
+
+                    b.Navigation("BookingSlots");
+
+                    b.Navigation("Hashtags");
+
+                    b.Navigation("Languages");
                 });
 #pragma warning restore 612, 618
         }

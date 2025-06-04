@@ -1,20 +1,29 @@
 using App.Repositories.Models.Scheduling;
 using FluentValidation;
 
-public record WeeklyAvailabilityPatternDTO(
-    DateTime AppliedFrom,
-    List<DailyAvailabilityDTO> DailyAvailabilities
-);
+public record WeeklyAvailabilityPatternDTO
+{
+    public DateTime AppliedFrom { get; init; }
+    public List<DailyAvailabilityDTO> DailyAvailabilities { get; init; } = new();
+}
 
-public record DailyAvailabilityDTO(
-    DayInWeek Day,
-    List<TimeSlotDTO> TimeSlots
-);
+public record DailyAvailabilityDTO
+{
+    public DayInWeek Day { get; init; }
+    public DateTime? Date { get; init; }
+    public List<TimeSlotDTO> TimeSlots { get; init; } = new();
+}
 
-public record TimeSlotDTO(
-    int SlotIndex,
-    SlotType Type
-);
+public record TimeSlotDTO
+{
+    public int SlotIndex { get; init; }
+    public TimeSpan? StartTime { get; init; }
+    public TimeSpan? EndTime { get; init; }
+    public SlotType Type { get; init; }
+    public string? BookingId { get; init; }
+    public string? LearnerId { get; init; }
+    public string? Note { get; init; }
+}
 
 #region Validators
 public class WeeklyAvailabilityPatternDTOValidator : AbstractValidator<WeeklyAvailabilityPatternDTO>
@@ -78,21 +87,24 @@ public static class WeeklyAvailabilityPatternExtensions
 {
     public static WeeklyAvailabilityPatternDTO ToDTO(this WeeklyAvailabilityPattern pattern)
     {
-        var dailySlots = pattern.Slots
+        var dailySlots = pattern.Slots?
             .GroupBy(s => s.DayInWeek)
-            .Select(g => new DailyAvailabilityDTO(
-                g.Key,
-                g.Select(s => new TimeSlotDTO(
-                    s.SlotIndex,
-                    s.Type
-                )).ToList()
-            ))
-            .ToList();
+            .Select(g => new DailyAvailabilityDTO
+            {
+                Day = g.Key,
+                TimeSlots = g.Select(s => new TimeSlotDTO
+                {
+                    SlotIndex = s.SlotIndex,
+                    Type = s.Type
+                }).ToList()
+            })
+            .ToList() ?? new List<DailyAvailabilityDTO>();
 
-        return new WeeklyAvailabilityPatternDTO(
-            pattern.AppliedFrom,
-            dailySlots
-        );
+        return new WeeklyAvailabilityPatternDTO
+        {
+            AppliedFrom = pattern.AppliedFrom,
+            DailyAvailabilities = dailySlots
+        };
     }
 
     public static WeeklyAvailabilityPattern ToEntity(this WeeklyAvailabilityPatternDTO dto, string tutorId)
@@ -104,9 +116,9 @@ public static class WeeklyAvailabilityPatternExtensions
             Slots = new List<AvailabilitySlot>()
         };
 
-        foreach (var dailyAvailability in dto.DailyAvailabilities)
+        foreach (var dailyAvailability in dto.DailyAvailabilities ?? Enumerable.Empty<DailyAvailabilityDTO>())
         {
-            foreach (var slot in dailyAvailability.TimeSlots)
+            foreach (var slot in dailyAvailability.TimeSlots ?? Enumerable.Empty<TimeSlotDTO>())
             {
                 pattern.Slots.Add(new AvailabilitySlot
                 {
@@ -117,7 +129,6 @@ public static class WeeklyAvailabilityPatternExtensions
                 });
             }
         }
-
         return pattern;
     }
 }

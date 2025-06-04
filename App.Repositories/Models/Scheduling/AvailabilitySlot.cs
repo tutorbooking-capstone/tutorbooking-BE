@@ -32,5 +32,24 @@ namespace App.Repositories.Models.Scheduling
 
         public virtual WeeklyAvailabilityPattern? WeeklyPattern { get; set; }
         public virtual BookingSlot? BookingSlot { get; set; } 
+
+        #region Behavior
+        public static DateTime CalculateDateForDay(DateTime weekStart, DayInWeek dayInWeek)
+        {
+            int offset = dayInWeek switch
+            {
+                DayInWeek.Monday => 0,
+                DayInWeek.Tuesday => 1,
+                DayInWeek.Wednesday => 2,
+                DayInWeek.Thursday => 3,
+                DayInWeek.Friday => 4,
+                DayInWeek.Saturday => 5,
+                DayInWeek.Sunday => 6,
+                _ => 0
+            };
+
+            return weekStart.AddDays(offset);
+        }
+        #endregion
     }
 }

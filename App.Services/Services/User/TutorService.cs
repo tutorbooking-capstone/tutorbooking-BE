@@ -22,18 +22,15 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
-        private readonly IScheduleService _scheduleService;
         private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
             IUserService userService,
-            IScheduleService scheduleService,
             ILogger<TutorService> logger)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
-            _scheduleService = scheduleService;
             _logger = logger;
         }
         #endregion

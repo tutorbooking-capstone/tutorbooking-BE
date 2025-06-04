@@ -165,3 +165,4 @@ D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\refint
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\TutorBooking.APIService.pdb
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\TutorBooking.APIService.genruntimeconfig.cache
 D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\ref\TutorBooking.APIService.dll
+D:\FFF\Sem_9\_\_\TutorBookingAPI\TutorBooking.APIService\obj\Debug\net8.0\TutorBooking.APIService.MvcApplicationPartsAssemblyInfo.cs
