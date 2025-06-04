@@ -18,11 +18,8 @@ namespace App.Services.Services
         private DateTime ConvertToUtc(DateTime dateTime)
         {
             if (dateTime.Kind == DateTimeKind.Unspecified)
-            {
-                // Giả định rằng DateTime.Unspecified là local time (hoặc UTC tùy theo logic của bạn)
-                // Ở đây, giả định là UTC để tránh lỗi
                 return DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
-            }
+                
             return dateTime.ToUniversalTime();
         }
         #endregion
@@ -36,68 +33,89 @@ namespace App.Services.Services
             var utcStartDate = ConvertToUtc(startDate);
             var utcEndDate = ConvertToUtc(endDate);
 
-            // Lấy tất cả các mẫu lịch tuần của gia sư có AppliedFrom <= ngày kết thúc
-            // Bao gồm cả các slot thời gian liên quan và sắp xếp giảm dần theo AppliedFrom
+            // Get patterns without including slots
             var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
                 .ExistEntities()
                 .Where(p => p.TutorId == tutorId && p.AppliedFrom <= utcEndDate)
-                .Include(p => p.Slots)
                 .OrderByDescending(p => p.AppliedFrom)
+                .ToListAsync();
+
+            // Get pattern IDs
+            var patternIds = patterns.Select(p => p.Id).ToList();
+
+            // Get slots separately
+            var slots = await _unitOfWork.GetRepository<AvailabilitySlot>()
+                .ExistEntities()
+                .Where(s => s.WeeklyPatternId != null && patternIds.Contains(s.WeeklyPatternId))
+                .ToListAsync();
+
+            // Get booked slots in the date range
+            var bookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
+                .ExistEntities()
+                .Where(bs => bs.BookedDate >= utcStartDate && bs.BookedDate <= utcEndDate)
+                .Include(bs => bs.BookingSlot) // Get booking details
                 .ToListAsync();
 
             var result = new List<DailyAvailabilityDTO>();
 
-            // Duyệt qua từng mẫu lịch tuần
+            // Process each pattern
             foreach (var pattern in patterns)
             {
-                // Bắt đầu từ ngày áp dụng của mẫu lịch
                 var currentWeekStart = ConvertToUtc(pattern.AppliedFrom);
                 
-                // Duyệt qua từng tuần cho đến khi vượt quá ngày kết thúc
                 while (currentWeekStart <= utcEndDate)
                 {
-                    // Nếu cả tuần này nằm trước ngày bắt đầu thì bỏ qua
                     if (currentWeekStart.AddDays(6) < utcStartDate)
                     {
                         currentWeekStart = currentWeekStart.AddDays(7);
                         continue;
                     }
 
-                    // Nhóm các slot theo ngày trong tuần
-                    var groupedSlots = pattern.Slots?.GroupBy(s => s.DayInWeek) ?? Enumerable.Empty<IGrouping<DayInWeek, AvailabilitySlot>>();
+                    // Get slots for this pattern
+                    var patternSlots = slots.Where(s => s.WeeklyPatternId == pattern.Id).ToList();
+                    var groupedSlots = patternSlots.GroupBy(s => s.DayInWeek);
                     
-                    // Duyệt qua từng ngày trong tuần
                     foreach (var dailySlots in groupedSlots)
                     {
                         var dayInWeek = dailySlots.Key;
-                        // Tính toán ngày cụ thể dựa trên ngày bắt đầu tuần và thứ trong tuần
                         var date = AvailabilitySlot.CalculateDateForDay(currentWeekStart, dayInWeek);
 
-                        // Bỏ qua nếu ngày nằm ngoài khoảng yêu cầu
                         if (date < utcStartDate.Date || date > utcEndDate.Date)
                             continue;
 
-                        // Thêm thông tin lịch vào kết quả
+                        var timeSlots = new List<TimeSlotDTO>();
+                        
+                        foreach (var slot in dailySlots)
+                        {
+                            // Check if slot is booked on this date
+                            var booking = bookedSlots.FirstOrDefault(bs => 
+                                bs.AvailabilitySlotId == slot.Id && 
+                                bs.BookedDate.Date == date.Date);
+                            
+                            timeSlots.Add(new TimeSlotDTO
+                            {
+                                SlotIndex = slot.SlotIndex,
+                                StartTime = TimeSpan.FromMinutes(slot.SlotIndex * 30),
+                                EndTime = TimeSpan.FromMinutes((slot.SlotIndex + 1) * 30),
+                                Type = booking != null ? SlotType.Booked : slot.Type,
+                                BookingId = booking?.BookingSlotId,
+                                LearnerId = booking?.BookingSlot?.LearnerId,
+                                Note = booking?.BookingSlot?.Note
+                            });
+                        }
+
                         result.Add(new DailyAvailabilityDTO
                         {
                             Date = date,
                             Day = dayInWeek,
-                            TimeSlots = dailySlots.Select(s => new TimeSlotDTO
-                            {
-                                SlotIndex = s.SlotIndex,
-                                StartTime = TimeSpan.FromMinutes(s.SlotIndex * 30),  // Mỗi slot là 30 phút
-                                EndTime = TimeSpan.FromMinutes((s.SlotIndex + 1) * 30),
-                                Type = s.Type  // Loại slot (Available/Unavailable/Booked)
-                            }).ToList()
+                            TimeSlots = timeSlots
                         });
                     }
 
-                    // Di chuyển sang tuần tiếp theo
                     currentWeekStart = currentWeekStart.AddDays(7);
                 }
             }
 
-            // Trả về kết quả đã sắp xếp theo ngày
             return result.OrderBy(d => d.Date).ToList();
         }
     }

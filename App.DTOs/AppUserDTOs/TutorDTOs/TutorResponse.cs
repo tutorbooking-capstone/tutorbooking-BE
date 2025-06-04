@@ -26,7 +26,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public List<HashtagDTO> Hashtags { get; set; } = new List<HashtagDTO>();
         public List<TutorLanguageDTO> Languages { get; set; } = new List<TutorLanguageDTO>();
 
-        // Phương thức ánh xạ trực tiếp, thay thế RegisterMappings
         public static Expression<Func<Tutor, TutorResponse>> ProjectionExpression => t => new TutorResponse
         {
             UserId = t.UserId,
@@ -39,21 +38,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             VerificationStatus = t.VerificationStatus,
             BecameTutorAt = t.BecameTutorAt
         };
-
-        public TutorResponse WithRelatedData(
-            List<HashtagDTO> hashtags,
-            List<TutorLanguageDTO> languages,
-            List<WeeklyAvailabilityPattern> patterns,
-            ICollection<BookingSlotDTO> bookings)
-        {
-            this.Hashtags = hashtags;
-            this.Languages = languages;
-            
-            this.AvailabilityPatterns = patterns.Select(p => WeeklyAvailabilityDTO.FromEntity(p)).ToList();
-            this.BookingSlots = bookings.ToList();
-            
-            return this;
-        }
     }
 
     public class HashtagDTO
@@ -76,19 +60,21 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public DateTime AppliedFrom { get; set; }
         public List<AvailabilitySlotDTO> Slots { get; set; } = new List<AvailabilitySlotDTO>();
 
-        public static WeeklyAvailabilityDTO FromEntity(WeeklyAvailabilityPattern entity)
-        {
-            var dto = new WeeklyAvailabilityDTO
+        public static Expression<Func<WeeklyAvailabilityPattern, WeeklyAvailabilityDTO>> ProjectionExpression => 
+            p => new WeeklyAvailabilityDTO
             {
-                Id = entity.Id,
-                AppliedFrom = entity.AppliedFrom
+                Id = p.Id,
+                AppliedFrom = p.AppliedFrom,
+                Slots = p.Slots != null 
+                    ? p.Slots.Select(s => new AvailabilitySlotDTO
+                    {
+                        Id = s.Id,
+                        Type = s.Type,
+                        DayInWeek = s.DayInWeek,
+                        SlotIndex = s.SlotIndex
+                    }).ToList()
+                    : new List<AvailabilitySlotDTO>()
             };
-
-            if (entity.Slots != null)
-                dto.Slots = entity.Slots.Select(AvailabilitySlotDTO.FromEntity).ToList();
-
-            return dto;
-        }
     }
 
     public class AvailabilitySlotDTO
@@ -98,18 +84,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public DayInWeek DayInWeek { get; set; }
         public int SlotIndex { get; set; }
         public string? BookingSlotId { get; set; }
-
-        public static AvailabilitySlotDTO FromEntity(AvailabilitySlot entity)
-        {
-            return new AvailabilitySlotDTO
-            {
-                Id = entity.Id,
-                Type = entity.Type,
-                DayInWeek = entity.DayInWeek,
-                SlotIndex = entity.SlotIndex,
-                BookingSlotId = entity.BookingSlotId
-            };
-        }
     }
 
     public class BookingSlotDTO
@@ -119,24 +93,37 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string? Note { get; set; }
         public DateTime StartDate { get; set; }
         public int? RepeatForWeeks { get; set; }
-        public List<string> AssociatedSlotIds { get; set; } = new List<string>();
+        
+        public List<BookedSlotDTO> BookedSlots { get; set; } = new List<BookedSlotDTO>();
 
-        public static BookingSlotDTO FromEntity(BookingSlot entity)
+        public static Expression<Func<BookingSlot, BookingSlotDTO>> ProjectionExpression => 
+        b => new BookingSlotDTO
         {
-            var dto = new BookingSlotDTO
+            Id = b.Id,
+            LearnerId = b.LearnerId,
+            Note = b.Note,
+            StartDate = DateTime.MaxValue,
+            RepeatForWeeks = 0,
+            BookedSlots = b.BookedSlots != null 
+            ? b.BookedSlots.Select(bs => new BookedSlotDTO
             {
-                Id = entity.Id,
-                LearnerId = entity.LearnerId,
-                Note = entity.Note,
-                StartDate = entity.StartDate,
-                RepeatForWeeks = entity.RepeatForWeeks
-            };
+                Id = bs.Id,
+                BookedDate = bs.BookedDate,
+                SlotNote = bs.SlotNote,
+                Status = bs.Status,
+                AvailabilitySlotId = bs.AvailabilitySlotId
+            }).ToList() 
+            : new List<BookedSlotDTO>()
+        };
+    }
 
-            if (entity.Slots != null)
-                dto.AssociatedSlotIds = entity.Slots.Select(s => s.Id).ToList();
-
-            return dto;
-        }
+    public class BookedSlotDTO
+    {
+        public string Id { get; set; } = string.Empty;
+        public DateTime BookedDate { get; set; }
+        public string? SlotNote { get; set; }
+        public SlotStatus Status { get; set; }
+        public string AvailabilitySlotId { get; set; } = string.Empty;
     }
 
     #region Extension Methods
@@ -158,40 +145,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 BecameTutorAt = tutor.BecameTutorAt
             };
         }
-
-        // public static TutorResponse ToDetailedTutorResponse(
-        //     this Tutor tutor, 
-        //     ICollection<WeeklyAvailabilityPattern>? patterns = null,
-        //     ICollection<BookingSlot>? bookings = null,
-        //     ICollection<TutorHashtag>? tutorHashtags = null,
-        //     ICollection<TutorLanguage>? tutorLanguages = null)
-        // {
-        //     var response = tutor.ToTutorResponse();
-
-        //     if (patterns != null)
-        //     {
-        //         response.AvailabilityPatterns = patterns.Select(WeeklyAvailabilityDTO.FromEntity).ToList();
-        //     }
-
-        //     if (bookings != null)
-        //     {
-        //         response.BookingSlots = bookings.Select(BookingSlotDTO.FromEntity).ToList();
-        //     }
-
-        //     if (tutorHashtags != null)
-        //     {
-        //         response.Hashtags = tutorHashtags
-        //             .Where(th => th.Hashtag != null)
-        //             .Select(HashtagDTO.FromEntity).ToList();
-        //     }
-
-        //     if (tutorLanguages != null)
-        //     {
-        //         response.Languages = tutorLanguages.Select(TutorLanguageDTO.FromEntity).ToList();
-        //     }
-
-        //     return response;
-        // }
     }
     #endregion
 }

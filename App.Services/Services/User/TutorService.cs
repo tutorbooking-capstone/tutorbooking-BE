@@ -447,7 +447,6 @@ namespace App.Services.Services.User
                 // Get tutor hashtags
                 var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>().ExistEntities()
                     .Where(th => th.TutorId == trimmedId)
-                    .Include(th => th.Hashtag)
                     .Select(HashtagDTO.ProjectionExpression)
                     .ToListAsync();
                     
@@ -457,36 +456,29 @@ namespace App.Services.Services.User
                     .Select(TutorLanguageDTO.ProjectionExpression)
                     .ToListAsync();
                 
-                // Get availability patterns
+                // Get availability patterns using projection
                 var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>().ExistEntities()
                     .Where(p => p.TutorId == trimmedId)
-                    .Include(p => p.Slots)
                     .OrderByDescending(p => p.AppliedFrom)
+                    .Select(WeeklyAvailabilityDTO.ProjectionExpression)
                     .ToListAsync();
                     
-                // Get booking slots
+                // Get booking slots using projection
                 var bookings = await _unitOfWork.GetRepository<BookingSlot>().ExistEntities()
                     .Where(b => b.TutorId == trimmedId)
-                    .Include(b => b.Slots)
-                    .Select(b => new BookingSlotDTO
-                    {
-                        Id = b.Id,
-                        LearnerId = b.LearnerId,
-                        Note = b.Note,
-                        StartDate = b.StartDate,
-                        RepeatForWeeks = b.RepeatForWeeks,
-                        AssociatedSlotIds = b.Slots != null ? b.Slots.Select(s => s.Id).ToList() : new List<string>()
-                    })
+                    .Select(BookingSlotDTO.ProjectionExpression)
                     .ToListAsync();
                 
                 return (tutor, tutorHashtags, tutorLanguages, patterns, bookings);
             });
             
-            return result.tutor.WithRelatedData(
-                result.tutorHashtags, 
-                result.tutorLanguages, 
-                result.patterns, 
-                result.bookings);
+            var response = result.tutor;
+            response.Hashtags = result.tutorHashtags;
+            response.Languages = result.tutorLanguages;
+            response.AvailabilityPatterns = result.patterns;
+            response.BookingSlots = result.bookings;
+
+            return response;
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
@@ -550,7 +542,6 @@ namespace App.Services.Services.User
         {
             var tutorsByLanguage = await GetTopTutorsByLanguagesAsync();
             
-            // Use LINQ for better performance and readability
             return tutorsByLanguage.Values
                 .SelectMany(tutors => tutors)
                 .GroupBy(t => t.TutorId)
@@ -558,7 +549,6 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-		// TODO: Add Sorting & Filtering, may let Chiyu handle this task
 		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page =1, int size =20)
 		{
 			var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()

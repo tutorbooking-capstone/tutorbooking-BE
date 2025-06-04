@@ -9,7 +9,7 @@ namespace App.Repositories.Models.Papers
         public HardcopySubmitStatus Status { get; set; } = HardcopySubmitStatus.Pending;
         public string StaffNotes { get; set; } = string.Empty;
 
-        public virtual TutorApplication? Application { get; set; }
+        public virtual TutorApplication? Application { get; set; } 
         public virtual ICollection<Document>? Documents { get; set; } 
     }
 

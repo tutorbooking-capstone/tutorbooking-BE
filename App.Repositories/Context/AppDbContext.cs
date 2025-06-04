@@ -5,7 +5,6 @@ using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 
 namespace App.Repositories.Context
 {
@@ -35,9 +34,10 @@ namespace App.Repositories.Context
         public DbSet<WeeklyAvailabilityPattern> WeeklyAvailabilityPatterns { get; set; }
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
-		
-		public DbSet<ChatMessage> ChatMessages { get; set; }
-		public DbSet<ChatConversation> ChatConversations { get; set; }
+        public DbSet<BookedSlot> BookedSlots { get; set; }
+
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatConversation> ChatConversations { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -47,9 +47,9 @@ namespace App.Repositories.Context
 
 
             #region Delete Behavior
-                // Cascade Delete được áp dụng khi xóa bản ghi chính sẽ xóa tất cả bản ghi phụ thuộc (vd: xóa Tutor sẽ xóa tất cả TutorLanguage)
-                // SetNull áp dụng cho mối quan hệ tùy chọn (vd: xóa Staff không xóa Document nhưng sẽ đặt StaffId về null)
-                // Restrict ngăn việc xóa nếu có bản ghi phụ thuộc (vd: không thể xóa Staff nếu đang có ApplicationRevision liên kết)
+            // Cascade Delete được áp dụng khi xóa bản ghi chính sẽ xóa tất cả bản ghi phụ thuộc (vd: xóa Tutor sẽ xóa tất cả TutorLanguage)
+            // SetNull áp dụng cho mối quan hệ tùy chọn (vd: xóa Staff không xóa Document nhưng sẽ đặt StaffId về null)
+            // Restrict ngăn việc xóa nếu có bản ghi phụ thuộc (vd: không thể xóa Staff nếu đang có ApplicationRevision liên kết)
             #endregion
 
             #region Main User Configuration
@@ -64,7 +64,7 @@ namespace App.Repositories.Context
 
             // AppUser -> Staff (1:1)
             modelBuilder.Entity<Staff>()
-                .HasKey(s => s.UserId);  
+                .HasKey(s => s.UserId);
 
             modelBuilder.Entity<Staff>()
                 .HasOne(t => t.User)
@@ -162,14 +162,14 @@ namespace App.Repositories.Context
                 .HasOne(dfu => dfu.Document)
                 .WithMany(d => d.DocumentFileUploads)
                 .HasForeignKey(dfu => dfu.DocumentId)
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
             // DocumentFileUpload -> FileUpload (M:1) - RESTRICT DELETE
             modelBuilder.Entity<DocumentFileUpload>()
                 .HasOne(dfu => dfu.FileUpload)
                 .WithMany()
                 .HasForeignKey(dfu => dfu.FileUploadId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
             #endregion
 
             #region HardcopySubmit Configuration
@@ -220,48 +220,57 @@ namespace App.Repositories.Context
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<AvailabilitySlot>()
-                .HasOne(a => a.BookingSlot)
-                .WithMany(b => b.Slots)
-                .HasForeignKey(a => a.BookingSlotId)
-                .IsRequired(false)
+            // BookedSlot relationships
+            modelBuilder.Entity<BookedSlot>()
+                .HasOne(bs => bs.BookingSlot)
+                .WithMany(bs => bs.BookedSlots)
+                .HasForeignKey(bs => bs.BookingSlotId)
                 .OnDelete(DeleteBehavior.Cascade);
-			#endregion
-			#region Chat Configuration
-			modelBuilder.Entity<ChatMessage>(builder =>
-			{
-				builder.HasKey(m => m.Id);
 
-				builder.Property(m => m.AppUserId)
-					   .IsRequired();
+            modelBuilder.Entity<BookedSlot>()
+                .HasOne(bs => bs.AvailabilitySlot)
+                .WithMany()
+                .HasForeignKey(bs => bs.AvailabilitySlotId)
+                .OnDelete(DeleteBehavior.Cascade);
+            #endregion
 
-				builder.Property(m => m.ChatConversationId)
-					   .IsRequired();
+            #region Chat Configuration
+            modelBuilder.Entity<ChatMessage>()
+                .HasKey(m => m.Id);
 
-				builder.Property(m => m.TextMessage)
-					   .IsRequired(false);
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.AppUserId)
+                .IsRequired();
 
-				builder.HasOne(m => m.AppUser)
-					   .WithMany()  // No explicit navigation property on AppUser for messages
-					   .HasForeignKey(m => m.AppUserId)
-					   .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.ChatConversationId)
+                .IsRequired();
 
-				// Relationship with ChatConversation
-				builder.HasOne(m => m.ChatConversation)
-					   .WithMany(c => c.ChatMessages)
-					   .HasForeignKey(m => m.ChatConversationId)
-					   .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
-			});
+            modelBuilder.Entity<ChatMessage>()
+                .Property(m => m.TextMessage)
+                .IsRequired(false);
 
-			modelBuilder.Entity<ChatConversation>(builder =>
-			{
-				builder.HasKey(c => c.Id);
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.AppUser)
+                .WithMany()  // No explicit navigation property on AppUser for messages
+                .HasForeignKey(m => m.AppUserId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
 
-				builder.HasMany(c => c.AppUsers)
-					   .WithMany()  // No explicit navigation property on AppUser for conversations
-					   .UsingEntity(j => j.ToTable("UserConversations")); // Configure join table name
-			});
-			#endregion
-		}
-	}
+            // Relationship with ChatConversation
+            modelBuilder.Entity<ChatMessage>()
+                .HasOne(m => m.ChatConversation)
+                .WithMany(c => c.ChatMessages)
+                .HasForeignKey(m => m.ChatConversationId)
+                .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
+
+            modelBuilder.Entity<ChatConversation>()
+                .HasKey(c => c.Id);
+
+            modelBuilder.Entity<ChatConversation>()
+                .HasMany(c => c.AppUsers)
+                .WithMany();  // No explicit navigation property on AppUser for conversations
+                              //.UsingEntity(j => j.ToTable("UserConversations")); // Configure join table name
+            #endregion
+        }
+    }
 }

@@ -87,23 +87,11 @@ public static class WeeklyAvailabilityPatternExtensions
 {
     public static WeeklyAvailabilityPatternDTO ToDTO(this WeeklyAvailabilityPattern pattern)
     {
-        var dailySlots = pattern.Slots?
-            .GroupBy(s => s.DayInWeek)
-            .Select(g => new DailyAvailabilityDTO
-            {
-                Day = g.Key,
-                TimeSlots = g.Select(s => new TimeSlotDTO
-                {
-                    SlotIndex = s.SlotIndex,
-                    Type = s.Type
-                }).ToList()
-            })
-            .ToList() ?? new List<DailyAvailabilityDTO>();
-
+        // We don't load slots here anymore
         return new WeeklyAvailabilityPatternDTO
         {
             AppliedFrom = pattern.AppliedFrom,
-            DailyAvailabilities = dailySlots
+            DailyAvailabilities = new List<DailyAvailabilityDTO>()
         };
     }
 

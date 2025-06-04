@@ -33,13 +33,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         }
     }
 
-    //public class TutorLanguageListValidator : AbstractValidator<List<TutorLanguageDTO>>
-    //{
-    //    public TutorLanguageListValidator(IValidator<TutorLanguageDTO> itemValidator)
-    //    {
-    //        RuleForEach(x => x).SetValidator(itemValidator);
-    //    }
-    //}
     #endregion
 
     #region Mapping

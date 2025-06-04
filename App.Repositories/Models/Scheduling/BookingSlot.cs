@@ -7,15 +7,11 @@ namespace App.Repositories.Models.Scheduling
     {
         public string TutorId { get; set; } = string.Empty;
         public string? LearnerId { get; set; }
-        public string? Note { get; set; }
-        public DateTime StartDate { get; set; }
-        public int? RepeatForWeeks { get; set; }
+        public string? Note { get; set; } // General note for the entire booking (e.g. Google Meet link for all sessions)
 
         public virtual Tutor? Tutor { get; set; }
         public virtual Learner? Learner { get; set; }
-        public virtual ICollection<AvailabilitySlot>? Slots { get; set; }
-
-
+        public virtual ICollection<BookedSlot>? BookedSlots { get; set; }
     }
 }
 

@@ -94,7 +94,6 @@ namespace App.Services.Services
             pattern.Id = HSeed.SeedGuid<WeeklyAvailabilityPattern>();
 
             // Generate availability slots for the pattern
-            // For example, available on weekdays from 18:00 to 21:00 (slots 36-42)
             var slots = new List<AvailabilitySlot>();
 
             for (int day = 2; day <= 6; day++) // Monday to Friday
@@ -109,7 +108,6 @@ namespace App.Services.Services
                         WeeklyPatternId = pattern.Id
                     };
                     
-                    // Generate seed ID for the slot using the new SeedGuid method
                     availSlot.Id = HSeed.SeedGuid<AvailabilitySlot>();
                     slots.Add(availSlot);
                 }
@@ -246,17 +244,14 @@ namespace App.Services.Services
                     TutorId = tutorId,
                     LearnerId = learnerId, // Use real learnerId or null
                     Note = $"Seed booking #{i+1}",
-                    StartDate = startDate, // UTC date
-                    RepeatForWeeks = random.Next(0, 4) // 0-3 weeks repeat
                 };
 
-                // Generate seed ID using the new SeedGuid method
                 booking.Id = HSeed.SeedGuid<BookingSlot>();
-
                 bookingSlots.Add(booking);
                 
                 // Store which slots to update for this booking
-                booking.Slots = slotsToBook;
+                // booking.Slots = slotsToBook;
+                // booking.BookedDate = startDate; // Store date for BookedSlot
                 
                 // Remove used slots from available slots
                 availableSlots[randomDay] = slotsForDay.Except(slotsToBook).ToList();
@@ -266,25 +261,33 @@ namespace App.Services.Services
 
             try
             {
-                // First insert the booking slots without saving yet
+                // First insert the booking slots
                 _unitOfWork.GetRepository<BookingSlot>().InsertRange(bookingSlots);
                 
-                // IMPORTANT: Execute in a single transaction to maintain referential integrity
-                await _unitOfWork.ExecuteInTransactionAsync(async () => {
-                    // Now update the availability slots to point to the booking slots
-                    foreach (var booking in bookingSlots)
-                    {
-                        foreach (var slot in booking.Slots)
-                        {
-                            slot.Type = SlotType.Booked;
-                            slot.BookingSlotId = booking.Id;
-                        }
-                    }
-                    
-                    await _unitOfWork.SaveAsync();
-                    return bookingSlots;
-                });
+                // Create BookedSlot records
+                var bookedSlots = new List<BookedSlot>();
+                foreach (var booking in bookingSlots)
+                {
+                    // foreach (var slot in booking.Slots)
+                    // {
+                    //     // Update slot type to Booked
+                    //     slot.Type = SlotType.Booked;
+                        
+                    //     // Create BookedSlot record
+                    //     bookedSlots.Add(new BookedSlot
+                    //     {
+                    //         BookingSlotId = booking.Id,
+                    //         AvailabilitySlotId = slot.Id,
+                    //         BookedDate = booking.BookedDate
+                    //     });
+                    // }
+                    Console.WriteLine(booking.Id);
+                }
                 
+                // Insert BookedSlots
+                _unitOfWork.GetRepository<BookedSlot>().InsertRange(bookedSlots);
+                
+                await _unitOfWork.SaveAsync();
                 return bookingSlots;
             }
             catch (DbUpdateException ex) when (ex.InnerException?.Message?.Contains("duplicate") == true)
