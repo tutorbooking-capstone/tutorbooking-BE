@@ -27,6 +27,7 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpGet("conversations")]
+		[Authorize]
 		public async Task<IActionResult> GetConversations([FromQuery]string userId, int page = 1, int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
@@ -35,6 +36,7 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpGet("conversation/{id}")]
+		[Authorize]
 		public async Task<IActionResult> GetConversationById([FromRoute]string id, [FromQuery]int page = 1 , int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
@@ -43,6 +45,7 @@ namespace TutorBooking.APIService.Controllers
 		}
 
 		[HttpPost("message")]
+		[Authorize]
 		public async Task<IActionResult> SendMessage(SendMessageRequest request)
 		{	
 			var response = await _chatService.SendMessageAsync(request);
