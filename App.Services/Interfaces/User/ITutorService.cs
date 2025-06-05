@@ -8,6 +8,7 @@ namespace App.Services.Interfaces.User
     {
         // Tutor Registration
         Task<TutorResponse> RegisterAsTutorAsync(TutorRegistrationRequest request);
+        Task<TutorResponse> SeedRegisterAsTutorAsync(string userId, TutorRegistrationRequest request);
 
         // Profile Updates 
         Task UpdateLanguagesAsync(List<TutorLanguageDTO> languages);
@@ -19,8 +20,9 @@ namespace App.Services.Interfaces.User
         Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync();
         Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync();
         Task<List<TutorCardDTO>> GetTutorCardListAsync();
+		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page, int size);
 
-        // Status Management 
-        Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
+		// Status Management 
+		Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
     }
 }

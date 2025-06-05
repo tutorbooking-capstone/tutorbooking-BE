@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using App.Repositories.Models.Scheduling;
 
 namespace App.Repositories.Models.User
 {
@@ -17,7 +18,13 @@ namespace App.Repositories.Models.User
         public DateTime LastStatusUpdateAt { get; set; }
         public DateTime? BecameTutorAt { get; set; }
 
-        public virtual AppUser? User { get; set; }
+        public virtual AppUser User { get; set; } = null!;
+
+        // Navigation properties
+        public virtual ICollection<TutorLanguage> Languages { get; set; } = new List<TutorLanguage>();
+        public virtual ICollection<TutorHashtag> Hashtags { get; set; } = new List<TutorHashtag>();
+        public virtual ICollection<WeeklyAvailabilityPattern> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityPattern>();
+        public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
 
         #region Behavior
         public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)

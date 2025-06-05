@@ -15,5 +15,6 @@ namespace App.Services.Interfaces.User
         Task UpdateBasicInformationAsync(UpdateBasicInformationRequest request);
         Task<UserProfileResponse> GetUserProfileAsync();
         Task<TutorRegistrationProfileResponse> GetTutorRegistrationProfileAsync();
+        Task UpdateTutorInfoAsync(UpdateTutorInfoDTO request);
     }
 }

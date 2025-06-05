@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using App.Core.Constants;
 using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
+using App.Core.Mapper;
 using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services.User
@@ -21,18 +22,15 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
-        private readonly IScheduleService _scheduleService;
         private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
             IUserService userService,
-            IScheduleService scheduleService,
             ILogger<TutorService> logger)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
-            _scheduleService = scheduleService;
             _logger = logger;
         }
         #endregion
@@ -330,6 +328,90 @@ namespace App.Services.Services.User
             });
         }
 
+        public async Task<TutorResponse> SeedRegisterAsTutorAsync(string userId, TutorRegistrationRequest request)
+        {
+            // Get the user by ID directly instead of using current user
+            var appUser = await _unitOfWork.GetRepository<AppUser>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(u => u.Id == userId);
+                
+            if (appUser == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    $"User with ID {userId} not found.");
+            
+            // Check if tutor already exists
+            var existingTutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(t => t.UserId == userId);
+
+            if (existingTutor != null)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Người dùng đã đăng ký làm gia sư");
+
+            var updatedUserFields = appUser.UpdateBasicInformation(
+                request.FullName,
+                request.DateOfBirth,
+                request.Gender,
+                request.Timezone);
+
+            var newTutor = request.ToTutorProfile(appUser);
+
+            return await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                if (updatedUserFields.Length > 0)
+                    _unitOfWork.GetRepository<AppUser>()
+                        .UpdateFields(appUser, updatedUserFields);
+
+                _unitOfWork.GetRepository<Tutor>().Insert(newTutor);
+
+                // Process hashtags
+                if (request.HashtagIds != null && request.HashtagIds.Any())
+                {
+                    var tutorHashtags = request.HashtagIds.Select(hashtagId => new TutorHashtag 
+                    {
+                        TutorId = userId,
+                        HashtagId = hashtagId
+                    }).ToList();
+                    
+                    _unitOfWork.GetRepository<TutorHashtag>().InsertRange(tutorHashtags);
+                }
+                
+                // Process languages
+                if (request.Languages != null && request.Languages.Any())
+                {
+                    var tutorLanguages = request.Languages.Select(lang => new TutorLanguage
+                    {
+                        TutorId = userId,
+                        LanguageCode = lang.LanguageCode,
+                        Proficiency = lang.Proficiency,
+                        IsPrimary = lang.IsPrimary
+                    }).ToList();
+                    
+                    _unitOfWork.GetRepository<TutorLanguage>().InsertRange(tutorLanguages);
+                }
+
+                var tutorApplication = TutorApplication.Create(userId);
+                _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
+
+                await _unitOfWork.SaveAsync();
+                await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
+
+                return newTutor.ToTutorResponse();
+            }, 
+            onError: ex => 
+            {
+                _logger.LogError(ex, "Tutor registration failed for user {UserId}", userId);
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    "Tutor registration failed: " + ex.Message);
+            });
+        }
+
         public async Task UpdateLanguagesAsync(List<TutorLanguageDTO> languages)
         {
             var tutorId = _userService.GetCurrentUserId();
@@ -346,35 +428,57 @@ namespace App.Services.Services.User
 
         public async Task<TutorResponse> GetByIdAsync(string id)
         {
-            var tutor = await _unitOfWork.GetRepository<Tutor>()
-                .ExistEntities()
-                .Include(t => t.User)
-                .FirstOrDefaultAsync(t => t.UserId == id.Trim());
+            string trimmedId = id.Trim();
+            
+            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => {
+                // Get tutor with basic info
+                var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                    .Include(t => t.User)
+                    .Where(t => t.UserId == trimmedId)
+                    .Select(TutorResponse.ProjectionExpression)
+                    .FirstOrDefaultAsync();
+                    
+                if (tutor == null)
+                    throw new ErrorException(
+                        StatusCodes.Status404NotFound, 
+                        ErrorCode.NotFound, 
+                        $"Tutor with ID {id} not found.");
 
-            if (tutor == null)
-                throw new ErrorException(
-                    StatusCodes.Status404NotFound,
-                    ErrorCode.NotFound,
-                    $"Tutor with ID {id} not found.");
+                // Get tutor hashtags
+                var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>().ExistEntities()
+                    .Where(th => th.TutorId == trimmedId)
+                    .Select(HashtagDTO.ProjectionExpression)
+                    .ToListAsync();
+                    
+                // Get tutor languages
+                var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
+                    .Where(tl => tl.TutorId == trimmedId)
+                    .Select(TutorLanguageDTO.ProjectionExpression)
+                    .ToListAsync();
+                
+                // Get availability patterns using projection
+                var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>().ExistEntities()
+                    .Where(p => p.TutorId == trimmedId)
+                    .OrderByDescending(p => p.AppliedFrom)
+                    .Select(WeeklyAvailabilityDTO.ProjectionExpression)
+                    .ToListAsync();
+                    
+                // Get booking slots using projection
+                var bookings = await _unitOfWork.GetRepository<BookingSlot>().ExistEntities()
+                    .Where(b => b.TutorId == trimmedId)
+                    .Select(BookingSlotDTO.ProjectionExpression)
+                    .ToListAsync();
+                
+                return (tutor, tutorHashtags, tutorLanguages, patterns, bookings);
+            });
+            
+            var response = result.tutor;
+            response.Hashtags = result.tutorHashtags;
+            response.Languages = result.tutorLanguages;
+            response.AvailabilityPatterns = result.patterns;
+            response.BookingSlots = result.bookings;
 
-            // Get availability patterns and booking slots using ScheduleService
-            var patterns = await _scheduleService.GetTutorAvailabilityPatternsAsync(id);
-            var bookings = await _scheduleService.GetTutorBookingSlotsAsync(id);
-
-            // Get tutor hashtags
-            var tutorHashtags = await _unitOfWork.GetRepository<TutorHashtag>()
-                .ExistEntities()
-                .Where(th => th.TutorId == id)
-                .Include(th => th.Hashtag)
-                .ToListAsync();
-
-            // Get tutor languages
-            var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
-                .ExistEntities()
-                .Where(tl => tl.TutorId == id)
-                .ToListAsync();
-
-            return tutor.ToDetailedTutorResponse(patterns, bookings, tutorHashtags, tutorLanguages);
+            return response;
         }
 
         public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
@@ -438,12 +542,32 @@ namespace App.Services.Services.User
         {
             var tutorsByLanguage = await GetTopTutorsByLanguagesAsync();
             
-            // Use LINQ for better performance and readability
             return tutorsByLanguage.Values
                 .SelectMany(tutors => tutors)
                 .GroupBy(t => t.TutorId)
                 .Select(g => g.First())
                 .ToList();
         }
+
+		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page =1, int size =20)
+		{
+			var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+				.Include(t => t.User)
+				.OrderByDescending(t => t.BecameTutorAt)
+				.Skip((page-1) * size).Take(size)
+				.ToListAsync();
+
+			var tutorResponses = new List<TutorCardDTO>();
+			foreach (var tutor in tutors)
+			{
+				tutorResponses.Add(tutor.ToTutorCardDTO(
+					await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
+					.Where(t => t.TutorId.Equals(tutor.UserId))
+					.ToListAsync(), 
+					GetMockRating(tutor, 4)));	
+			}	
+
+			return tutorResponses;
+		}
     }
 }

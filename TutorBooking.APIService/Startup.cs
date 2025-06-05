@@ -3,6 +3,8 @@ using App.Services;
 using App.DTOs;
 using TutorBooking.APIService.Middleware;
 using App.Core;
+using TutorBooking.APIService.Hubs.ChatHubs;
+using TutorBooking.APIService.Hubs.NotificationHubs;
 
 namespace TutorBooking.APIService
 {
@@ -98,7 +100,27 @@ namespace TutorBooking.APIService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-            });
+				endpoints.MapHub<ChatHub>("/chathub", options =>
+				{
+					options.Transports =
+						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+						Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+
+					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
+					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
+					options.AllowStatefulReconnects = true;
+				});
+
+				endpoints.MapHub<NotificationHub>("/NotificationHub", options =>
+				{
+					options.Transports =
+						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+						Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+
+					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
+					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
+				});
+			});
         }
     }
 

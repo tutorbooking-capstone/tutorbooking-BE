@@ -9,6 +9,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string ProfileImageUrl { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string NickName { get; set; } = string.Empty;
+		public string Description {  get; set; } = string.Empty;
         public bool IsProfessional { get; set; }
         public double Rating { get; set; }
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
@@ -35,6 +36,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 ProfileImageUrl = tutor.User?.ProfilePictureUrl ?? string.Empty,
                 FullName = tutor.User?.FullName ?? string.Empty,
                 NickName = tutor.NickName,
+				Description = tutor.Description,
                 IsProfessional = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy,
                 Rating = rating,
                 Languages = languages

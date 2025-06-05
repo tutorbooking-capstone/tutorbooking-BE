@@ -27,6 +27,8 @@ namespace TutorBooking.APIService
             services.ConfigRoute();
             services.AddAuthenJwt(configuration);
             services.ConfigSwagger();
+            services.ConfigureValidation();
+			services.ConfigureSignalR();
             services.ConfigureControllers();
 
             return services;
@@ -89,9 +91,19 @@ namespace TutorBooking.APIService
                         logger.LogDebug("[TOKEN VALIDATED] Roles found in token: [{Roles}]", string.Join(", ", roles));
 
                         return Task.CompletedTask;
-                    }
-                };
-            });	
+                    },
+					OnMessageReceived = context =>
+					{
+						var authHeader = context.Request.Headers.Authorization.ToString();
+
+						if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+							context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                            
+						return Task.CompletedTask;
+					}
+				};
+            });
+
             return services;
         }
 
@@ -198,6 +210,20 @@ namespace TutorBooking.APIService
 
             return services;
         }
+
+		public static IServiceCollection ConfigureSignalR(this IServiceCollection services)
+		{
+			// Add SignalR with optional configuration
+			services.AddSignalR(options =>
+			{
+				options.EnableDetailedErrors = true;
+				options.MaximumReceiveMessageSize = 102400; // 100 KB
+				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+				options.StatefulReconnectBufferSize = 1000;
+			});
+			return services;
+		}
         #endregion
     }
 }

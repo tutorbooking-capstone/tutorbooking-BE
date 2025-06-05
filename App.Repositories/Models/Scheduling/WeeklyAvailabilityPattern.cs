@@ -10,17 +10,20 @@ namespace App.Repositories.Models.Scheduling
 
         public virtual Tutor? Tutor { get; set; }
         public virtual ICollection<AvailabilitySlot>? Slots { get; set; }
-
-        #region Behavior
-        public static WeeklyAvailabilityPattern? GetLatestPattern(ICollection<WeeklyAvailabilityPattern> patterns)
-        {
-            if (patterns == null || !patterns.Any())
-                return null;
-
-            return patterns
-                .OrderByDescending(p => p.AppliedFrom)
-                .FirstOrDefault();
-        }
-        #endregion
     }
 }
+
+
+
+
+        // #region Behavior
+        // public static WeeklyAvailabilityPattern? GetLatestPattern(ICollection<WeeklyAvailabilityPattern> patterns)
+        // {
+        //     if (patterns == null || !patterns.Any())
+        //         return null;
+
+        //     return patterns
+        //         .OrderByDescending(p => p.AppliedFrom)
+        //         .FirstOrDefault();
+        // }
+        // #endregion

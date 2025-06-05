@@ -1,0 +1,37 @@
+Chào bạn, đây là một vấn đề khá phổ biến và thường gây bối rối khi làm việc với Entity Framework Core Migrations, đặc biệt là khi có những thay đổi hoặc sự cố với bảng `__EFMigrationsHistory`.
+
+**Chuyện gì đã xảy ra?**
+
+Khi bạn chạy lệnh `add-migration AddChatSession` (hoặc bất kỳ tên nào khác), Entity Framework (EF) Core thực hiện các bước sau:
+
+1.  **So sánh Model Hiện Tại với Snapshot Cuối Cùng:**
+    *   EF Core nhìn vào model hiện tại của bạn (các class entity và cấu hình `DbContext`).
+    *   Nó so sánh model này với "snapshot" (ảnh chụp) của model được lưu trữ trong file `.Designer.cs` của migration **cuối cùng được áp dụng thành công** (theo thông tin trong bảng `__EFMigrationsHistory` trên database) hoặc, nếu bảng `__EFMigrationsHistory` trống hoặc không có migration nào khớp, nó có thể so sánh với một snapshot "rỗng" hoặc snapshot từ file `AppDbContextModelSnapshot.cs` (nếu nó không khớp với migration cuối cùng).
+
+2.  **Xác định Thay Đổi:** Dựa trên sự khác biệt giữa model hiện tại và snapshot, EF Core xác định những thay đổi cần thiết để đưa schema database từ trạng thái của snapshot lên trạng thái của model hiện tại.
+
+3.  **Tạo File Migration Mới (`.cs` và `.Designer.cs`):**
+    *   File `.cs` (ví dụ: `20250528165523_AddChatSession.cs`) chứa các lệnh `migrationBuilder` (ví dụ: `CreateTable`, `AddColumn`, `DropTable`) để áp dụng những thay đổi đó.
+    *   File `.Designer.cs` của migration mới này sẽ chứa một snapshot của model **sau khi** áp dụng những thay đổi của migration này.
+
+**Lý do tại sao `20250528165523_AddChatSession.cs` lại cố gắng `CreateTable` cho các bảng đã có:**
+
+Khả năng cao nhất là do **EF Core không "nhìn thấy" các migration trước đó đã được áp dụng thành công trên database của bạn.** Điều này có thể xảy ra vì một trong các lý do sau (hoặc kết hợp):
+
+1.  **Bảng `__EFMigrationsHistory` bị trống hoặc thiếu thông tin:**
+    *   Như bạn đã đề cập, "các record trong bảng `__EFMigrationsHistory` đã bị mất sạch." Khi EF Core không tìm thấy các migration cũ (như `20250415103716_Init`, `20250419154401_AddTutorFlowEntity`, v.v.) trong `__EFMigrationsHistory`, nó sẽ giả định rằng database của bạn đang ở trạng thái "rỗng" (hoặc ở trạng thái của migration cuối cùng mà nó *tìm thấy*).
+    *   Do đó, khi bạn thêm migration `AddChatSession`, EF Core nghĩ rằng nó cần phải tạo *tất cả* các bảng từ đầu (bao gồm cả những bảng được định nghĩa trong `Init` và các migration khác) *cộng với* những thay đổi cụ thể cho `AddChatSession`.
+
+2.  **`AppDbContextModelSnapshot.cs` không đồng bộ:**
+    *   File `AppDbContextModelSnapshot.cs` trong thư mục `Migrations` lưu trữ snapshot tổng thể của model của bạn. Nếu file này vì lý do nào đó không phản ánh đúng trạng thái *sau khi tất cả các migration cũ đã được áp dụng*, EF Core có thể dựa vào đó và quyết định rằng nhiều thứ cần được tạo lại.
+    *   Thông thường, khi bạn xóa các file migration và tạo lại một migration "ReInit" như bạn đã làm (`20250528165523_AddChatSession.cs` có vẻ như là một migration "ReInit" vì nó tạo lại toàn bộ schema), thì snapshot đi kèm với nó (trong `20250528165523_AddChatSession.Designer.cs`) sẽ là snapshot của model hiện tại, và EF Core sẽ coi đó là điểm khởi đầu mới.
+
+**Phân tích file `20250528165523_AddChatSession.cs` của bạn:**
+
+Nhìn vào nội dung file này (mà bạn đã cung cấp), rõ ràng nó đang cố gắng tạo lại toàn bộ schema database: `__roles`, `__users`, `chat_conversations`, `hashtags`, `blogs`, `learners`, `staffs`, `tutors`, và tất cả các bảng khác cùng với các khóa ngoại và index. Điều này khẳng định rằng EF Core, tại thời điểm bạn chạy `add-migration`, đã không nhận diện được sự tồn tại của các schema object này thông qua lịch sử migration.
+
+**Tóm lại:**
+
+EF Core không "nhớ" rằng các migration cũ đã tạo ra các bảng đó vì thông tin tương ứng không có (hoặc không đúng) trong `__EFMigrationsHistory`. Do đó, migration `AddChatSession` mới của bạn được tạo ra như một migration "khởi tạo lại từ đầu" (initial migration) đối với EF Core, cố gắng tạo tất cả mọi thứ mà nó thấy trong model hiện tại của bạn.
+
+Để khắc phục, bạn cần sử dụng các giải pháp đã thảo luận trước đó để đồng bộ hóa `__EFMigrationsHistory` với trạng thái thực tế của database deploy, ví dụ như chèn thủ công các record migration đã được áp dụng vào `__EFMigrationsHistory`.

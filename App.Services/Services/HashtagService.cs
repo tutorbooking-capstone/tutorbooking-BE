@@ -21,12 +21,9 @@ namespace App.Services.Services
         public async Task SeedHashtagsAsync()
         {
             var repo = _unitOfWork.GetRepository<Hashtag>();
-            var existingCount = await repo.ExistEntities().CountAsync();
+            if (await repo.ExistEntities().AnyAsync()) return;
 
-            if (existingCount > 0) return;
-
-            var hashtags = HashtagSeeder.SeedHashtags();
-            repo.InsertRange(hashtags);
+            repo.InsertRange(HashtagSeeder.SeedHashtags());
             await _unitOfWork.SaveAsync();
         }
 
@@ -36,11 +33,10 @@ namespace App.Services.Services
 
         public async Task<List<HashtagResponse>> GetAllHashtagsAsync()
         {
-            var hashtags = await _unitOfWork.GetRepository<Hashtag>()
+            return await _unitOfWork.GetRepository<Hashtag>()
                 .ExistEntities()
+                .Select(HashtagResponse.ProjectionExpression)
                 .ToListAsync();
-
-            return hashtags.ToHashtagResponseList();
         }
     }
 } 

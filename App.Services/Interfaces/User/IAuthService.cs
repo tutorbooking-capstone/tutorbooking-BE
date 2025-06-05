@@ -14,6 +14,6 @@ namespace App.Services.Interfaces.User
         Task<ResponseAuthModel> RefreshTokenAsync(RefreshTokenRequest refreshTokenModel);
         Task LogoutAsync(RefreshTokenRequest model);
 		Task<object> LoginGoogleAsync(string credential);
-
-	}
+        Task SeedRegisterAsync(RegisterRequest model);
+    }
 }

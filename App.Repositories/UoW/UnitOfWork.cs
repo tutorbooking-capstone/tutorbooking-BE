@@ -1,7 +1,7 @@
 ﻿using App.Core.Provider;
 using App.Repositories.Context;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using System.Threading;
 
 namespace App.Repositories.UoW
 {
@@ -113,6 +113,7 @@ namespace App.Repositories.UoW
 
         public async Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default)
         {
+            //openconnection
             await BeginTransactionAsync(cancellationToken);
             try
             {
@@ -125,6 +126,19 @@ namespace App.Repositories.UoW
                 await RollBackAsync(cancellationToken);
                 onError?.Invoke(ex);
                 throw;  
+            }
+        }
+
+        public async Task<T> ExecuteWithConnectionReuseAsync<T>(Func<Task<T>> operation)
+        {
+            await _dbContext.Database.OpenConnectionAsync();
+            try
+            {
+                return await operation();
+            }
+            finally
+            {
+                await _dbContext.Database.CloseConnectionAsync();
             }
         }
     }

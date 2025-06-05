@@ -1,4 +1,6 @@
-﻿namespace App.Repositories.UoW
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace App.Repositories.UoW
 {
     public interface IUnitOfWork : IDisposable
     {
@@ -15,5 +17,6 @@
 
         Task ExecuteInTransactionAsync(Func<Task> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default);
         Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default);
+        Task<T> ExecuteWithConnectionReuseAsync<T>(Func<Task<T>> operation);
     }
 }

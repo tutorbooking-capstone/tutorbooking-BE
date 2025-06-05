@@ -94,6 +94,15 @@ namespace TutorBooking.APIService.Controllers
                 additionalData: "For Dev only: Dùng mã ISO, kham khảo tại: https://www.w3schools.com/tags/ref_language_codes.asp"
             ));
         }
+
+        [HttpPatch("tutor-info")]
+        public async Task<IActionResult> UpdateTutorInfo([FromBody] UpdateTutorInfoDTO request)
+        {
+            await _profileService.UpdateTutorInfoAsync(request);
+            return Ok(new BaseResponseModel<string>(
+                message: "Thông tin gia sư đã được cập nhật thành công."
+            ));
+        }
     }
 }
 
