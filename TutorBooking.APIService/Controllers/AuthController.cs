@@ -7,6 +7,9 @@ using System.Text.Json;
 using System;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Cryptography.X509Certificates;
+using System.ComponentModel.DataAnnotations;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -118,19 +121,9 @@ namespace TutorBooking.APIService.Controllers
         }
 
 		[HttpPost("login-google")]
-		public async Task<IActionResult> LoginGoogle([FromForm] string email, [FromForm]string password)
+		public async Task<IActionResult> LoginGoogle([Required][FromForm] string credential)
 		{
-			return Ok(await _authService.LoginGoogleAsync(email, password));
-		}
-
-		[HttpPost("get-auth-detail")]
-		public async Task<IActionResult> GetAuthDetails()
-		{
-			var claimsPrincipal = _contextAccessor.HttpContext.User;
-			var firebaseId = claimsPrincipal.Claims.First(x => x.Type == "user_id").Value;
-			var email = claimsPrincipal.Claims.First(x => x.Type == ClaimTypes.Email).Value;
-
-			return Ok();
+			return Ok(await _authService.LoginGoogleAsync(credential));
 		}
     }
 }

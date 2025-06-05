@@ -21,8 +21,6 @@ namespace App.Repositories.Models.User
         public DateTime? DateOfBirth { get; set; }
         public Gender Gender { get; set; } = Gender.NotGiven;
         public string Timezone { get; set; } = "UTC+7";
-		public string? FirebaseUserId {  get; set; } = string.Empty;
-
         #region Behavior
         public void UpdateBasicInformation(
             string fullName,

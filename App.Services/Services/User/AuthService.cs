@@ -15,6 +15,10 @@ using Newtonsoft.Json.Linq;
 using System.Text.Json;
 using System;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using Google.Apis.Auth;
+using System.Security.Cryptography;
 
 namespace App.Services.Services.User
 {
@@ -361,66 +365,61 @@ namespace App.Services.Services.User
             return roleNames;
         }
 
-		public async Task<object> LoginGoogleAsync(string email, string password)
+		public async Task<object> LoginGoogleAsync(string credential)
 		{
-			string WEB_API_KEY = "AIzaSyABId0f0DwXduAECd_G6OXzqOYRVTTOY1k";
-			string uri = $"https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key={WEB_API_KEY}";
-
-			FireBaseLoginInfo loginInfo = new FireBaseLoginInfo()
+			GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(credential);
+			AppUser user = await _userManager.FindByNameAsync(payload.Email);
+			if (user == null)
 			{
-				Email = email,
-				Password = password,
-			};
-
-			using (HttpClient client = new HttpClient())
-			{			
-				var result = await client.PostAsJsonAsync(uri, loginInfo, new JsonSerializerOptions()
-				{ WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.CamelCase});
-
-				var encoded = await result.Content.ReadFromJsonAsync<GoogleToken>();
-				Token token = new Token
+				#region create learner
+				var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
+				user = new AppUser
 				{
-					token_type = "Bearer",
-					access_token = encoded.idToken,
-					id_token = encoded.idToken,
-					expires_in = int.Parse(encoded.expiresIn),
-					refresh_token = encoded.refreshToken
+					Id = Guid.NewGuid().ToString("N"),
+					Email = payload.Email,
+					UserName = payload.Email,
+					NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(payload.Email),
+					NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(payload.Email),
+					FullName = payload.Name,
+					SecurityStamp = Guid.NewGuid().ToString(),
+					PasswordHash = passwordHasher.HashPassword(null, Convert.ToBase64String(RandomNumberGenerator.GetBytes(16))),
+					PhoneNumberConfirmed = true,
+					EmailConfirmed = true,
+					CreatedTime = DateTime.UtcNow,
 				};
-			return token;
+
+				var result = await _userManager.CreateAsync(user);
+				user.TrackCreate(user.Id);
+				if (!result.Succeeded)
+					throw new ErrorException(
+						StatusCodes.Status400BadRequest,
+						ErrorCode.BadRequest,
+						result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
+
+				result = await _userManager.AddToRoleAsync(user, Role.Learner.ToString());
+				if (!result.Succeeded)
+				{
+					await _userManager.DeleteAsync(user);
+					throw new ErrorException(
+						StatusCodes.Status400BadRequest,
+						ErrorCode.BadRequest,
+						result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
+				}
+
+				// Create Learner entity
+				var learner = user.BecomeLearner(user.Id);
+				_unitOfWork.GetRepository<Learner>().Insert(learner);
+				await _unitOfWork.SaveAsync();
+				#endregion
 			}
+
+			var roles = await _userManager.GetRolesAsync(user);
+			var tokenResponse = await _tokenService.GenerateTokens(user, roles);
+			return new LoginResponse
+			{
+				Token = tokenResponse,
+				Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
+			};
 		}
-
-		//public async Task<object> LoginGoogleV2Async(string credential)
     }
-
-	public class Token
-	{
-		internal string refresh_token;
-		public string token_type { get; set; }
-		public int expires_in { get; set; }
-		public int ext_expires_in { get; set; }
-		public string access_token { get; set; }
-		public string id_token { get; set; }
-	}
-
-
-	public class GoogleToken
-	{
-		public string kind { get; set; }
-		public string localId { get; set; }
-		public string email { get; set; }
-		public string displayName { get; set; }
-		public string idToken { get; set; }
-		public bool registered { get; set; }
-		public string refreshToken { get; set; }
-		public string expiresIn { get; set; }
-	}
-
-	public class FireBaseLoginInfo
-	{
-		public string Email { get; set; }
-		public string Password { get; set; }
-		public bool ReturnSecureToken { get; set; } = true;
-	}
-
 }

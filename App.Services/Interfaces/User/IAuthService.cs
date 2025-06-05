@@ -13,7 +13,7 @@ namespace App.Services.Interfaces.User
         Task ResetPasswordAsync(ResetPasswordRequest model);
         Task<ResponseAuthModel> RefreshTokenAsync(RefreshTokenRequest refreshTokenModel);
         Task LogoutAsync(RefreshTokenRequest model);
-		Task<object> LoginGoogleAsync(string email, string password);
+		Task<object> LoginGoogleAsync(string credential);
 
 	}
 }
