@@ -46,7 +46,7 @@ namespace App.Services.Services
 				.ToListAsync();
 			foreach (var conversation in chatConversations)
 			{
-				response.Add(conversation.ToChatConversationDTO());
+				response.Add(await conversation.ToChatConversationDTO());
 			}
 			return response;
 		}
@@ -67,7 +67,7 @@ namespace App.Services.Services
 				.FirstOrDefaultAsync(e => e.Id.Equals(id));
 			if (conversation == null)
 				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
-			return conversation.ToChatConversationDTO();
+			return await conversation.ToChatConversationDTO();
 		}
 
 		/// <summary>
