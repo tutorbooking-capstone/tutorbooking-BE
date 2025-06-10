@@ -16,20 +16,25 @@ namespace App.DTOs.ChatDTOs
 
 	public static class ChatConversationDTOExtenstions
 	{
-		public static ChatConversationDTO ToChatConversationDTO(this ChatConversation entity)
+		public static async Task<ChatConversationDTO> ToChatConversationDTO(this ChatConversation entity)
 		{
 			var response = new ChatConversationDTO();
 			response.Id = entity.Id;
-			foreach (var message in entity.ChatMessages)
+			var task1 = Task.Run(() =>
 			{
-				response.Messages.Add(message.ToChatMessageDTO());
-			}
+				for (var i = entity.ChatMessages.Count -1; i >= 0; i--)
+				{
+					response.Messages.Add(entity.ChatMessages.ElementAt(i).ToChatMessageDTO());
+				}
+			});
 
-			foreach (var appUser in entity.AppUsers)
-			{
-				response.Participants.Add(appUser.ToChatParticipantDTO());
-			}
-
+			var task2 = Task.Run(() => {
+				foreach (var appUser in entity.AppUsers)
+				{
+					response.Participants.Add(appUser.ToChatParticipantDTO());
+				}
+			});
+			await Task.WhenAll(task1, task2);
 			return response;
 		}
 	}
