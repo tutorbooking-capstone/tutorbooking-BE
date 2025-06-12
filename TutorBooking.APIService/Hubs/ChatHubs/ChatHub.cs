@@ -1,6 +1,9 @@
 ﻿using App.Repositories.Models.User;
 using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Net.Http.Headers;
 using Org.BouncyCastle.Security;
 using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
@@ -8,6 +11,7 @@ using System.Security.Claims;
 
 namespace TutorBooking.APIService.Hubs.ChatHubs
 {
+	[Authorize]
 	public class ChatHub : Hub<IChatClient>
 	{
 		private IChatService _chatService;
@@ -74,9 +78,10 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 		{
 			try
 			{
-				var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("access_token")).Value;
+				//var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("access_token")).Value;
+				var token2 = Context.GetHttpContext().Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim();
 				var handler = new JwtSecurityTokenHandler();
-				var securityToken = handler.ReadJwtToken(token);
+				var securityToken = handler.ReadJwtToken(token2);
 				var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
 
 				return userId;
