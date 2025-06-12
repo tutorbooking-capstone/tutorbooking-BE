@@ -2,15 +2,17 @@
 using App.Core.Constants;
 using App.Core.Utils;
 using App.DTOs.AuthDTOs;
+using App.Repositories.Models.User;
+using App.Repositories.UoW;
 using App.Services.Interfaces.User;
+using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Data;
-using Microsoft.Extensions.Logging;
-using App.Repositories.Models.User;
-using App.Repositories.UoW;
+using System.Security.Cryptography;
 
 namespace App.Services.Services.User
 {
@@ -407,6 +409,65 @@ namespace App.Services.Services.User
 
             return roleNames;
         }
+
+
+        public async Task<LoginResponse> LoginGoogleAsync(string credential)
+        {
+            GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(credential);
+            AppUser user = await _userManager.FindByNameAsync(payload.Email);
+            if (user == null)
+            {
+                #region create learner
+                var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
+                user = new AppUser
+                {
+                    Id = Guid.NewGuid().ToString("N"),
+                    Email = payload.Email,
+                    UserName = payload.Email,
+                    NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(payload.Email),
+                    NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(payload.Email),
+                    FullName = payload.Name,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                    PasswordHash = passwordHasher.HashPassword(null, Convert.ToBase64String(RandomNumberGenerator.GetBytes(16))),
+                    PhoneNumberConfirmed = true,
+                    EmailConfirmed = true,
+                    CreatedTime = DateTime.UtcNow,
+                };
+
+                var result = await _userManager.CreateAsync(user);
+                user.TrackCreate(user.Id);
+                if (!result.Succeeded)
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
+
+                result = await _userManager.AddToRoleAsync(user, Role.Learner.ToString());
+                if (!result.Succeeded)
+                {
+                    await _userManager.DeleteAsync(user);
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
+                }
+
+                // Create Learner entity
+                var learner = user.BecomeLearner(user.Id);
+                _unitOfWork.GetRepository<Learner>().Insert(learner);
+                await _unitOfWork.SaveAsync();
+                #endregion
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var tokenResponse = await _tokenService.GenerateTokens(user, roles);
+            return new LoginResponse
+            {
+                Token = tokenResponse,
+                Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
+            };
+        }
+
     }
 
 }
