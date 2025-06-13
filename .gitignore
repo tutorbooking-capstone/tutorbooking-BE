@@ -33,9 +33,8 @@ x86/
 **/[Bb]in/*
 **/[Oo]bj/*
 
-# obj/Debug
-**/obj/Debug/
-**/obj/Debug/net8.0
+# Bỏ qua tất cả các thư mục obj
+**/obj/
 
 # .NET Core
 project.lock.json
@@ -52,8 +51,3 @@ artifacts/
 plan.txt
 /.plan
 /.know
-/App.Core/obj/Debug/net8.0
-/TutorBooking.APIService/obj/Debug/net8.0
-/TutorBooking.APIService/obj
-/TutorBooking.APIService/obj
-/TutorBooking.APIService
