@@ -2,6 +2,7 @@
 using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -110,6 +111,11 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpPost("login-google")]
+        public async Task<IActionResult> LoginGoogle([Required][FromForm] string credential)
+        {
+            return Ok(await _authService.LoginGoogleAsync(credential));
+        }
 
     }
 }
