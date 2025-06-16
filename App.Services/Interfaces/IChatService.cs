@@ -13,7 +13,9 @@ namespace App.Services.Interfaces
 		Task<ICollection<ChatConversationDTO>> GetConversationsByUserIdAsync(string userId, int page, int size);
 		Task<ChatMessageDTO> SendMessageAsync(SendMessageRequest request);
 		Task<ChatConversationDTO> GetConversationAsync(string id, int page, int size);
+        Task<ChatMessageDTO> UpdateMessageAsync(UpdateMessageRequest request);
+        Task DeleteMessageAsync(string id);
 
-		//Task DeleteChatMessage();
-	}
+        //Task DeleteChatMessage();
+    }
 }

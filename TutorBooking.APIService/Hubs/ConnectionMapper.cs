@@ -4,9 +4,9 @@ namespace TutorBooking.APIService.Hubs
 {
 	public class ConnectionMapper
 	{
-		public static Dictionary<string, ConnectedUser> _connectionMap = new Dictionary<string, ConnectedUser>();
+		public static Dictionary<string, string> _connectionMap = new Dictionary<string, string>();
 
-		public static ConnectedUser? Get(string userId)
+		public static string? Get(string? userId)
 		{
 			try
 			{
@@ -18,9 +18,9 @@ namespace TutorBooking.APIService.Hubs
 			}
 		}
 
-		public static void Set(string userId, ConnectedUser connectedUser)
+		public static void Set(string userId, string connectionId)
 		{
-			_connectionMap[userId] = connectedUser;
+			_connectionMap[userId] = connectionId;
 		}
 
 		public static bool Contains(string userId)
