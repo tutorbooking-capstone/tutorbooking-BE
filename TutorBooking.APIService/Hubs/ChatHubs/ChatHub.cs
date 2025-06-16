@@ -1,4 +1,5 @@
-﻿using App.DTOs.ChatDTOs;
+﻿using App.Core.Base;
+using App.DTOs.ChatDTOs;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -56,12 +57,19 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
+                request.SenderUserId = GetUserId();
                 var response = await _chatService.SendMessageAsync(request);
 
                 var user = ConnectionMapper.Get(request.ReceiverUserId);
                 if (user != null) await Clients.Client(user).ReceiveMessage(response);
                 user = ConnectionMapper.Get(GetUserId());
                 if (user != null) await Clients.Client(user).SendMessageResult(200, response);
+            }
+            catch (ErrorException ex)
+            {
+                _logger.LogError(ex.ToString());
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).SendMessageResult(ex.StatusCode, ex.ErrorDetail);
             }
             catch (Exception ex)
             {
@@ -81,6 +89,12 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
                 if (user != null) await Clients.Client(user).OnMessageUpdated(response);
                 user = ConnectionMapper.Get(GetUserId());
                 if (user != null) await Clients.Client(user).UpdateMessageResult(200, response);              
+            }
+            catch (ErrorException ex)
+            {
+                _logger.LogError(ex.ToString());
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).SendMessageResult(ex.StatusCode, ex.ErrorDetail);
             }
             catch (Exception ex)
             {
@@ -106,6 +120,12 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
                 user = ConnectionMapper.Get(GetUserId());
                 if (user != null) await Clients.Client(user).DeleteMessageResult(200, "SUCCESS");
 
+            }
+            catch (ErrorException ex)
+            {
+                _logger.LogError(ex.ToString());
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).SendMessageResult(ex.StatusCode, ex.ErrorDetail);
             }
             catch (Exception ex)
             {

@@ -78,7 +78,10 @@ namespace App.Services.Services
 		/// <exception cref="ErrorException"></exception>
 		public async Task<ChatMessageDTO> SendMessageAsync(SendMessageRequest request)
 		{
-			var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
+			if (request.SenderUserId.Equals(request.ReceiverUserId))
+                throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "SENDER_ID_SAME_AS_RECEIVER_ID");
+
+            var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
 				.FirstOrDefaultAsync(e => e.AppUsers.Any(x => x.Id.Equals(request.SenderUserId)
 						&& e.AppUsers.Any(x => x.Id.Equals(request.ReceiverUserId)
 						)));
