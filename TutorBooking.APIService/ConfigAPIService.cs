@@ -211,7 +211,7 @@ namespace TutorBooking.APIService
 				options.MaximumReceiveMessageSize = 102400; // 100 KB
 				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
 				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
-				options.StatefulReconnectBufferSize = 1000;
+                options.StatefulReconnectBufferSize = 1000;
 			});
 			return services;
 		}

@@ -4,9 +4,16 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 {
 	public interface IChatClient
 	{
-		Task ReceiveMessage(int status, ChatMessageDTO message);
-		Task ReceiveMessage(int status, string error);
-		Task OnConnected(string message);
-		Task OnDisconnected(string message);
+        Task OnConnected(string message);
+        Task OnDisconnected(string message);
+
+        Task ReceiveMessage(ChatMessageDTO message);
+		Task OnMessageUpdated (ChatMessageDTO message);
+		Task OnMessageDeleted (string messageId);
+		Task OnUserTyping(string userId);
+
+		Task SendMessageResult(int status, object data);
+		Task UpdateMessageResult(int status, object data);
+		Task DeleteMessageResult(int status, object data);
 	}
 }

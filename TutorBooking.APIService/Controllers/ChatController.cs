@@ -43,19 +43,5 @@ namespace TutorBooking.APIService.Controllers
 				data: await _chatService.GetConversationAsync(id, page, size)
 				));
 		}
-
-		[HttpPost("message")]
-		[Authorize]
-		public async Task<IActionResult> SendMessage(SendMessageRequest request)
-		{	
-			var response = await _chatService.SendMessageAsync(request);
-			if (ConnectionMapper.Contains(request.ReceiverUserId))
-				Task.Run(() => _hubContext.Clients.Client(ConnectionMapper.Get(request.ReceiverUserId).ConnectionId).ReceiveMessage(200, response));
-						
-			return Ok(new BaseResponseModel<object>()
-			{
-				Data = response
-			});
-		}
-	}
+    }
 }

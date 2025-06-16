@@ -78,7 +78,10 @@ namespace App.Services.Services
 		/// <exception cref="ErrorException"></exception>
 		public async Task<ChatMessageDTO> SendMessageAsync(SendMessageRequest request)
 		{
-			var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
+			if (request.SenderUserId.Equals(request.ReceiverUserId))
+                throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "SENDER_ID_SAME_AS_RECEIVER_ID");
+
+            var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
 				.FirstOrDefaultAsync(e => e.AppUsers.Any(x => x.Id.Equals(request.SenderUserId)
 						&& e.AppUsers.Any(x => x.Id.Equals(request.ReceiverUserId)
 						)));
@@ -118,5 +121,25 @@ namespace App.Services.Services
 			await _unitOfWork.SaveAsync();
 			return conversation;
 		}
-	}
+
+		public async Task<ChatMessageDTO> UpdateMessageAsync(UpdateMessageRequest request)
+		{
+			var message = await _unitOfWork.GetRepository<ChatMessage>().ExistEntities()
+				.FirstOrDefaultAsync(x => x.Id.Equals(request.Id));
+			if (message == null)
+				throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "CHAT_MESSAGE_NOT_FOUND");
+
+			message.TextMessage = request.TextMessage;
+			_unitOfWork.GetRepository<ChatMessage>().Update(message);
+			await _unitOfWork.SaveAsync();
+			return message.ToChatMessageDTO();
+		}
+
+        public async Task DeleteMessageAsync(string id)
+        {
+            var entity = await _unitOfWork.GetRepository<ChatMessage>().GetByIdAsync(id);
+			_unitOfWork.GetRepository<ChatMessage>().Delete(entity);
+			await _unitOfWork.SaveAsync();
+        }
+    }
 }
