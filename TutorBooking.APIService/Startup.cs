@@ -116,7 +116,6 @@ namespace TutorBooking.APIService
 					options.Transports =
 						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
 						Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
-
 					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
 					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
 				});
