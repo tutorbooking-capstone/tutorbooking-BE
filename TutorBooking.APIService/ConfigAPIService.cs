@@ -208,11 +208,10 @@ namespace TutorBooking.APIService
 			services.AddSignalR(options =>
 			{
 				options.EnableDetailedErrors = true;
-				options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+				options.MaximumReceiveMessageSize = 102400; // 100 KB
 				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
 				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
                 options.StatefulReconnectBufferSize = 1000;
-                options.HandshakeTimeout = TimeSpan.FromSeconds(60);
 			});
 			return services;
 		}
