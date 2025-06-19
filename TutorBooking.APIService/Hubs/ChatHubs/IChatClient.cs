@@ -15,5 +15,6 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
 		Task SendMessageResult(int status, object data);
 		Task UpdateMessageResult(int status, object data);
 		Task DeleteMessageResult(int status, object data);
+		Task MarkAsReadResult(int status, object data);
 	}
 }

@@ -19,6 +19,7 @@ namespace App.Repositories.Models.Chat
 		[Required]
 		public string ChatConversationId { get; set; } = null!;
 		public string? TextMessage { get; set; }
+		
 
 		[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
 		public virtual AppUser AppUser { get; set; } = null!;
@@ -27,7 +28,9 @@ namespace App.Repositories.Models.Chat
 		public virtual ChatConversation ChatConversation { get; set; } = null!;
 		public virtual ICollection<FileUpload>? FileUploads { get; set; }
 
-	}
+		public virtual ICollection<ChatConversationReadStatus> ChatConversationReadStatuses { get; set;}
+
+    }
 
 	
 }

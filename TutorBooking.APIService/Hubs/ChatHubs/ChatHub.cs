@@ -153,6 +153,28 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
             }
         }
 
+        public async Task MarkAsRead(string messageId)
+        {
+            try
+            {
+                await _chatService.MarkAsReadAsync(GetUserId(), messageId);
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).MarkAsReadResult(200, "SUCCESS");
+            }
+            catch (ErrorException ex)
+            {
+                _logger.LogError(ex.ToString());
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).MarkAsReadResult(ex.StatusCode, ex.ErrorDetail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.ToString());
+                var user = ConnectionMapper.Get(GetUserId());
+                if (user != null) await Clients.Client(user).MarkAsReadResult(500, ex.Message);
+            }
+        }
+
         /// <summary>
         /// Gets the UserId of the connected user
         /// </summary>

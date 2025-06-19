@@ -1,4 +1,5 @@
 using App.Core.Base;
+using App.Repositories.Models.Chat;
 using System.Linq.Expressions;
 
 namespace App.Repositories.Models.User
@@ -21,6 +22,9 @@ namespace App.Repositories.Models.User
         public DateTime? DateOfBirth { get; set; }
         public Gender Gender { get; set; } = Gender.NotGiven;
         public string Timezone { get; set; } = "UTC+7";
+
+        //Navigation Properties
+        public virtual ICollection<ChatConversationReadStatus> ChatConversationReadStatuses { get; set; }
 
         #region Behavior
         public void UpdateBasicInformation(

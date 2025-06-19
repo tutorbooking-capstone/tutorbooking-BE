@@ -5,6 +5,7 @@ using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Repositories.Context
 {
@@ -38,6 +39,7 @@ namespace App.Repositories.Context
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatConversation> ChatConversations { get; set; }
+        public DbSet<ChatConversationReadStatus> chatConversationReadStatuses { get; set; }
 
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -267,6 +269,26 @@ namespace App.Repositories.Context
                 builder.HasMany(c => c.AppUsers)
                        .WithMany()// No explicit navigation property on AppUser for conversations	
                        .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
+            });
+
+            modelBuilder.Entity<ChatConversationReadStatus>(builder =>
+            {
+                builder.HasKey(m => m.Id);   
+
+                builder.HasOne(m => m.ChatConversation)
+                .WithMany(m => m.ChatConversationReadStatus)
+                .HasForeignKey(m => m.ChatConversationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+                builder.HasOne(m => m.LastReadChatMessage)
+                .WithMany(m => m.ChatConversationReadStatuses)
+                .HasForeignKey(m => m.LastReadChatMessageId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+                builder.HasOne(m => m.AppUser)
+                .WithMany(m => m.ChatConversationReadStatuses)
+                .HasForeignKey(m => m.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
             });
             #endregion
         }

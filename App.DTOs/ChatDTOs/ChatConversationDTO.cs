@@ -12,7 +12,8 @@ namespace App.DTOs.ChatDTOs
 		public string Id { get; set; } = string.Empty;
 		public ICollection<ChatMessageDTO> Messages { get; set; } = new List<ChatMessageDTO>();
 		public ICollection<ChatParticipantDTO> Participants { get; set; } = new List<ChatParticipantDTO>();
-	}
+		public ICollection<ChatConversationReadStatusDTO> ChatConversationReadStatus { get; set; } = new List<ChatConversationReadStatusDTO>();
+    }
 
 	public static class ChatConversationDTOExtenstions
 	{
@@ -34,7 +35,14 @@ namespace App.DTOs.ChatDTOs
 					response.Participants.Add(appUser.ToChatParticipantDTO());
 				}
 			});
-			await Task.WhenAll(task1, task2);
+
+			var task3 = Task.Run(() =>
+			{
+				if (entity.ChatConversationReadStatus != null)
+					foreach (var readStatus in entity.ChatConversationReadStatus)
+						response.ChatConversationReadStatus.Add(readStatus.ToDTO());
+			});
+			await Task.WhenAll(task1, task2, task3);
 			return response;
 		}
 	}
