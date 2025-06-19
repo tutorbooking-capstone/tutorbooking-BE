@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
+using App.Core.Utils;
 using App.DTOs.ChatDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Chat;
@@ -40,7 +41,8 @@ namespace App.Services.Services
 				.OrderByDescending(c => c.CreatedTime)
 				.Include(c => c.ChatMessages.OrderByDescending(c => c.CreatedTime).Take(10))
 				.Include(c => c.AppUsers)
-				.Where(e => e.AppUsers.Any(x => x.Id.Equals(userId)))
+                .Include(c => c.ChatConversationReadStatus)
+                .Where(e => e.AppUsers.Any(x => x.Id.Equals(userId)))
 				.Skip((page-1) * size)
 				.Take(size)
 				.ToListAsync();
@@ -64,6 +66,7 @@ namespace App.Services.Services
 			var conversation = await _unitOfWork.GetRepository<ChatConversation>().GetQueryable()
 				.Include(c => c.ChatMessages.OrderByDescending(c => c.CreatedTime).Skip((page - 1) * size).Take(20))
 				.Include(c => c.AppUsers)
+				.Include(c => c.ChatConversationReadStatus)
 				.FirstOrDefaultAsync(e => e.Id.Equals(id));
 			if (conversation == null)
 				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
@@ -139,6 +142,36 @@ namespace App.Services.Services
         {
             var entity = await _unitOfWork.GetRepository<ChatMessage>().GetByIdAsync(id);
 			_unitOfWork.GetRepository<ChatMessage>().Delete(entity);
+			await _unitOfWork.SaveAsync();
+        }
+
+		public async Task MarkAsReadAsync(string userId, string messageId)
+		{
+			var message = await _unitOfWork.GetRepository<ChatMessage>().ExistEntities()
+				.FirstOrDefaultAsync(e => e.Id.Equals(messageId) && e.AppUserId.Equals(userId));
+			if (message == null)
+				throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "MESSAGE_NOT_FOUND");
+
+			var entity = await _unitOfWork.GetRepository<ChatConversationReadStatus>().ExistEntities()
+				.FirstOrDefaultAsync(e => e.ChatConversationId.Equals(message.ChatConversationId) && e.UserId.Equals(userId));
+
+			if (entity == null)
+			{
+                entity = new ChatConversationReadStatus()
+                {
+                    UserId = userId,
+                    LastReadChatMessageId = message.Id,
+                    ChatConversationId = message.ChatConversationId,
+                    LastReadAt = TimeHelper.GetCurrentUtcTime()
+                };
+                _unitOfWork.GetRepository<ChatConversationReadStatus>().Insert(entity);
+			}
+			else
+			{
+				entity.LastReadChatMessageId = message.Id;
+				entity.LastReadAt = TimeHelper.GetCurrentUtcTime();
+				_unitOfWork.GetRepository<ChatConversationReadStatus>().Update(entity);
+			}
 			await _unitOfWork.SaveAsync();
         }
     }
