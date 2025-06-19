@@ -161,7 +161,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
                 var user = ConnectionMapper.Get(GetUserId());
                 if (user != null) await Clients.Client(user).MarkAsReadResult(200, "SUCCESS");
                 user = ConnectionMapper.Get(receiverUserId);
-                if (user != null) await Clients.Client(user).OnMessageRead(user);
+                if (user != null) await Clients.Client(user).OnMessageRead(messageId);
             }
             catch (ErrorException ex)
             {
