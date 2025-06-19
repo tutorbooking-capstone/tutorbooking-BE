@@ -153,13 +153,15 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
             }
         }
 
-        public async Task MarkAsRead(string messageId)
+        public async Task MarkAsRead(string messageId, string receiverUserId)
         {
             try
             {
                 await _chatService.MarkAsReadAsync(GetUserId(), messageId);
                 var user = ConnectionMapper.Get(GetUserId());
                 if (user != null) await Clients.Client(user).MarkAsReadResult(200, "SUCCESS");
+                user = ConnectionMapper.Get(receiverUserId);
+                if (user != null) await Clients.Client(user).OnMessageRead(user);
             }
             catch (ErrorException ex)
             {

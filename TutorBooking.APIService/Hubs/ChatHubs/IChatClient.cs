@@ -10,6 +10,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         Task ReceiveMessage(ChatMessageDTO message);
 		Task OnMessageUpdated (ChatMessageDTO message);
 		Task OnMessageDeleted (string messageId);
+		Task OnMessageRead(string messageId);
 		Task OnUserTyping(string userId);
 
 		Task SendMessageResult(int status, object data);

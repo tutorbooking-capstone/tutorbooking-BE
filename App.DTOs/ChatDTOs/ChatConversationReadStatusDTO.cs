@@ -10,9 +10,10 @@ namespace App.DTOs.ChatDTOs
 {
     public class ChatConversationReadStatusDTO
     {
-        public string UserId { get; set; }
-        public string ChatConversationId { get; set; }
-        public string LastReadChatMessageId { get; set; }
+        public string? UserId { get; set; }
+        public string? ChatConversationId { get; set; }
+        public string? LastReadChatMessageId { get; set; }
+        public DateTime? LastReadAt { get; set; }
     }
 
     public static class ChatConversationReadStatusDTOExtensions
@@ -24,6 +25,7 @@ namespace App.DTOs.ChatDTOs
                 UserId = entity.UserId,
                 ChatConversationId = entity.ChatConversationId,
                 LastReadChatMessageId = entity.LastReadChatMessageId,
+                LastReadAt = entity.LastReadAt,
             };
         }
     }

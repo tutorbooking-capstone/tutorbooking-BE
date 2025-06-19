@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
+using App.Core.Utils;
 using App.DTOs.ChatDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Chat;
@@ -161,12 +162,14 @@ namespace App.Services.Services
                     UserId = userId,
                     LastReadChatMessageId = message.Id,
                     ChatConversationId = message.ChatConversationId,
+                    LastReadAt = TimeHelper.GetCurrentUtcTime()
                 };
                 _unitOfWork.GetRepository<ChatConversationReadStatus>().Insert(entity);
 			}
 			else
 			{
 				entity.LastReadChatMessageId = message.Id;
+				entity.LastReadAt = TimeHelper.GetCurrentUtcTime();
 				_unitOfWork.GetRepository<ChatConversationReadStatus>().Update(entity);
 			}
 			await _unitOfWork.SaveAsync();

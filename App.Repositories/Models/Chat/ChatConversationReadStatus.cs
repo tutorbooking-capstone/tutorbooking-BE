@@ -8,11 +8,12 @@ using System.Threading.Tasks;
 
 namespace App.Repositories.Models.Chat
 {
-    public class ChatConversationReadStatus : BaseEntity
+    public class ChatConversationReadStatus : CoreEntity
     {
-        public string UserId { get; set; }
-        public string ChatConversationId { get; set; }
-        public string LastReadChatMessageId { get; set; }
+        public string UserId { get; set; } = null!;
+        public string ChatConversationId { get; set; } = null!;
+        public string LastReadChatMessageId { get; set; } = null!;
+        public DateTime LastReadAt { get; set; } = DateTime.UtcNow;
 
         public virtual AppUser AppUser { get; set; }
         public virtual ChatConversation ChatConversation { get; set; }
