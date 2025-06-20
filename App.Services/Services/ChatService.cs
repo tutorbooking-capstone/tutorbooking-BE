@@ -128,7 +128,7 @@ namespace App.Services.Services
 		public async Task<ChatMessageDTO> UpdateMessageAsync(UpdateMessageRequest request)
 		{
 			var message = await _unitOfWork.GetRepository<ChatMessage>().ExistEntities()
-				.FirstOrDefaultAsync(x => x.Id.Equals(request.Id));
+				.FirstOrDefaultAsync(x => x.Id.Equals(request.Id) && x.DeletedTime == null);
 			if (message == null)
 				throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "CHAT_MESSAGE_NOT_FOUND");
 
@@ -140,8 +140,10 @@ namespace App.Services.Services
 
         public async Task DeleteMessageAsync(string id)
         {
-            var entity = await _unitOfWork.GetRepository<ChatMessage>().GetByIdAsync(id);
-			_unitOfWork.GetRepository<ChatMessage>().Delete(entity);
+            var entity = await _unitOfWork.GetRepository<ChatMessage>().ExistEntities()
+				.FirstOrDefaultAsync(e => e.Id.Equals(id) && e.DeletedTime == null);
+			if (entity != null)
+				_unitOfWork.GetRepository<ChatMessage>().Delete(entity);
 			await _unitOfWork.SaveAsync();
         }
 
