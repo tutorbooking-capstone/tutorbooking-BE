@@ -140,7 +140,8 @@ namespace App.Services.Services
 
         public async Task DeleteMessageAsync(string id)
         {
-            var entity = await _unitOfWork.GetRepository<ChatMessage>().GetByIdAsync(id);
+            var entity = await _unitOfWork.GetRepository<ChatMessage>().ExistEntities()
+				.FirstOrDefaultAsync(e => e.Id.Equals(id) && e.DeletedTime == null);
 			if (entity != null)
 				_unitOfWork.GetRepository<ChatMessage>().Delete(entity);
 			await _unitOfWork.SaveAsync();
