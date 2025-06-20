@@ -68,20 +68,23 @@ namespace App.Services.Services.User
 
         public async Task RegisterAsync(RegisterRequest model)
         {
-            if (model.Password != model.ConfirmPassword)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest,
-                    ErrorCode.BadRequest,
-                    "Xác nhận mật khẩu không đúng!");
-
+            var existingUser = await _userManager.FindByEmailAsync(model.Email);
             var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
 
+            if (existingUser != null)
+            {
+                await HandleExistingUserRegistration(model, existingUser, passwordHasher);
+                return;
+            }
+
+            // Case 1: New user registration.
             string otp = GenerateOtp();
             int otpCode = int.Parse(otp);
 
             var newUser = new AppUser
             {
                 Id = Guid.NewGuid().ToString("N"),
+                FullName = model.FullName,
                 Email = model.Email,
                 UserName = model.Email,
                 NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(model.Email),
@@ -118,7 +121,7 @@ namespace App.Services.Services.User
             _unitOfWork.GetRepository<Learner>().Insert(learner);
             await _unitOfWork.SaveAsync();
 
-            string greeting = $"Chào {model.Email},";
+            string greeting = $"Chào {model.FullName},";
             string mainMessage = $@"
                 Cảm ơn bạn đã đăng ký tài khoản.
                 <br>Mã OTP của bạn để xác thực tài khoản là: <div class='otp-code'>{otp}</div>
@@ -129,6 +132,44 @@ namespace App.Services.Services.User
                 "Xác thực tài khoản",
                 greeting,
                 mainMessage);
+        }
+
+        private async Task HandleExistingUserRegistration(RegisterRequest model, AppUser existingUser, FixedSaltPasswordHasher<AppUser> passwordHasher)
+        {
+            // Case 3: User exists and is confirmed.
+            if (existingUser.EmailConfirmed)
+            {
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Tài khoản đã tồn tại. Vui lòng đăng nhập.");
+            }
+
+            // Case 2: User exists but is not confirmed (OTP expired). Resend OTP.
+            string newOtp = GenerateOtp();
+            existingUser.EmailCode = int.Parse(newOtp);
+            existingUser.CodeGeneratedTime = DateTime.UtcNow;
+            existingUser.FullName = model.FullName;
+            existingUser.PasswordHash = passwordHasher.HashPassword(null, model.Password);
+
+            var updateResult = await _userManager.UpdateAsync(existingUser);
+            if (!updateResult.Succeeded)
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    updateResult.Errors.FirstOrDefault()?.Description ?? "Không thể cập nhật tài khoản để gửi lại OTP.");
+
+            string resendGreeting = $"Chào {model.FullName},";
+            string resendMainMessage = $@"
+                Chúng tôi đã nhận được yêu cầu đăng ký mới cho tài khoản của bạn.
+                <br>Mã OTP mới của bạn để xác thực tài khoản là: <div class='otp-code'>{newOtp}</div>
+                <br>Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.";
+
+            await _emailService.SendEmailAsync(
+                model.Email,
+                "Xác thực tài khoản (OTP mới)",
+                resendGreeting,
+                resendMainMessage);
         }
 
         public async Task SeedRegisterAsync(RegisterRequest model)
@@ -272,7 +313,7 @@ namespace App.Services.Services.User
             var loginResponse = new LoginResponse
             {
                 Token = tokenResponse,
-                Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
+                //Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
                 Roles = roles.ToList()
             };
 
@@ -410,11 +451,10 @@ namespace App.Services.Services.User
             return roleNames;
         }
 
-
         public async Task<LoginResponse> LoginGoogleAsync(string credential)
         {
             GoogleJsonWebSignature.Payload payload = await GoogleJsonWebSignature.ValidateAsync(credential);
-            AppUser user = await _userManager.FindByNameAsync(payload.Email);
+            AppUser? user = await _userManager.FindByNameAsync(payload.Email);
             if (user == null)
             {
                 #region create learner
@@ -464,10 +504,9 @@ namespace App.Services.Services.User
             return new LoginResponse
             {
                 Token = tokenResponse,
-                Role = tokenResponse.User?.Role ?? roles.FirstOrDefault() ?? "unknown",
+                Roles = roles.ToList(),
             };
         }
-
     }
 
 }

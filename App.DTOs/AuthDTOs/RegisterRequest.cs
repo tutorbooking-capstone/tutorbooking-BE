@@ -4,6 +4,7 @@ namespace App.DTOs.AuthDTOs
 {
     public class RegisterRequest
     {
+        public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public string ConfirmPassword { get; set; } = string.Empty;
@@ -14,6 +15,9 @@ namespace App.DTOs.AuthDTOs
     {
         public RegisterRequestValidator()
         {
+            RuleFor(x => x.FullName)
+                .NotEmpty().WithMessage("Họ và tên là bắt buộc");
+
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email bắt buộc")
                 .EmailAddress().WithMessage("Email không hợp lệ");
