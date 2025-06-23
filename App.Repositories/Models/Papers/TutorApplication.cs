@@ -52,10 +52,7 @@ namespace App.Repositories.Models.Papers
         // Status when tutor has submitted revised documents after a revision request
         PendingReverification = 3,
         
-        // Status when digital documents have been verified, but physical docs still needed
-        VerifiedUpload = 4,
-        
-        // Final status when both digital and physical documents are verified
-        VerifiedHardcopy = 5
+        // Status when all required documents have been verified
+        Verified =4
     }
 }

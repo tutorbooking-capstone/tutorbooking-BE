@@ -26,9 +26,9 @@ public class StateOrchestrator
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _revisionStateManager.UpdateRevisionActionAsync(revisionId, RevisionAction.ApproveHardcopy);
+                await _revisionStateManager.UpdateRevisionActionAsync(revisionId, RevisionAction.Approve);
 
-                await _tutorApplicationStateManager.UpdateApplicationStatusAsync(applicationId, ApplicationStatus.VerifiedHardcopy);
+                await _tutorApplicationStateManager.UpdateApplicationStatusAsync(applicationId, ApplicationStatus.Verified);
 
                 await _tutorStateManager.UpdateVerificationStatusAsync(tutorId, VerificationStatus.VerifiedHardcopy);
 

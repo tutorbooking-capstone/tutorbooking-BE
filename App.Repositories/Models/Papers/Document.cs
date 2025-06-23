@@ -11,6 +11,7 @@ namespace App.Repositories.Models.Papers
         public string? HardcopySubmitId { get; set; } = null; //Exist if the hardcopy document is uploaded by hardcopy submit
         public string Description { get; set; } = string.Empty; //Description of document by Tutor
         public bool IsVisibleToLearner { get; set; } = false; // Whether the document is visible to learners
+        public bool IsVerified { get; set; } = false;
 
         public virtual Staff? Staff { get; set; }
         public virtual TutorApplication? Application { get; set; }
