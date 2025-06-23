@@ -24,7 +24,7 @@ namespace App.DTOs.ChatDTOs
 				Id = entity.Id,
 				UserId = entity.AppUserId,
 				ChatConversationId = entity.ChatConversationId,
-				TextMessage = entity.TextMessage,
+				TextMessage = entity.DeletedTime == null? entity.TextMessage : null,
 				CreatedTime = entity.CreatedTime,
 			}; 
 
