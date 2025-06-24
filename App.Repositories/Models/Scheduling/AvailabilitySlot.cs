@@ -48,6 +48,43 @@ namespace App.Repositories.Models.Scheduling
 
             return weekStart.AddDays(offset);
         }
+
+        public static AvailabilitySlot Create(SlotType type, DayInWeek dayInWeek, int slotIndex)
+        {
+            return new AvailabilitySlot
+            {
+                Type = type,
+                DayInWeek = dayInWeek,
+                SlotIndex = slotIndex
+            };
+        }
+
+        public bool IsValid()
+        {
+            // Validate SlotIndex (0-47 cho 48 slot 30 phút trong ngày)
+            if (SlotIndex < 0 || SlotIndex > 47)
+                return false;
+
+            // Validate DayInWeek (phải là giá trị hợp lệ trong enum)
+            if (!Enum.IsDefined(typeof(DayInWeek), DayInWeek))
+                return false;
+
+            // Validate Type (phải là giá trị hợp lệ trong enum)
+            if (!Enum.IsDefined(typeof(SlotType), Type))
+                return false;
+
+            return true;
+        }
+
+        public TimeSpan GetStartTime()
+        {
+            return TimeSpan.FromMinutes(SlotIndex * 30);
+        }
+
+        public TimeSpan GetEndTime()
+        {
+            return TimeSpan.FromMinutes((SlotIndex + 1) * 30);
+        }
         #endregion
     }
 }

@@ -17,7 +17,7 @@ namespace App.DTOs.LessonDTOs
         public string Category { get; set; } = string.Empty;
         
         public decimal Price { get; set; }
-        public string Currency { get; set; } = string.Empty;
+        //public string Currency { get; set; } = string.Empty;
         public int DurationInMinutes { get; set; }
         public string TutorId { get; set; } = string.Empty;
 
@@ -33,7 +33,7 @@ namespace App.DTOs.LessonDTOs
             LanguageCode = lesson.LanguageCode,
             Category = lesson.Category,
             Price = lesson.Price,
-            Currency = lesson.Currency,
+            //Currency = lesson.Currency,
             DurationInMinutes = lesson.DurationInMinutes,
             TutorId = lesson.TutorId
         };

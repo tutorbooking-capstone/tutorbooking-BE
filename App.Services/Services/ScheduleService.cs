@@ -2,16 +2,27 @@ using App.Services.Interfaces;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.UoW;
 using Microsoft.EntityFrameworkCore;
+using App.DTOs.ScheduleDTOs;
+using App.Core.Provider;
+using App.Core.Base;
+using Microsoft.AspNetCore.Http;
+using App.Core.Constants;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace App.Services.Services
 {
     public class ScheduleService : IScheduleService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly ICurrentUserProvider _currentUserProvider;
 
-        public ScheduleService(IUnitOfWork unitOfWork)
+        public ScheduleService(IUnitOfWork unitOfWork, ICurrentUserProvider currentUserProvider)
         {
             _unitOfWork = unitOfWork;
+            _currentUserProvider = currentUserProvider;
         }
 
         #region Private Helpers
@@ -117,6 +128,63 @@ namespace App.Services.Services
             }
 
             return result.OrderBy(d => d.Date).ToList();
+        }
+    
+        public async Task<WeeklyPatternResponse> UpdateWeeklyPatternAsync(UpdateWeeklyPatternRequest request)
+        {
+            var tutorId = _currentUserProvider.GetCurrentUserId();
+            if (tutorId is null)
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized, 
+                    ErrorCode.Unauthorized, 
+                    "User is not authenticated.");
+
+            var appliedFromDate = request.AppliedFrom.Date;
+
+            // Business Rule 1 & 4: AppliedFrom phải lớn hơn ngày hiện tại
+            var today = DateTime.UtcNow.Date;
+            if (appliedFromDate <= today)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Availability can only be set for future dates, starting from tomorrow.");
+
+            // Business Rule 2: AppliedFrom phải là Thứ Hai
+            if (appliedFromDate.DayOfWeek != DayOfWeek.Monday)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "The start date for a weekly pattern must be a Monday.");
+
+            var patternRepo = _unitOfWork.GetRepository<WeeklyAvailabilityPattern>();
+
+            // Business Rule 3: Tìm và xóa pattern cũ nếu có cùng AppliedFrom
+            var existingPattern = await patternRepo.ExistEntities()
+                .FirstOrDefaultAsync(p => p.TutorId == tutorId && p.AppliedFrom == appliedFromDate);
+
+            if (existingPattern != null)
+                patternRepo.Delete(existingPattern);
+
+            var newPattern = new WeeklyAvailabilityPattern
+            {
+                TutorId = tutorId,
+                AppliedFrom = appliedFromDate,
+                Slots = request.Slots.Select(s => new AvailabilitySlot
+                {
+                    Type = s.Type,
+                    DayInWeek = s.DayInWeek,
+                    SlotIndex = s.SlotIndex
+                }).ToList()
+            };
+
+            patternRepo.Insert(newPattern);
+            await _unitOfWork.SaveAsync();
+
+            return await patternRepo.ExistEntities()
+                .AsNoTracking()
+                .Where(p => p.Id == newPattern.Id)
+                .Select(WeeklyPatternResponse.Projection)
+                .FirstAsync();
         }
     }
 }

@@ -16,7 +16,7 @@ namespace App.DTOs.LessonDTOs
         public string Category { get; set; } = string.Empty;
         
         public decimal Price { get; set; }
-        public string Currency { get; set; } = "VND";
+        //public string Currency { get; set; } = "VND";
         //public int DurationInMinutes { get; set; } = 30;
     }
 
@@ -71,9 +71,9 @@ namespace App.DTOs.LessonDTOs
             RuleFor(x => x.Price)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá phải lớn hơn hoặc bằng 0");
                 
-            RuleFor(x => x.Currency)
-                .NotEmpty().WithMessage("Tiền tệ không được để trống")
-                .Length(3).WithMessage("Tiền tệ phải có 3 ký tự");
+            //RuleFor(x => x.Currency)
+            //    .NotEmpty().WithMessage("Tiền tệ không được để trống")
+            //    .Length(3).WithMessage("Tiền tệ phải có 3 ký tự");
                 
             // RuleFor(x => x.DurationInMinutes)
             //     .GreaterThan(0).WithMessage("Thời lượng phải lớn hơn 0 phút");
@@ -116,9 +116,9 @@ namespace App.DTOs.LessonDTOs
                 .GreaterThanOrEqualTo(0).WithMessage("Giá phải lớn hơn hoặc bằng 0")
                 .When(x => x.Price.HasValue);
                 
-            RuleFor(x => x.Currency)
-                .Length(3).WithMessage("Tiền tệ phải có 3 ký tự")
-                .When(x => x.Currency != null);
+            //RuleFor(x => x.Currency)
+            //    .Length(3).WithMessage("Tiền tệ phải có 3 ký tự")
+            //    .When(x => x.Currency != null);
                 
             // RuleFor(x => x.DurationInMinutes)
             //     .GreaterThan(0).WithMessage("Thời lượng phải lớn hơn 0 phút")
@@ -143,7 +143,7 @@ namespace App.DTOs.LessonDTOs
                 LanguageCode = request.LanguageCode,
                 Category = request.Category,
                 Price = request.Price,
-                Currency = request.Currency,
+                //Currency = request.Currency,
             };
         }
 
@@ -157,7 +157,7 @@ namespace App.DTOs.LessonDTOs
             lesson.LanguageCode = request.LanguageCode ?? lesson.LanguageCode;
             lesson.Category = request.Category ?? lesson.Category;
             lesson.Price = request.Price ?? lesson.Price;
-            lesson.Currency = request.Currency ?? lesson.Currency;
+            //lesson.Currency = request.Currency ?? lesson.Currency;
         }
     }
     #endregion

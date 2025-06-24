@@ -1,13 +1,14 @@
 ﻿using App.Core.Base;
+using App.DTOs.ScheduleDTOs;
+using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers
 {
-    [Route("api/schedule")]
+    [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
     public class ScheduleController : ControllerBase
     {
         #region DI Constructor
@@ -20,6 +21,7 @@ namespace TutorBooking.APIService.Controllers
         #endregion
 
         [HttpGet("tutors/{tutorId}/availability")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetTutorAvailability(
             [FromRoute] string tutorId,
             [FromQuery] DateTime startDate,
@@ -30,6 +32,16 @@ namespace TutorBooking.APIService.Controllers
                 data: availability,
                 message: "Lịch của gia sư"
             ));
+        }
+
+        [HttpPut("weekly-pattern")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> UpdateWeeklyPattern([FromBody] UpdateWeeklyPatternRequest request)
+        {
+            var response = await _scheduleService.UpdateWeeklyPatternAsync(request);
+            return Ok(new BaseResponseModel<WeeklyPatternResponse>(
+                data: response, 
+                message: "Cập nhật lịch rãnh thành công!"));
         }
     }
 }
