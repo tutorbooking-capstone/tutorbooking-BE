@@ -5,7 +5,6 @@ using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Repositories.Context
 {
@@ -25,6 +24,7 @@ namespace App.Repositories.Context
 
         public DbSet<TutorLanguage> TutorLanguages { get; set; }
         public DbSet<Blog> Blogs { get; set; }
+        public DbSet<Lesson> Lessons { get; set; }
 
         public DbSet<Hashtag> Hashtags { get; set; }
         public DbSet<TutorHashtag> TutorHashtags { get; set; }
@@ -273,7 +273,7 @@ namespace App.Repositories.Context
 
             modelBuilder.Entity<ChatConversationReadStatus>(builder =>
             {
-                builder.HasKey(m => m.Id);   
+                builder.HasKey(m => m.Id);
 
                 builder.HasOne(m => m.ChatConversation)
                 .WithMany(m => m.ChatConversationReadStatus)
@@ -290,6 +290,19 @@ namespace App.Repositories.Context
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.SetNull);
             });
+            #endregion
+
+            #region Lesson Configuration
+            // Lesson -> Tutor (M:1)
+            modelBuilder.Entity<Lesson>()
+                .HasOne(l => l.Tutor)
+                .WithMany(t => t.Lessons)
+                .HasForeignKey(l => l.TutorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Lesson>()
+                .Property(l => l.Price)
+                .HasColumnType("decimal(18, 2)");
             #endregion
         }
     }

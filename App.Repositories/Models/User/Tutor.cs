@@ -23,6 +23,7 @@ namespace App.Repositories.Models.User
         // Navigation properties
         public virtual ICollection<TutorLanguage> Languages { get; set; } = new List<TutorLanguage>();
         public virtual ICollection<TutorHashtag> Hashtags { get; set; } = new List<TutorHashtag>();
+        public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
         public virtual ICollection<WeeklyAvailabilityPattern> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityPattern>();
         public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
 
