@@ -7,10 +7,7 @@ using App.Core.Provider;
 using App.Core.Base;
 using Microsoft.AspNetCore.Http;
 using App.Core.Constants;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using App.Repositories.Models.User;
 
 namespace App.Services.Services
 {
@@ -139,22 +136,33 @@ namespace App.Services.Services
                     ErrorCode.Unauthorized, 
                     "User is not authenticated.");
 
-            var appliedFromDate = request.AppliedFrom.Date;
+            // Chuyển đổi DateTime sang UTC trước khi sử dụng
+            var appliedFromDate = ConvertToUtc(request.AppliedFrom).Date;
+            var today = DateTime.UtcNow.Date;
 
             // Business Rule 1 & 4: AppliedFrom phải lớn hơn ngày hiện tại
-            var today = DateTime.UtcNow.Date;
             if (appliedFromDate <= today)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
-                    "Availability can only be set for future dates, starting from tomorrow.");
+                    "Chỉ có thể đặt lịch rảnh cho các ngày trong tương lai, bắt đầu từ ngày mai.");
 
             // Business Rule 2: AppliedFrom phải là Thứ Hai
             if (appliedFromDate.DayOfWeek != DayOfWeek.Monday)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
-                    "The start date for a weekly pattern must be a Monday.");
+                    "Ngày bắt đầu của lịch tuần phải là Thứ Hai.");
+
+            // Validate slots
+            foreach (var slot in request.Slots)
+            {
+                if (!slot.IsValid())
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        "Một hoặc nhiều khung giờ rảnh không hợp lệ.");
+            }
 
             var patternRepo = _unitOfWork.GetRepository<WeeklyAvailabilityPattern>();
 
@@ -165,26 +173,127 @@ namespace App.Services.Services
             if (existingPattern != null)
                 patternRepo.Delete(existingPattern);
 
-            var newPattern = new WeeklyAvailabilityPattern
-            {
-                TutorId = tutorId,
-                AppliedFrom = appliedFromDate,
-                Slots = request.Slots.Select(s => new AvailabilitySlot
-                {
-                    Type = s.Type,
-                    DayInWeek = s.DayInWeek,
-                    SlotIndex = s.SlotIndex
-                }).ToList()
-            };
+            var availabilitySlots = AvailabilitySlotDTO.ToEntities(request.Slots);
+            var newPattern = WeeklyAvailabilityPattern.Create(tutorId, appliedFromDate, availabilitySlots);
 
             patternRepo.Insert(newPattern);
             await _unitOfWork.SaveAsync();
 
+            // Trả về response bằng cách query lại từ DB để có ID và dữ liệu nhất quán
             return await patternRepo.ExistEntities()
                 .AsNoTracking()
                 .Where(p => p.Id == newPattern.Id)
                 .Select(WeeklyPatternResponse.Projection)
                 .FirstAsync();
+        }
+
+        public async Task DeleteWeeklyPatternAsync(string patternId)
+        {
+            var tutorId = _currentUserProvider.GetCurrentUserId();
+            if (tutorId is null)
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized, 
+                    ErrorCode.Unauthorized, 
+                    "User is not authenticated.");
+
+            var patternRepo = _unitOfWork.GetRepository<WeeklyAvailabilityPattern>();
+            var patternToDelete = await patternRepo.ExistEntities()
+                .FirstOrDefaultAsync(p => p.Id == patternId);
+
+            if (patternToDelete == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Weekly pattern not found.");
+
+            if (patternToDelete.TutorId != tutorId)
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden, 
+                    ErrorCode.Forbidden, 
+                    "You are not authorized to delete this pattern.");
+
+            // Business Rule: Chỉ cho phép xóa các pattern có ngày bắt đầu trong tương lai.
+            var today = DateTime.UtcNow.Date;
+            if (patternToDelete.AppliedFrom <= today)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Không thể xóa các mẫu lịch tuần đã qua hoặc hiện tại.");
+
+            patternRepo.Delete(patternToDelete);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public async Task<List<WeeklyPatternResponse>> GetAllWeeklyPatternsAsync(string tutorId)
+        {
+            // Kiểm tra tutor có tồn tại không
+            var tutorExists = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .AnyAsync(t => t.UserId == tutorId);
+
+            if (!tutorExists)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy gia sư với ID đã cung cấp.");
+
+            // Sử dụng Projection để ánh xạ trực tiếp trong câu query, giúp tối ưu hiệu suất
+            return await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .AsNoTracking()
+                .Where(p => p.TutorId == tutorId)
+                .OrderByDescending(p => p.AppliedFrom)
+                .Select(WeeklyPatternResponse.Projection)
+                .ToListAsync();
+        }
+
+        public async Task<List<DailyAvailabilityPatternDTO>> GetWeekAvailabilityAsync(string tutorId, DateTime startDate)
+        {
+            // Kiểm tra tutor có tồn tại không
+            var tutorExists = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .AnyAsync(t => t.UserId == tutorId);
+
+            if (!tutorExists)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy gia sư với ID đã cung cấp.");
+
+            var normalizedStartDate = ConvertToUtc(startDate).Date;
+            var endDate = normalizedStartDate.AddDays(6);
+
+            var relevantPatterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .Where(p => p.TutorId == tutorId && p.AppliedFrom <= endDate)
+                .OrderByDescending(p => p.AppliedFrom)
+                .Include(p => p.Slots)
+                .ToListAsync();
+
+            // Nếu không có mẫu nào, trả về danh sách rỗng
+            if (!relevantPatterns.Any())
+                return new List<DailyAvailabilityPatternDTO>();
+
+            var result = new List<DailyAvailabilityPatternDTO>();
+
+            // Lặp qua từng ngày trong khoảng thời gian 7 ngày
+            for (int i = 0; i < 7; i++)
+            {
+                var currentDate = normalizedStartDate.AddDays(i);
+                DayInWeek currentDayOfWeek = (DayInWeek)((int)currentDate.DayOfWeek + 1);
+
+                // Sau sắp xếp, mẫu đầu tiên có AppliedFrom <= currentDate là mẫu đúng
+                var applicablePattern = relevantPatterns.FirstOrDefault(p => p.AppliedFrom <= currentDate);
+                var timeSlotIndices = new List<int>();
+
+                if (applicablePattern?.Slots != null)
+                    timeSlotIndices = applicablePattern.Slots
+                        .Where(s => s.DayInWeek == currentDayOfWeek && s.Type == SlotType.Available)
+                        .Select(s => s.SlotIndex)
+                        .ToList();
+                
+                result.Add(DailyAvailabilityPatternDTO.Create(currentDayOfWeek, currentDate, timeSlotIndices));
+            }
+
+            return result;
         }
     }
 }

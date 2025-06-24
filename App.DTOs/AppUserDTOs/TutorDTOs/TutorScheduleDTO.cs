@@ -7,6 +7,23 @@ public record WeeklyAvailabilityPatternDTO
     public List<DailyAvailabilityDTO> DailyAvailabilities { get; init; } = new();
 }
 
+public record DailyAvailabilityPatternDTO
+{
+    public DayInWeek Day { get; init; }
+    public DateTime Date { get; init; }
+    public List<int> TimeSlotIndex { get; init; } = new();
+
+    public static DailyAvailabilityPatternDTO Create(DayInWeek day, DateTime date, List<int> timeSlotIndices)
+    {
+        return new DailyAvailabilityPatternDTO
+        {
+            Day = day,
+            Date = date,
+            TimeSlotIndex = timeSlotIndices
+        };
+    }
+}
+
 public record DailyAvailabilityDTO
 {
     public DayInWeek Day { get; init; }

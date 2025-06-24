@@ -17,7 +17,7 @@ namespace App.DTOs.AuthDTOs
         public string FullName { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public string ProfileImageUrl { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
+        //public string Role { get; set; } = string.Empty;
         public DateTime? DateOfBirth { get; set; }
         public Gender Gender { get; set; } 
         public DateTimeOffset CreatedTime { get; set; }

@@ -43,5 +43,39 @@ namespace TutorBooking.APIService.Controllers
                 data: response, 
                 message: "Cập nhật lịch rãnh thành công!"));
         }
+
+        [HttpDelete("weekly-pattern/{patternId}")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> DeleteWeeklyPattern(string patternId)
+        {
+            await _scheduleService.DeleteWeeklyPatternAsync(patternId);
+            return Ok(new BaseResponseModel<object>(
+                data: null, 
+                message: "Xóa lịch tuần thành công!"));
+        }
+
+        [HttpGet("tutors/{tutorId}/weekly-patterns")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllWeeklyPatterns([FromRoute] string tutorId)
+        {
+            var patterns = await _scheduleService.GetAllWeeklyPatternsAsync(tutorId);
+            return Ok(new BaseResponseModel<List<WeeklyPatternResponse>>(
+                data: patterns,
+                message: "Danh sách lịch tuần của gia sư"
+            ));
+        }
+
+        [HttpGet("tutors/{tutorId}/week")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetWeekAvailability(
+            [FromRoute] string tutorId,
+            [FromQuery] DateTime startDate)
+        {
+            var availability = await _scheduleService.GetWeekAvailabilityAsync(tutorId, startDate);
+            return Ok(new BaseResponseModel<List<DailyAvailabilityPatternDTO>>(
+                data: availability,
+                message: "Lịch rảnh dự kiến của gia sư trong 7 ngày"
+            ));
+        }
     }
 }

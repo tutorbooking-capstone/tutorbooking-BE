@@ -76,7 +76,7 @@ namespace App.Services.Services.User
                     FullName = user.FullName ?? string.Empty,
                     PhoneNumber = user.PhoneNumber ?? string.Empty,
                     ProfileImageUrl = user.ProfilePictureUrl ?? string.Empty,
-                    Role = roles?.FirstOrDefault() ?? "unknown",
+                    //Role = roles?.FirstOrDefault() ?? "unknown",
                     DateOfBirth = user.DateOfBirth,
                     Gender = user.Gender,
                     CreatedTime = user.CreatedTime
