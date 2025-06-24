@@ -14,7 +14,7 @@ namespace App.Repositories.Models.User
         public string TeachingMethod { get; set; } = string.Empty;
 
         // Verification Info
-        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Basic;
+        //public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Basic;
         public DateTime LastStatusUpdateAt { get; set; }
         public DateTime? BecameTutorAt { get; set; }
 
@@ -27,20 +27,20 @@ namespace App.Repositories.Models.User
         public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
 
         #region Behavior
-        public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
-        {
-            if (VerificationStatus == newStatus)
-                return Array.Empty<Expression<Func<Tutor, object>>>();
+        //public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
+        //{
+        //    if (VerificationStatus == newStatus)
+        //        return Array.Empty<Expression<Func<Tutor, object>>>();
 
-            VerificationStatus = newStatus;
-            LastStatusUpdateAt = DateTime.UtcNow;
+        //    VerificationStatus = newStatus;
+        //    LastStatusUpdateAt = DateTime.UtcNow;
             
-            return
-            [
-                x => x.VerificationStatus,
-                x => x.LastStatusUpdateAt
-            ];
-        }
+        //    return
+        //    [
+        //        x => x.VerificationStatus,
+        //        x => x.LastStatusUpdateAt
+        //    ];
+        //}
 
         public Expression<Func<Tutor, object>>[] UpdateTutorProfile(
             string? nickName,

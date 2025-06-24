@@ -14,6 +14,7 @@ using App.Repositories.Models.Papers;
 using Microsoft.Extensions.Logging;
 using App.Core.Mapper;
 using App.Repositories.Models.Scheduling;
+using System.Security.Cryptography;
 
 namespace App.Services.Services.User
 {
@@ -193,7 +194,8 @@ namespace App.Services.Services.User
             // Step 2: Get only tutors that teach these popular languages (with appropriate verification status)
             var relevantTutors = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
-                .Where(t => t.VerificationStatus != VerificationStatus.Basic)
+                //.Where(t => t.VerificationStatus != VerificationStatus.Basic)
+                .Where(t => t.Languages.Select(t => t.LanguageCode).Any(t => popularLanguages.Contains(t)))
                 .Include(t => t.User)
                 .Where(t => _unitOfWork.GetRepository<TutorLanguage>()
                     .ExistEntities()
@@ -274,10 +276,11 @@ namespace App.Services.Services.User
             // Generate a stable pseudo-random value based on tutor ID
             var random = new Random(tutor.UserId.GetHashCode());
             double baseRating = 3.5 + random.NextDouble();
-            
+
             // Add bonus for verification status
-            double verificationBonus = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy ? 0.5 : 0.0;
-            
+            //double verificationBonus = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy ? 0.5 : 0.0;
+            double verificationBonus = Random.Shared.NextDouble();
+
             // Add bonus for language proficiency
             double proficiencyBonus = languageProficiency / 14.0; // Max 0.5 for proficiency 7
             
@@ -481,37 +484,52 @@ namespace App.Services.Services.User
             return response;
         }
 
-        public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
-        {
-            var tutorStatus = await _unitOfWork.GetRepository<Tutor>()
-                .ExistEntities()
-                .Where(t => t.UserId == id.Trim())
-                .Select(t => (VerificationStatus?)t.VerificationStatus)
-                .SingleOrDefaultAsync();
+        //public async Task<VerificationStatus> GetVerificationStatusAsync(string id)
+        //{
+        //    var tutorStatus = await _unitOfWork.GetRepository<Tutor>()
+        //        .ExistEntities()
+        //        .Where(t => t.UserId == id.Trim())
+        //        .Select(t => (VerificationStatus?)t.VerificationStatus)
+        //        .SingleOrDefaultAsync();
 
-            if (tutorStatus == null)
+        //    if (tutorStatus == null)
+        //        throw new ErrorException(
+        //            StatusCodes.Status404NotFound,
+        //            ErrorCode.NotFound,
+        //            $"Tutor with ID {id} not found.");
+
+        //    return tutorStatus.Value;
+        //}
+
+        public async Task<bool> GetVerificationStatusAsync(string id)
+        {
+            var tutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(t => t.UserId == id.Trim());
+
+            if (tutor == null)
                 throw new ErrorException(
                     StatusCodes.Status404NotFound,
                     ErrorCode.NotFound,
                     $"Tutor with ID {id} not found.");
 
-            return tutorStatus.Value;
+            return tutor.Languages.Any();
         }
 
-        public async Task UpdateVerificationStatusAsync(
-            string tutorId, 
-            VerificationStatus status, 
-            string? updatedBy = null)
-        {
-            var tutor = await GetTutorByIdAsync(tutorId);
-            var modifiedProperties = tutor.UpdateVerificationStatus(status);
-            
-            if (modifiedProperties.Length > 0)
-            {
-                _unitOfWork.GetRepository<Tutor>().UpdateFields(tutor, modifiedProperties);
-                await _unitOfWork.SaveAsync();
-            }
-        }
+        //public async Task UpdateVerificationStatusAsync(
+        //    string tutorId, 
+        //    VerificationStatus status, 
+        //    string? updatedBy = null)
+        //{
+        //    var tutor = await GetTutorByIdAsync(tutorId);
+        //    var modifiedProperties = tutor.UpdateVerificationStatus(status);
+
+        //    if (modifiedProperties.Length > 0)
+        //    {
+        //        _unitOfWork.GetRepository<Tutor>().UpdateFields(tutor, modifiedProperties);
+        //        await _unitOfWork.SaveAsync();
+        //    }
+        //}
 
         public async Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync()
         {

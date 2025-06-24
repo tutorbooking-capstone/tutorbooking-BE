@@ -30,7 +30,7 @@ public class StateOrchestrator
 
                 await _tutorApplicationStateManager.UpdateApplicationStatusAsync(applicationId, ApplicationStatus.Verified);
 
-                await _tutorStateManager.UpdateVerificationStatusAsync(tutorId, VerificationStatus.VerifiedHardcopy);
+                //await _tutorStateManager.UpdateVerificationStatusAsync(tutorId, VerificationStatus.VerifiedHardcopy);
 
                 await _unitOfWork.SaveAsync();
             });

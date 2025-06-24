@@ -37,7 +37,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 FullName = tutor.User?.FullName ?? string.Empty,
                 NickName = tutor.NickName,
 				Description = tutor.Description,
-                IsProfessional = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy,
+                //IsProfessional = tutor.VerificationStatus == VerificationStatus.VerifiedHardcopy,
+                IsProfessional = tutor.Languages.Any(),
                 Rating = rating,
                 Languages = languages
                     .OrderByDescending(l => l.IsPrimary)

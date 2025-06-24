@@ -15,7 +15,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string Description { get; set; } = string.Empty;
         public string TeachingMethod { get; set; } = string.Empty;
 		public string ProfileImageUrl  { get; set; } = string.Empty;
-		public VerificationStatus VerificationStatus { get; set; }
+		//public VerificationStatus VerificationStatus { get; set; }
         public DateTime? BecameTutorAt { get; set; }
         
         // Scheduling information
@@ -35,7 +35,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             Brief = t.Brief,
             Description = t.Description,
             TeachingMethod = t.TeachingMethod,
-            VerificationStatus = t.VerificationStatus,
+            //VerificationStatus = t.Languages.Any(),
             BecameTutorAt = t.BecameTutorAt
         };
     }
@@ -141,7 +141,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 Description = tutor.Description,
                 TeachingMethod = tutor.TeachingMethod,
 				ProfileImageUrl = tutor.User != null ? tutor.User.ProfilePictureUrl : string.Empty,
-                VerificationStatus = tutor.VerificationStatus,
+                //VerificationStatus = tutor.VerificationStatus,
                 BecameTutorAt = tutor.BecameTutorAt
             };
         }
