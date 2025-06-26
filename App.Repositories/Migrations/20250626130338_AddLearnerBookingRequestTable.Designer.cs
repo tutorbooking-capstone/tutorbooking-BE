@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250626130338_AddLearnerBookingRequestTable")]
+    partial class AddLearnerBookingRequestTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -367,17 +370,9 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
                     b.Property<int>("DayInWeek")
                         .HasColumnType("integer")
                         .HasColumnName("day_in_week");
-
-                    b.Property<DateTime?>("LastViewedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_viewed_at");
 
                     b.Property<string>("LearnerId")
                         .IsRequired()

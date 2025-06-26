@@ -11,6 +11,7 @@ namespace App.Repositories.Models.User
 
         public virtual AppUser? User { get; set; }
         public virtual ICollection<BookingSlot>? BookingSlots { get; set; }
+        public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
 
         #region Behavior
         public Expression<Func<Learner, object>>[] UpdateLearningLanguage(

@@ -197,7 +197,8 @@ namespace App.Services.Services
                     "User is not authenticated.");
 
             var patternRepo = _unitOfWork.GetRepository<WeeklyAvailabilityPattern>();
-            var patternToDelete = await patternRepo.ExistEntities()
+            var patternToDelete = await patternRepo
+                .ExistEntities()
                 .FirstOrDefaultAsync(p => p.Id == patternId);
 
             if (patternToDelete == null)

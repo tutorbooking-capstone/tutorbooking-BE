@@ -26,6 +26,7 @@ namespace App.Repositories.Models.User
         public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
         public virtual ICollection<WeeklyAvailabilityPattern> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityPattern>();
         public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
+        public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
 
         #region Behavior
         public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)

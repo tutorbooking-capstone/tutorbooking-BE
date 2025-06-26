@@ -41,6 +41,7 @@ namespace App.Repositories.Context
         public DbSet<ChatConversation> ChatConversations { get; set; }
         public DbSet<ChatConversationReadStatus> chatConversationReadStatuses { get; set; }
 
+        public DbSet<LearnerTimeSlotRequest> LearnerTimeSlotRequests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -303,6 +304,29 @@ namespace App.Repositories.Context
             modelBuilder.Entity<Lesson>()
                 .Property(l => l.Price)
                 .HasColumnType("decimal(18, 2)");
+            #endregion
+
+            #region LearnerTimeSlotRequest Configuration
+            modelBuilder.Entity<LearnerTimeSlotRequest>(builder =>
+            {
+                builder.HasKey(lts => lts.Id);
+
+                // Relationship with Learner
+                builder.HasOne(lts => lts.Learner)
+                    .WithMany(l => l.TimeSlotRequests)
+                    .HasForeignKey(lts => lts.LearnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Relationship with Tutor
+                builder.HasOne(lts => lts.Tutor)
+                    .WithMany(t => t.TimeSlotRequests)
+                    .HasForeignKey(lts => lts.TutorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                // Unique constraint to prevent duplicate requests
+                builder.HasIndex(lts => new { lts.LearnerId, lts.TutorId, lts.DayInWeek, lts.SlotIndex })
+                    .IsUnique();
+            });
             #endregion
         }
     }
