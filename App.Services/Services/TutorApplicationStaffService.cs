@@ -97,9 +97,9 @@ namespace App.Services.Services
             var entity = request.ToEntity(_userService.GetCurrentUserId());
             _unitOfWork.GetRepository<ApplicationRevision>().Insert(entity);
             if (request.Action == RevisionAction.Approve) 
-                UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
+                await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
             if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
-                UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
+                await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
             await _unitOfWork.SaveAsync();       
             return entity.ToRevisionResponse();
         }
