@@ -18,11 +18,13 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
         public string RevisionNotes { get; set; } = string.Empty;
         public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
         public string TutorName { get; set; } = string.Empty;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public virtual TutorResponse? Tutor { get; set; }
-        public virtual ICollection<DocumentResponse>? Documents { get; set; } = new List<DocumentResponse>();
-        public virtual ICollection<RevisionResponse>? ApplicationRevisions { get; set; } = new List<RevisionResponse>();
-
-
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public virtual ICollection<DocumentResponse>? Documents { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public virtual ICollection<RevisionResponse>? ApplicationRevisions { get; set; }
     }
 
     #region Mapping
@@ -54,15 +56,22 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
             var task1 = Task.Run(() =>
             {
                 if (entity.ApplicationRevisions != null)
+                {
+                    response.ApplicationRevisions = new List<RevisionResponse>();
                     foreach (var note in entity.ApplicationRevisions)
                         response.ApplicationRevisions.Add(note.ToRevisionResponse());
+                }
+                    
             });
 
             var task2 = Task.Run(() =>
             {
                 if (entity.Documents != null)
+                {
+                    response.Documents = new List<DocumentResponse>();
                     foreach (var document in entity.Documents)
                         response.Documents.Add(document.ToDocumentResponse());
+                }      
             });
             await Task.WhenAll(task1, task2);
             return response;

@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
+using App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.Repositories.Models;
@@ -86,7 +87,7 @@ namespace App.Services.Services
         /// application ID and the desired revision action.</param>
         /// <returns>The newly created <see cref="ApplicationRevision"/> entity.</returns>
         /// <exception cref="ErrorException">Thrown if the tutor application specified in <paramref name="request"/> does not exist.</exception>
-        public async Task<ApplicationRevision> CreateApplicationRevisionAsync(ApplicationRevisionCreateRequest request)
+        public async Task<RevisionResponse> CreateApplicationRevisionAsync(ApplicationRevisionCreateRequest request)
         {
             var existsTutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
                 .AnyAsync(e => e.Id.Equals(request.ApplicationId));
@@ -100,7 +101,7 @@ namespace App.Services.Services
             if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
                 UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
             await _unitOfWork.SaveAsync();       
-            return entity;
+            return entity.ToRevisionResponse();
         }
 
         #region private
