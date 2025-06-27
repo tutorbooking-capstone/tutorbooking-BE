@@ -26,7 +26,9 @@ namespace App.Repositories.Models.Scheduling
     {
         public SlotType Type { get; set; }
         public DayInWeek DayInWeek { get; set; }
-        public int SlotIndex { get; set; } // Slot index within the day (e.g., 0 for 00:00-00:30, ..., 47 for 23:30-24:00)
+
+        // Slot index within the day (e.g., 0 for 00:00-00:30, ..., 47 for 23:30-24:00)
+        public int SlotIndex { get; set; } 
         public string? WeeklyPatternId { get; set; }
 
         public virtual WeeklyAvailabilityPattern? WeeklyPattern { get; set; }
@@ -58,6 +60,14 @@ namespace App.Repositories.Models.Scheduling
                 SlotIndex = slotIndex
             };
         }
+
+        public static AvailabilitySlot CreateAvailable(DayInWeek dayInWeek, int slotIndex)
+            => new AvailabilitySlot
+            {
+                Type = SlotType.Available,
+                DayInWeek = dayInWeek,
+                SlotIndex = slotIndex
+            };
 
         public bool IsValid()
         {

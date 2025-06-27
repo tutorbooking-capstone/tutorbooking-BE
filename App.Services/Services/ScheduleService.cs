@@ -154,15 +154,7 @@ namespace App.Services.Services
                     ErrorCode.BadRequest,
                     "Ngày bắt đầu của lịch tuần phải là Thứ Hai.");
 
-            // Validate slots
-            foreach (var slot in request.Slots)
-            {
-                if (!slot.IsValid())
-                    throw new ErrorException(
-                        StatusCodes.Status400BadRequest,
-                        ErrorCode.BadRequest,
-                        "Một hoặc nhiều khung giờ rảnh không hợp lệ.");
-            }
+            // Validation đã được xử lý bởi FluentValidation, không cần check thủ công ở đây.
 
             var patternRepo = _unitOfWork.GetRepository<WeeklyAvailabilityPattern>();
 
@@ -173,7 +165,10 @@ namespace App.Services.Services
             if (existingPattern != null)
                 patternRepo.Delete(existingPattern);
 
-            var availabilitySlots = AvailabilitySlotDTO.ToEntities(request.Slots);
+            var availabilitySlots = request.Slots.Select(s => 
+                AvailabilitySlot.CreateAvailable(s.DayInWeek, s.SlotIndex)
+            );
+
             var newPattern = WeeklyAvailabilityPattern.Create(tutorId, appliedFromDate, availabilitySlots);
 
             patternRepo.Insert(newPattern);
