@@ -16,13 +16,13 @@ namespace App.Services.Interfaces.User
 
         // Retrieval
         Task<TutorResponse> GetByIdAsync(string tutorId);
-        Task<VerificationStatus> GetVerificationStatusAsync(string tutorId);
+        Task<bool> GetVerificationStatusAsync(string tutorId);
         Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync();
         Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync();
         Task<List<TutorCardDTO>> GetTutorCardListAsync();
 		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page, int size);
 
 		// Status Management 
-		Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
+		//Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
     }
 }

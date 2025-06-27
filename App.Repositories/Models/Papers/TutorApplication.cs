@@ -13,6 +13,8 @@ namespace App.Repositories.Models.Papers
         public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
 
         public virtual Tutor? Tutor { get; set; }
+        public virtual ICollection<Document>? Documents { get; set; }
+        public virtual ICollection<ApplicationRevision>? ApplicationRevisions { get; set; }
 
         #region Behavior
         public static TutorApplication Create(string tutorId)
@@ -52,10 +54,7 @@ namespace App.Repositories.Models.Papers
         // Status when tutor has submitted revised documents after a revision request
         PendingReverification = 3,
         
-        // Status when digital documents have been verified, but physical docs still needed
-        VerifiedUpload = 4,
-        
-        // Final status when both digital and physical documents are verified
-        VerifiedHardcopy = 5
+        // Status when all required documents have been verified
+        Verified =4
     }
 }

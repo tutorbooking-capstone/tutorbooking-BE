@@ -22,15 +22,15 @@ public class StateOrchestrator
         }
         #endregion
 
-        public async Task ApproveHardcopyAsync(string revisionId, string applicationId, string tutorId)
+        public async Task ApproveAsync(string revisionId, string applicationId, string tutorId)
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                await _revisionStateManager.UpdateRevisionActionAsync(revisionId, RevisionAction.ApproveHardcopy);
+                await _revisionStateManager.UpdateRevisionActionAsync(revisionId, RevisionAction.Approve);
 
-                await _tutorApplicationStateManager.UpdateApplicationStatusAsync(applicationId, ApplicationStatus.VerifiedHardcopy);
+                await _tutorApplicationStateManager.UpdateApplicationStatusAsync(applicationId, ApplicationStatus.Verified);
 
-                await _tutorStateManager.UpdateVerificationStatusAsync(tutorId, VerificationStatus.VerifiedHardcopy);
+                //await _tutorStateManager.UpdateVerificationStatusAsync(tutorId, VerificationStatus.VerifiedHardcopy);
 
                 await _unitOfWork.SaveAsync();
             });

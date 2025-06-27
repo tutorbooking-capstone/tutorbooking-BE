@@ -35,10 +35,9 @@ namespace App.Repositories.Models
         RequestRevision = 0,
 
         // Staff approves the application or a specific document Upload or Hardcopy
-        ApproveUpload = 1,
-        ApproveHardcopy = 2,
+        Approve = 1,
 
         // Staff rejects the application or a specific document
-        Reject = 3
+        Reject = 2
     }
 }

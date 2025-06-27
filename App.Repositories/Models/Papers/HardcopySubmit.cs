@@ -15,8 +15,9 @@ namespace App.Repositories.Models.Papers
 
     public enum HardcopySubmitStatus
     {
-        Pending = 0,       
-        Verified = 1,     
-        Rejected = 2      
+        Pending = 0,    
+        Processing = 1,
+        Verified = 2,     
+        Rejected = 3      
     }
 }
