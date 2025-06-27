@@ -13,6 +13,8 @@ namespace App.Repositories.Models.Papers
         public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
 
         public virtual Tutor? Tutor { get; set; }
+        public virtual ICollection<Document>? Documents { get; set; }
+        public virtual ICollection<ApplicationRevision>? ApplicationRevisions { get; set; }
 
         #region Behavior
         public static TutorApplication Create(string tutorId)

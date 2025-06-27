@@ -46,7 +46,7 @@ namespace App.Repositories.Context
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.UseSnakeCaseNames();
-
+            AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
             #region Delete Behavior
             // Cascade Delete được áp dụng khi xóa bản ghi chính sẽ xóa tất cả bản ghi phụ thuộc (vd: xóa Tutor sẽ xóa tất cả TutorLanguage)
@@ -89,6 +89,18 @@ namespace App.Repositories.Context
                 .HasOne(ta => ta.Tutor)
                 .WithMany()
                 .HasForeignKey(ta => ta.TutorId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<TutorApplication>()
+                .HasMany(ta => ta.Documents)
+                .WithOne(doc => doc.Application)
+                .HasForeignKey(ta => ta.Id)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<TutorApplication>()
+                .HasMany(ta => ta.ApplicationRevisions)
+                .WithOne(rev => rev.Application)
+                .HasForeignKey(ta => ta.Id)
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
 

@@ -22,7 +22,7 @@ public class StateOrchestrator
         }
         #endregion
 
-        public async Task ApproveHardcopyAsync(string revisionId, string applicationId, string tutorId)
+        public async Task ApproveAsync(string revisionId, string applicationId, string tutorId)
         {
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
