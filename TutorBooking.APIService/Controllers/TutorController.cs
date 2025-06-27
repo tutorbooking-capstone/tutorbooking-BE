@@ -64,26 +64,26 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpGet("{id}/verification-status")]
-        public async Task<IActionResult> GetVerificationStatus(string id)
-        {
-            var status = await _tutorService.GetVerificationStatusAsync(id);
-            return Ok(new BaseResponseModel<VerificationStatus>(
-                data: status
-            ));
-        }
+        //[HttpGet("{id}/verification-status")]
+        //public async Task<IActionResult> GetVerificationStatus(string id)
+        //{
+        //    var status = await _tutorService.GetVerificationStatusAsync(id);
+        //    return Ok(new BaseResponseModel<VerificationStatus>(
+        //        data: status
+        //    ));
+        //}
 
-        [HttpPatch("{id}/verification-status")]
-        public async Task<IActionResult> UpdateVerificationStatus(
-            string tutorId, 
-            [FromBody] VerificationStatus status,
-            [FromQuery] string? updatedBy = null)
-        {
-            await _tutorService.UpdateVerificationStatusAsync(tutorId, status, updatedBy);
-            return Ok(new BaseResponseModel<string>(
-                message: "Cập nhật trạng thái xác minh thành công!"
-            ));
-        }
+        //[HttpPatch("{id}/verification-status")]
+        //public async Task<IActionResult> UpdateVerificationStatus(
+        //    string tutorId, 
+        //    [FromBody] VerificationStatus status,
+        //    [FromQuery] string? updatedBy = null)
+        //{
+        //    await _tutorService.UpdateVerificationStatusAsync(tutorId, status, updatedBy);
+        //    return Ok(new BaseResponseModel<string>(
+        //        message: "Cập nhật trạng thái xác minh thành công!"
+        //    ));
+        //}
 
         [HttpGet("hashtags")]
         [AuthorizeRoles(Role.Tutor)]

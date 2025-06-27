@@ -90,7 +90,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 Brief = request.Brief ?? string.Empty,
                 Description = request.Description ?? string.Empty,
                 TeachingMethod = request.TeachingMethod ?? string.Empty,
-                VerificationStatus = VerificationStatus.Basic,
+                //VerificationStatus = VerificationStatus.Basic,
                 BecameTutorAt = DateTime.UtcNow,
                 LastStatusUpdateAt = DateTime.UtcNow,
                 User = user
