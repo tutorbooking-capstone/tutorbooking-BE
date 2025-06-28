@@ -18,6 +18,7 @@ namespace App.DTOs.DocumentDTOs
         public string ApplicationId { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public bool IsVisibleToLearner { get; set; }
+        public bool IsVerified { get; set; }
         public List<FileUploadResponse> Files { get; set; } = new List<FileUploadResponse>();
     }
 
@@ -31,7 +32,8 @@ namespace App.DTOs.DocumentDTOs
                 Id = document.Id,
                 ApplicationId = document.ApplicationId,
                 Description = document.Description,
-                IsVisibleToLearner = document.IsVisibleToLearner
+                IsVisibleToLearner = document.IsVisibleToLearner,
+                IsVerified = document.IsVerified,
             };
 
             if (document.DocumentFileUploads != null)

@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.DocumentDTOs;
+using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +48,26 @@ namespace TutorBooking.APIService.Controllers
             await _documentService.DeleteDocumentAsync(documentId);
             return Ok(new BaseResponseModel<string>(
                 message: "Xóa tài liệu thành công!"
+            ));
+        }
+
+        [HttpPost("staff/verify")]
+        [Authorize]
+        public async Task<IActionResult> VerifyDocument(DocumentVerifyRequest request)
+        {
+            await _documentService.VerifyDocumentAsync(request);
+            return Ok(new BaseResponseModel<string>(
+                message: "SUCCESS"
+            ));
+        }
+
+        [HttpPost("staff/verify/list")]
+        [Authorize]
+        public async Task<IActionResult> VerifyDocumentList(DocumentVerifyRequestList request)
+        {
+            await _documentService.VerifyDocumentListAsync(request);
+            return Ok(new BaseResponseModel<string>(
+                message: "SUCCESS"
             ));
         }
     }

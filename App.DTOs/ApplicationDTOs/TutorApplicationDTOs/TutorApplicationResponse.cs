@@ -55,7 +55,7 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
 
             var task1 = Task.Run(() =>
             {
-                if (entity.ApplicationRevisions != null)
+                if (entity.ApplicationRevisions != null && entity.ApplicationRevisions.Count > 0)
                 {
                     response.ApplicationRevisions = new List<RevisionResponse>();
                     foreach (var note in entity.ApplicationRevisions)
@@ -66,7 +66,7 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
 
             var task2 = Task.Run(() =>
             {
-                if (entity.Documents != null)
+                if (entity.Documents != null && entity.Documents.Count > 0)
                 {
                     response.Documents = new List<DocumentResponse>();
                     foreach (var document in entity.Documents)

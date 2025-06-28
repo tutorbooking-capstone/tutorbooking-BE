@@ -89,6 +89,25 @@ namespace App.Services.Services
             await _unitOfWork.SaveAsync();
         }
 
+        public async Task VerifyDocumentAsync(DocumentVerifyRequest request)
+        {
+            var document = await GetDocumentByIdAsync(request.DocumentId);
+            document.IsVerified = request.IsVerified;
+            _unitOfWork.GetRepository<Document>().Update(document);
+            await _unitOfWork.SaveAsync();
+        }
+
+        public async Task VerifyDocumentListAsync(DocumentVerifyRequestList requestList)
+        {
+            foreach(var request in requestList.requests)
+            {
+                var document = await GetDocumentByIdAsync(request.DocumentId);
+                document.IsVerified = request.IsVerified;
+                _unitOfWork.GetRepository<Document>().Update(document);
+            }
+            await _unitOfWork.SaveAsync();
+        }
+
         #region Private Helper
         private async Task<Document> GetDocumentByIdAsync(string documentId)
         {

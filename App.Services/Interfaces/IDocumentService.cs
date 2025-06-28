@@ -8,5 +8,7 @@ namespace App.Services.Interfaces
         //Task<List<DocumentResponse>> UploadListDocumentsAsync(List<DocumentUploadRequest> requests);
         Task UpdateDocumentVisibilityAsync(string documentId, bool isVisibleToLearner);
         Task DeleteDocumentAsync(string documentId);
+        Task VerifyDocumentAsync(DocumentVerifyRequest request);
+        Task VerifyDocumentListAsync(DocumentVerifyRequestList requestList);
     }
 }
