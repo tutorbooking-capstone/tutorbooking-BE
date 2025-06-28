@@ -9,7 +9,7 @@ namespace App.Repositories.Models
         public string LanguageCode { get; set; } = string.Empty; //Base on ISO Code
         public bool IsPrimary { get; set; } //Is main teaching language or not
         public int Proficiency { get; set; } //Represent the level of proficiency in the language (1-7 scale)
-        public DateTime AssignedAt { get; set; } = DateTime.Now;
+        //public DateTime AssignedAt { get; set; } = DateTime.Now;
 
         public virtual Tutor? Tutor { get; set; }
     }
