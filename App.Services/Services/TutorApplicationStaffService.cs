@@ -9,6 +9,7 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
@@ -65,15 +66,32 @@ namespace App.Services.Services
         /// <exception cref="ErrorException">Thrown if the tutor application with the specified <paramref name="id"/> is not found.</exception>
         public async Task<TutorApplicationResponse> GetTutorApplicationByIdAsync(string id)
         {
-            var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
-                .Include(e => e.Tutor)
-                .Include(e => e.ApplicationRevisions)
-                .Include(e => e.Documents)
-                .FirstOrDefaultAsync(e => e.Id.Equals(id));
-            if (tutorApplication == null)
-                throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
+            //var result = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
+            //    .Include(e => e.Tutor)
+            //    .Include(e => e.ApplicationRevisions)
+            //    .Include(e => e.Documents)
+            //    .FirstOrDefaultAsync(e => e.Id.Equals(id));
 
-            return await tutorApplication.ToDetailedResponse();
+            //if (result == null)
+            //    throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
+
+            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => //bandaid fix for multiple Include() bug
+            {
+                var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
+                .Include(e => e.Tutor)
+                .FirstOrDefaultAsync(e => e.Id.Equals(id));
+                if (tutorApplication == null)
+                    throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
+
+                tutorApplication.ApplicationRevisions = await _unitOfWork.GetRepository<ApplicationRevision>().ExistEntities()
+                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+
+                tutorApplication.Documents = await _unitOfWork.GetRepository<Document>().ExistEntities()
+                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+
+                return tutorApplication;
+            });
+            return await result.ToDetailedResponse();
         }
 
         /// <summary>

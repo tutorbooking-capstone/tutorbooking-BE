@@ -95,13 +95,13 @@ namespace App.Repositories.Context
             modelBuilder.Entity<TutorApplication>()
                 .HasMany(ta => ta.Documents)
                 .WithOne(doc => doc.Application)
-                .HasForeignKey(ta => ta.Id)
+                .HasForeignKey(doc => doc.ApplicationId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<TutorApplication>()
                 .HasMany(ta => ta.ApplicationRevisions)
                 .WithOne(rev => rev.Application)
-                .HasForeignKey(ta => ta.Id)
+                .HasForeignKey(rev => rev.ApplicationId)
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
 
