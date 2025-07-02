@@ -50,6 +50,16 @@ namespace App.DTOs.DocumentDTOs
 
             return response;
         }
+
+        public static ICollection<DocumentResponse> ToDocumentResponses(this ICollection<Document> entities)
+        {
+            var responses = new List<DocumentResponse>();
+            foreach (var item in entities)
+            {
+                responses.Add(item.ToDocumentResponse());
+            }
+            return responses;
+        }
     }
     #endregion
 }

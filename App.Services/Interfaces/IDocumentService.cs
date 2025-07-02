@@ -1,4 +1,5 @@
 ﻿using App.DTOs.DocumentDTOs;
+using App.Repositories.Models.Papers;
 
 namespace App.Services.Interfaces
 {
@@ -8,5 +9,6 @@ namespace App.Services.Interfaces
         //Task<List<DocumentResponse>> UploadListDocumentsAsync(List<DocumentUploadRequest> requests);
         Task UpdateDocumentVisibilityAsync(string documentId, bool isVisibleToLearner);
         Task DeleteDocumentAsync(string documentId);
+        Task<ICollection<DocumentResponse>> GetDocumentsByTutorIdAsync(string tutorId);
     }
 }
