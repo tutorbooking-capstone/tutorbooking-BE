@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using App.Services.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +20,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [AuthorizeRoles(Role.Tutor)]
         public async Task<IActionResult> CreateApplication(string tutorId)
         {
             await _service.CreateTutorApplicationAsync(tutorId);
@@ -29,7 +30,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("request-verification")]
-        [Authorize]
+        [AuthorizeRoles(Role.Tutor)]
         public async Task<IActionResult> RequestVerification(string tutorApplicationId)
         {
             await _service.RequestVerificationAsync(tutorApplicationId);
