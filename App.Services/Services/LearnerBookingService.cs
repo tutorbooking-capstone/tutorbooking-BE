@@ -8,6 +8,7 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using App.Repositories.Models.Booking;
 
 namespace App.Services.Services
 {
@@ -41,7 +42,7 @@ namespace App.Services.Services
             var tutorExists = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
                 .AnyAsync(t => t.UserId == tutorId);
-            
+
             if (!tutorExists)
                 throw new ErrorException(
                     StatusCodes.Status404NotFound,
@@ -56,7 +57,7 @@ namespace App.Services.Services
             await ValidateTutorExistsAsync(request.TutorId);
 
             var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
-            
+
             // Delete all existing requests for this learner-tutor pair
             var existingRequests = await repo.ExistEntities()
                 .Where(r => r.LearnerId == learnerId && r.TutorId == request.TutorId)
@@ -106,65 +107,56 @@ namespace App.Services.Services
                 .ToListAsync();
         }
 
-        // public async Task<List<LearnerTimeSlotResponseDTO>> GetTimeSlotRequestsByLearnerAsync(string learnerId)
-        // {
-        //     var tutorId = GetAuthenticatedTutorId();
-        //     var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
+        public async Task<List<TutorBookingOfferResponse>> GetBookingOffersForLearnerAsync()
+        {
+            var learnerId = GetAuthenticatedLearnerId();
+            return await _unitOfWork.GetRepository<TutorBookingOffer>().ExistEntities()
+                .Where(o => o.LearnerId == learnerId)
+                .Include(o => o.Tutor).ThenInclude(t => t!.User)
+                .Include(o => o.Learner).ThenInclude(l => l!.User)
+                .Include(o => o.Lesson)
+                .Include(o => o.OfferedSlots)
+                .OrderByDescending(o => o.CreatedAt)
+                .Select(TutorBookingOfferResponse.Projection)
+                .ToListAsync();
+        }
+
+        public async Task<TutorBookingOfferResponse> GetBookingOfferByIdForLearnerAsync(string offerId)
+        {
+            var learnerId = GetAuthenticatedLearnerId();
+            var offer = await _unitOfWork.GetRepository<TutorBookingOffer>().ExistEntities()
+                .Where(o => o.Id == offerId && o.LearnerId == learnerId)
+                .Include(o => o.Tutor).ThenInclude(t => t!.User)
+                .Include(o => o.Learner).ThenInclude(l => l!.User)
+                .Include(o => o.Lesson)
+                .Include(o => o.OfferedSlots)
+                .Select(TutorBookingOfferResponse.Projection)
+                .FirstOrDefaultAsync();
+
+            if (offer == null)
+                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or you don't have permission to view it.");
+
+            return offer;
+        }
+
+        public async Task<List<TutorInfoDTO>> GetAllTimeSlotRequestsForLearnerAsync()
+        {
+            var learnerId = GetAuthenticatedLearnerId();
             
-        //     // Get requests
-        //     var requests = await repo.ExistEntities()
-        //         .Where(r => r.LearnerId == learnerId && r.TutorId == tutorId)
-        //         .ToListAsync();
-
-        //     // Mark as viewed
-        //     foreach (var request in requests)
-        //     {
-        //         var updateFields = request.MarkAsViewed();
-        //         repo.UpdateFields(request, updateFields);
-        //     }
-        //     await _unitOfWork.SaveAsync();
-
-        //     return requests.Select(LearnerTimeSlotResponseDTO.Projection.Compile()).ToList();
-        // }
-
-        // public async Task<LearnerTimeSlotResponseDTO> GetTimeSlotRequestByIdAsync(string requestId)
-        // {
-        //     var tutorId = GetAuthenticatedTutorId();
-
-        //     var request = await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
-        //         .ExistEntities()
-        //         .Where(r => r.Id == requestId && r.TutorId == tutorId)
-        //         .Select(LearnerTimeSlotResponseDTO.Projection)
-        //         .FirstOrDefaultAsync();
-
-        //     if (request == null)
-        //         throw new ErrorException(
-        //             StatusCodes.Status404NotFound,
-        //             ErrorCode.NotFound,
-        //             "Time slot request not found or you don't have permission to view it.");
-
-        //     return request;
-        // }
-
-        // public async Task<List<LearnerInfoDTO>> GetAllTimeSlotRequestsForTutorAsync()
-        // {
-        //     var tutorId = GetAuthenticatedTutorId();
-
-        //     return await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
-        //         .ExistEntities()
-        //         .Include(r => r.Learner)
-        //         .ThenInclude(l => l.User)
-        //         .Where(r => r.TutorId == tutorId)
-        //         .GroupBy(r => new { r.LearnerId, r.Learner.User.FullName })
-        //         .Select(g => new LearnerInfoDTO
-        //         {
-        //             LearnerId = g.Key.LearnerId,
-        //             LearnerName = g.Key.FullName,
-        //             HasUnviewed = g.Any(r => !r.LastViewedAt.HasValue),
-        //             LatestRequestTime = g.Max(r => r.CreatedAt)
-        //         })
-        //         .OrderByDescending(x => x.LatestRequestTime)
-        //         .ToListAsync();
-        // }
+            return await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
+                .ExistEntities()
+                .Include(r => r.Tutor)
+                .ThenInclude(t => t.User)
+                .Where(r => r.LearnerId == learnerId)
+                .GroupBy(r => new TutorInfoDTO.TutorInfoKey 
+                { 
+                    TutorId = r.TutorId, 
+                    TutorName = r.Tutor.User.FullName,
+                    TutorAvatarUrl = r.Tutor.User.ProfilePictureUrl
+                })
+                .Select(TutorInfoDTO.TutorInfoProjection)
+                .OrderByDescending(x => x.LatestRequestTime)
+                .ToListAsync();
+        }
     }
 }

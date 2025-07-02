@@ -51,5 +51,38 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách yêu cầu khung giờ"
             ));
         }
+
+        [HttpGet("offers")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> GetBookingOffers()
+        {
+            var offers = await _service.GetBookingOffersForLearnerAsync();
+            return Ok(new BaseResponseModel<List<TutorBookingOfferResponse>>(
+                data: offers,
+                message: "Lấy danh sách gói học được đề nghị thành công."
+            ));
+        }
+
+        [HttpGet("offers/{offerId}")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> GetBookingOfferById([FromRoute] string offerId)
+        {
+            var offer = await _service.GetBookingOfferByIdForLearnerAsync(offerId);
+            return Ok(new BaseResponseModel<TutorBookingOfferResponse>(
+                data: offer,
+                message: "Lấy thông tin chi tiết gói học được đề nghị thành công."
+            ));
+        }
+
+        [HttpGet("list-tutors-request")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> GetAllTimeSlotRequestsForLearner()
+        {
+            var tutors = await _service.GetAllTimeSlotRequestsForLearnerAsync();
+            return Ok(new BaseResponseModel<List<TutorInfoDTO>>(
+                data: tutors,
+                message: "Danh sách gia sư đã gửi yêu cầu"
+            ));
+        }
     }
 }

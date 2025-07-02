@@ -13,14 +13,12 @@ namespace App.Repositories.Models.Scheduling
 
         #region Behavior
         public static WeeklyAvailabilityPattern Create(string tutorId, DateTime appliedFrom, IEnumerable<AvailabilitySlot> slots)
-        {
-            return new WeeklyAvailabilityPattern
+            => new WeeklyAvailabilityPattern
             {
                 TutorId = tutorId,
                 AppliedFrom = appliedFrom.Date,
                 Slots = slots.ToList()
             };
-        }
 
         public static WeeklyAvailabilityPattern? GetLatestPattern(ICollection<WeeklyAvailabilityPattern> patterns)
         {

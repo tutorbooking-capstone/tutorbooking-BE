@@ -67,7 +67,7 @@ namespace App.Repositories.Models.User
                 return Array.Empty<Expression<Func<AppUser, object>>>();
 
             DateOfBirth = dateOfBirth;
-            return [x => x.DateOfBirth];
+            return [x => x.DateOfBirth!];
         }
 
         public Expression<Func<AppUser, object>>[] UpdateGender(Gender gender)
@@ -96,7 +96,7 @@ namespace App.Repositories.Models.User
             if (dateOfBirth.HasValue && DateOfBirth != dateOfBirth)
             {
                 DateOfBirth = dateOfBirth;
-                updatedFields.Add(x => x.DateOfBirth);
+                updatedFields.Add(x => x.DateOfBirth!);
             }
 
             if (gender.HasValue && Gender != gender)

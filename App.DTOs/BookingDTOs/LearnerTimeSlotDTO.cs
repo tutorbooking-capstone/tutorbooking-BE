@@ -57,6 +57,34 @@ namespace App.DTOs.BookingDTOs
     }
     #endregion
 
+    #region Tutor Info DTO
+    public class TutorInfoDTO
+    {
+        public string TutorId { get; set; } = string.Empty;
+        public string TutorName { get; set; } = string.Empty;
+        public string TutorAvatarUrl { get; set; } = string.Empty;
+        public DateTime LatestRequestTime { get; set; }
+
+        public static Expression<Func<IGrouping<TutorInfoKey, LearnerTimeSlotRequest>, TutorInfoDTO>> TutorInfoProjection =>
+        g => new TutorInfoDTO
+        {
+            TutorId = g.Key.TutorId,
+            TutorName = g.Key.TutorName,
+            TutorAvatarUrl = g.Key.TutorAvatarUrl,
+            LatestRequestTime = g.Max(r => r.CreatedAt)
+        };
+
+        public class TutorInfoKey
+        {
+            public string TutorId { get; set; } = string.Empty;
+            public string TutorName { get; set; } = string.Empty;
+            public string TutorAvatarUrl { get; set; } = string.Empty;
+        }   
+    }
+
+
+    #endregion
+
     #region Mapping
     public static class LearnerTimeSlotDTOExtensions
     {

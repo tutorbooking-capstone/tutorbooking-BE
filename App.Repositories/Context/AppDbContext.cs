@@ -1,4 +1,5 @@
 using App.Repositories.Models;
+using App.Repositories.Models.Booking;
 using App.Repositories.Models.Chat;
 using App.Repositories.Models.Papers;
 using App.Repositories.Models.Scheduling;
@@ -36,6 +37,8 @@ namespace App.Repositories.Context
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
         public DbSet<BookedSlot> BookedSlots { get; set; }
+        public DbSet<TutorBookingOffer> TutorBookingOffers { get; set; }
+        public DbSet<OfferedSlot> OfferedSlots { get; set; }
 
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatConversation> ChatConversations { get; set; }
@@ -247,6 +250,42 @@ namespace App.Repositories.Context
                 .WithMany()
                 .HasForeignKey(bs => bs.AvailabilitySlotId)
                 .OnDelete(DeleteBehavior.Cascade);
+            #endregion
+
+            #region TutorBookingOffer Configuration
+            modelBuilder.Entity<TutorBookingOffer>(builder =>
+            {
+                builder.HasKey(o => o.Id);
+
+                builder.HasOne(o => o.Tutor)
+                    .WithMany() 
+                    .HasForeignKey(o => o.TutorId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                builder.HasOne(o => o.Learner)
+                    .WithMany() 
+                    .HasForeignKey(o => o.LearnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                builder.HasOne(o => o.Lesson)
+                    .WithMany() 
+                    .HasForeignKey(o => o.LessonId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                builder.HasMany(o => o.OfferedSlots)
+                    .WithOne(s => s.TutorBookingOffer)
+                    .HasForeignKey(s => s.TutorBookingOfferId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                builder.Property(o => o.TotalPrice)
+                    .HasColumnType("decimal(18, 2)");
+            });
+
+            modelBuilder.Entity<OfferedSlot>(builder =>
+            {
+                builder.HasKey(s => s.Id);
+            });
             #endregion
 
             #region Chat Configuration

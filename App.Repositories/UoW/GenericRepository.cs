@@ -5,7 +5,6 @@ using System.Linq.Expressions;
 using Microsoft.AspNetCore.Http;
 using App.Core.Constants;
 using App.Core.Provider;
-using System.Threading;
 
 namespace App.Repositories.UoW
 {

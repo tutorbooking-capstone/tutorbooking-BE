@@ -41,5 +41,60 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách yêu cầu khung giờ từ học viên"
             ));
         }
+
+        [HttpPost("offers")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> CreateBookingOffer([FromBody] CreateTutorBookingOfferRequest request)
+        {
+            var offer = await _service.CreateBookingOfferAsync(request);
+            return CreatedAtAction(nameof(GetBookingOfferById), new { offerId = offer.Id }, new BaseResponseModel<TutorBookingOfferResponse>(
+                data: offer,
+                message: "Tạo đề nghị gói học thành công."
+            ));
+        }
+
+        [HttpGet("offers")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetAllBookingOffers()
+        {
+            var offers = await _service.GetAllBookingOffersByTutorAsync();
+            return Ok(new BaseResponseModel<List<TutorBookingOfferResponse>>(
+                data: offers,
+                message: "Lấy danh sách đề nghị đã tạo thành công."
+            ));
+        }
+
+        [HttpGet("offers/{offerId}", Name = "GetBookingOfferById")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetBookingOfferById([FromRoute] string offerId)
+        {
+            var offer = await _service.GetBookingOfferByIdForTutorAsync(offerId);
+            return Ok(new BaseResponseModel<TutorBookingOfferResponse>(
+                data: offer,
+                message: "Lấy thông tin đề nghị thành công."
+            ));
+        }
+
+        [HttpPut("offers/{offerId}")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> UpdateBookingOffer([FromRoute] string offerId, [FromBody] UpdateTutorBookingOfferRequest request)
+        {
+            var offer = await _service.UpdateBookingOfferAsync(offerId, request);
+            return Ok(new BaseResponseModel<TutorBookingOfferResponse>(
+                data: offer,
+                message: "Cập nhật đề nghị thành công."
+            ));
+        }
+
+        [HttpDelete("offers/{offerId}")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> DeleteBookingOffer([FromRoute] string offerId)
+        {
+            await _service.DeleteBookingOfferAsync(offerId);
+            return Ok(new BaseResponseModel<object>(
+                data: null,
+                message: "Xóa đề nghị thành công."
+            ));
+        }
     }
 }
