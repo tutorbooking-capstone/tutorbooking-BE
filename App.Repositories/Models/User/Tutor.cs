@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using App.Repositories.Models.Papers;
 using App.Repositories.Models.Scheduling;
 
 namespace App.Repositories.Models.User
@@ -21,6 +22,7 @@ namespace App.Repositories.Models.User
         public virtual AppUser User { get; set; } = null!;
 
         // Navigation properties
+        public virtual TutorApplication? Application { get; set; }
         public virtual ICollection<TutorLanguage> Languages { get; set; } = new List<TutorLanguage>();
         public virtual ICollection<TutorHashtag> Hashtags { get; set; } = new List<TutorHashtag>();
         public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();

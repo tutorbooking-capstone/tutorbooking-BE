@@ -68,6 +68,12 @@ namespace App.Repositories.Context
                 .WithOne()
                 .HasForeignKey<Tutor>(t => t.UserId);
 
+            // Tutor -> TutorApplication (1:1)
+            modelBuilder.Entity<Tutor>()
+                .HasOne(t => t.Application)
+                .WithOne()
+                .HasForeignKey<TutorApplication>(ta => ta.TutorId);
+
             // AppUser -> Staff (1:1)
             modelBuilder.Entity<Staff>()
                 .HasKey(s => s.UserId);
@@ -88,12 +94,9 @@ namespace App.Repositories.Context
             #endregion
 
             #region TutorApplication Configuration
-            // TutorApplication -> Tutor (M:1)
             modelBuilder.Entity<TutorApplication>()
-                .HasOne(ta => ta.Tutor)
-                .WithMany()
-                .HasForeignKey(ta => ta.TutorId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .HasIndex(ta => ta.TutorId)
+                .IsUnique();
 
             modelBuilder.Entity<TutorApplication>()
                 .HasMany(ta => ta.Documents)

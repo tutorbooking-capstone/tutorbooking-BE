@@ -315,6 +315,9 @@ namespace App.Services.Services.User
 
                 var tutorApplication = TutorApplication.Create(userId);
                 _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
+                
+                // Set application reference
+                newTutor.Application = tutorApplication;
 
                 await _unitOfWork.SaveAsync();
                 await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
@@ -399,6 +402,9 @@ namespace App.Services.Services.User
 
                 var tutorApplication = TutorApplication.Create(userId);
                 _unitOfWork.GetRepository<TutorApplication>().Insert(tutorApplication);
+                
+                // Set application reference
+                newTutor.Application = tutorApplication;
 
                 await _unitOfWork.SaveAsync();
                 await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
@@ -434,9 +440,10 @@ namespace App.Services.Services.User
             string trimmedId = id.Trim();
             
             var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => {
-                // Get tutor with basic info
+                // Get tutor with basic info and application
                 var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Include(t => t.User)
+                    .Include(t => t.Application)
                     .Where(t => t.UserId == trimmedId)
                     .Select(TutorResponse.ProjectionExpression)
                     .FirstOrDefaultAsync();

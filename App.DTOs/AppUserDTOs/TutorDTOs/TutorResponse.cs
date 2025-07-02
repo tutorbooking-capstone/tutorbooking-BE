@@ -17,6 +17,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
 		public string ProfileImageUrl  { get; set; } = string.Empty;
 		//public VerificationStatus VerificationStatus { get; set; }
         public DateTime? BecameTutorAt { get; set; }
+        public string? ApplicationId { get; set; }
         
         // Scheduling information
         public List<WeeklyAvailabilityDTO> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityDTO>();
@@ -36,7 +37,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             Description = t.Description,
             TeachingMethod = t.TeachingMethod,
             //VerificationStatus = t.Languages.Any(),
-            BecameTutorAt = t.BecameTutorAt
+            BecameTutorAt = t.BecameTutorAt,
+            ApplicationId = t.Application != null ? t.Application.Id : null
         };
     }
 
@@ -142,7 +144,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 TeachingMethod = tutor.TeachingMethod,
 				ProfileImageUrl = tutor.User != null ? tutor.User.ProfilePictureUrl : string.Empty,
                 //VerificationStatus = tutor.VerificationStatus,
-                BecameTutorAt = tutor.BecameTutorAt
+                BecameTutorAt = tutor.BecameTutorAt,
+                ApplicationId = tutor.Application?.Id
             };
         }
     }
