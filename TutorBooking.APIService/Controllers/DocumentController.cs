@@ -49,5 +49,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "Xóa tài liệu thành công!"
             ));
         }
+
+        [HttpGet("tutor/{tutorId}")]
+        [Authorize]
+        public async Task<IActionResult> GetDocumentsByTutorId(string tutorId)
+        {
+            var documents = await _documentService.GetDocumentsByTutorIdAsync(tutorId);
+            return Ok(new BaseResponseModel<object>(
+                data: documents,
+                message: "SUCCEXSS"
+            ));
+        }
     }
 }
