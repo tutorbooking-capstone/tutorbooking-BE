@@ -39,7 +39,8 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
                 SubmittedAt = entity.SubmittedAt,
                 Status = entity.Status,
                 RevisionNotes = entity.RevisionNotes,
-                TutorName = entity.Tutor?.User?.FullName ?? "N/A" 
+                TutorName = entity.Tutor?.User?.FullName ?? "N/A" ,
+                Tutor = entity.Tutor == null? null : entity.Tutor.ToTutorResponse(),
             };
         }
 
@@ -51,7 +52,7 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
             response.SubmittedAt = entity.SubmittedAt;
             response.Status = entity.Status;
             response.InternalNotes = entity.InternalNotes;
-            response.Tutor = entity.Tutor.ToTutorResponse();
+            response.Tutor = entity.Tutor == null ? null : entity.Tutor.ToTutorResponse();
 
             var task1 = Task.Run(() =>
             {

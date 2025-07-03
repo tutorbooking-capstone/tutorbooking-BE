@@ -5,6 +5,7 @@ using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Papers;
+using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
@@ -41,18 +42,24 @@ namespace App.Services.Services
         /// cref="TutorApplicationResponse"/> objects representing the pending tutor applications.</returns>
         public async Task<List<TutorApplicationResponse>> GetAllPendingTutorApplicationsAsync(int page, int size)
         {
-            var tutors = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities().
-                OrderBy(e => e.CreatedTime)
-                .Where(e => e.Status == ApplicationStatus.PendingVerification || e.Status == ApplicationStatus.PendingReverification)
-                .Skip((page - 1) * size)
-                .Take(size)
-                .ToListAsync();
-            var tutorResponses = new List<TutorApplicationResponse>();
-            foreach (var tutor in tutors)
+            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
-                tutorResponses.Add(tutor.ToTutorApplicationResponse());
-            }
-            return tutorResponses;
+                var tutorApplications = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
+                        .OrderBy(e => e.CreatedTime)
+                        .Where(e => e.Status == ApplicationStatus.PendingVerification || e.Status == ApplicationStatus.PendingReverification)
+                        .Skip((page - 1) * size)
+                        .Take(size)
+                        //.Include(e => e.Tutor) //Currently Not Working
+                        .ToListAsync();
+                var tutorAppResponses = new List<TutorApplicationResponse>();
+                foreach (var app in tutorApplications)
+                {
+                    app.Tutor = await _unitOfWork.GetRepository<Tutor>().GetByIdAsync(app.TutorId);
+                    tutorAppResponses.Add(app.ToTutorApplicationResponse());
+                }
+                return tutorAppResponses;
+            });
+            return result;
         }
 
         /// <summary>
@@ -78,10 +85,15 @@ namespace App.Services.Services
             var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => //bandaid fix for multiple Include() bug
             {
                 var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
-                .Include(e => e.Tutor)
+                //.Include(e => e.Tutor) // currently not working
+                //.Include(e => e.ApplicationRevisions)
+                //.Include(e => e.Documents)
                 .FirstOrDefaultAsync(e => e.Id.Equals(id));
                 if (tutorApplication == null)
                     throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
+
+                tutorApplication.Tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
 
                 tutorApplication.ApplicationRevisions = await _unitOfWork.GetRepository<ApplicationRevision>().ExistEntities()
                 .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
