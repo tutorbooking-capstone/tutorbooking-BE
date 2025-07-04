@@ -89,6 +89,14 @@ namespace App.Services.Services
             await _unitOfWork.SaveAsync();
         }
 
+        public async Task<ICollection<DocumentResponse>> GetDocumentsByTutorIdAsync(string tutorId)
+        {
+            var documets = await _unitOfWork.GetRepository<Document>().ExistEntities()
+                .Include(e => e.DocumentFileUploads).ThenInclude(d => d.FileUpload)
+                .Where(e => e.Application.TutorId.Equals(tutorId)).ToListAsync();
+            return documets.ToDocumentResponses();
+        }
+
         #region Private Helper
         private async Task<Document> GetDocumentByIdAsync(string documentId)
         {
