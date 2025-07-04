@@ -155,10 +155,16 @@ namespace App.Services.Services
                 .FirstOrDefaultAsync(o => o.Id == offerId && o.TutorId == tutorId);
 
             if (offer == null)
-                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or you don't have permission to update it.");
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Offer not found or you don't have permission to update it.");
 
             if (offer.Lesson == null)
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Cannot update an offer with a deleted lesson.");
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    "Cannot update an offer with a deleted lesson.");
 
             // Remove old slots
             slotRepo.DeleteRange(offer.OfferedSlots);
