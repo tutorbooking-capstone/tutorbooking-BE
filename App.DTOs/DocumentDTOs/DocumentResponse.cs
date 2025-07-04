@@ -10,6 +10,7 @@ namespace App.DTOs.DocumentDTOs
         public string ContentType { get; set; } = string.Empty;
         public long FileSize { get; set; }
         public string CloudinaryUrl { get; set; } = string.Empty;
+        public string OriginalFileName { get; set; } = string.Empty;
     }
 
     public class DocumentResponse
@@ -43,11 +44,11 @@ namespace App.DTOs.DocumentDTOs
                         Id = dfu.FileUploadId,
                         ContentType = dfu.FileUpload!.ContentType,
                         FileSize = dfu.FileUpload.FileSize,
-                        CloudinaryUrl = dfu.FileUpload.CloudinaryUrl
+                        CloudinaryUrl = dfu.FileUpload.CloudinaryUrl,
+                        OriginalFileName = dfu.FileUpload.OriginalFileName,
                     });
                 }
             }
-
             return response;
         }
 

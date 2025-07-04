@@ -93,12 +93,14 @@ namespace App.Services.Services
                     throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
 
                 tutorApplication.Tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .Include(e => e.User)
                 .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
 
                 tutorApplication.ApplicationRevisions = await _unitOfWork.GetRepository<ApplicationRevision>().ExistEntities()
                 .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 tutorApplication.Documents = await _unitOfWork.GetRepository<Document>().ExistEntities()
+                .Include(e => e.DocumentFileUploads).ThenInclude(e => e.FileUpload)
                 .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 return tutorApplication;
@@ -128,7 +130,7 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<ApplicationRevision>().Insert(entity);
             if (request.Action == RevisionAction.Approve) 
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
-            if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
+            else if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
             await _unitOfWork.SaveAsync();       
             return entity.ToRevisionResponse();
@@ -141,6 +143,7 @@ namespace App.Services.Services
                     .FirstOrDefaultAsync(e => e.Id.Equals(tutorApplicationId));
             tutorApplication.Status = status;
             _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
+            await _unitOfWork.SaveAsync();
         }
         #endregion
     }
