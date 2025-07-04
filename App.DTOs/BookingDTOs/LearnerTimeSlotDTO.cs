@@ -64,6 +64,7 @@ namespace App.DTOs.BookingDTOs
         public string TutorName { get; set; } = string.Empty;
         public string TutorAvatarUrl { get; set; } = string.Empty;
         public DateTime LatestRequestTime { get; set; }
+        public string TutorBookingOfferId { get; set; } = string.Empty;
 
         public static Expression<Func<IGrouping<TutorInfoKey, LearnerTimeSlotRequest>, TutorInfoDTO>> TutorInfoProjection =>
         g => new TutorInfoDTO
@@ -71,7 +72,8 @@ namespace App.DTOs.BookingDTOs
             TutorId = g.Key.TutorId,
             TutorName = g.Key.TutorName,
             TutorAvatarUrl = g.Key.TutorAvatarUrl,
-            LatestRequestTime = g.Max(r => r.CreatedAt)
+            LatestRequestTime = g.Max(r => r.CreatedAt),
+            TutorBookingOfferId = g.Key.TutorBookingOfferId
         };
 
         public class TutorInfoKey
@@ -79,6 +81,7 @@ namespace App.DTOs.BookingDTOs
             public string TutorId { get; set; } = string.Empty;
             public string TutorName { get; set; } = string.Empty;
             public string TutorAvatarUrl { get; set; } = string.Empty;
+            public string TutorBookingOfferId { get; set; } = string.Empty;
         }   
     }
 

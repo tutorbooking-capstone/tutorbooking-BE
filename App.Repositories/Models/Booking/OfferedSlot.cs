@@ -10,5 +10,15 @@ namespace App.Repositories.Models.Booking
         //public decimal Price { get; set; }
 
         public virtual TutorBookingOffer? TutorBookingOffer { get; set; }
+
+        #region Behavior
+        public static OfferedSlot Create(string tutorBookingOfferId, DateTime slotDateTime, int slotIndex)
+        => new OfferedSlot
+        {
+            TutorBookingOfferId = tutorBookingOfferId,
+            SlotDateTime = slotDateTime,
+            SlotIndex = slotIndex
+        };
+        #endregion
     }
 }

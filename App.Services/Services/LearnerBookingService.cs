@@ -134,7 +134,10 @@ namespace App.Services.Services
                 .FirstOrDefaultAsync();
 
             if (offer == null)
-                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or you don't have permission to view it.");
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Offer not found or you don't have permission to view it.");
 
             return offer;
         }
@@ -142,21 +145,42 @@ namespace App.Services.Services
         public async Task<List<TutorInfoDTO>> GetAllTimeSlotRequestsForLearnerAsync()
         {
             var learnerId = GetAuthenticatedLearnerId();
-            
-            return await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
+
+            // Pre-fetch all offers for the learner
+            var offerLookup = await _unitOfWork.GetRepository<TutorBookingOffer>()
+                .ExistEntities()
+                .Where(o => o.LearnerId == learnerId)
+                .GroupBy(o => o.TutorId)
+                .Select(g => new
+                {
+                    TutorId = g.Key,
+                    LatestOfferId = g
+                        .OrderByDescending(o => o.CreatedAt)
+                        .Select(o => o.Id)
+                        .FirstOrDefault()
+                })
+                .ToDictionaryAsync(x => x.TutorId, x => x.LatestOfferId ?? string.Empty);
+
+            // Fetch requests and process in memory
+            var requests = await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
                 .ExistEntities()
                 .Include(r => r.Tutor)
                 .ThenInclude(t => t.User)
                 .Where(r => r.LearnerId == learnerId)
-                .GroupBy(r => new TutorInfoDTO.TutorInfoKey 
-                { 
-                    TutorId = r.TutorId, 
-                    TutorName = r.Tutor.User.FullName,
-                    TutorAvatarUrl = r.Tutor.User.ProfilePictureUrl
-                })
-                .Select(TutorInfoDTO.TutorInfoProjection)
-                .OrderByDescending(x => x.LatestRequestTime)
                 .ToListAsync();
+
+            return requests
+                .GroupBy(r => r.TutorId)
+                .Select(g => new TutorInfoDTO
+                {
+                    TutorId = g.Key,
+                    TutorName = g.First().Tutor?.User?.FullName ?? string.Empty,
+                    TutorAvatarUrl = g.First().Tutor?.User?.ProfilePictureUrl ?? string.Empty,
+                    LatestRequestTime = g.Max(r => r.CreatedAt),
+                    TutorBookingOfferId = offerLookup.GetValueOrDefault(g.Key, string.Empty)
+                })
+                .OrderByDescending(x => x.LatestRequestTime)
+                .ToList();
         }
     }
 }
