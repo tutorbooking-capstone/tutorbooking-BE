@@ -70,9 +70,7 @@ namespace App.Services.Services
                 .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == request.TutorId);
 
             if (existingRequest != null)
-            {
                 repo.Delete(existingRequest);
-            }
 
             if (request.TimeSlots.Any())
             {

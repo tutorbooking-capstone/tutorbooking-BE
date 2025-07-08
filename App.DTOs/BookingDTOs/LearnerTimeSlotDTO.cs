@@ -150,11 +150,10 @@ namespace App.DTOs.BookingDTOs
                 .NotEmpty()
                 .When(x => x.LessonId != null)
                 .WithMessage("Lesson ID cannot be an empty string if provided.");
-
             RuleFor(x => x.ExpectedStartDate)
                 .NotEmpty()
-                .GreaterThan(DateTime.UtcNow)
-                .WithMessage("Expected start date must be in the future.");
+                .GreaterThanOrEqualTo(DateTime.UtcNow.Date)
+                .WithMessage("Expected start date cannot be in the past.");
 
             RuleFor(x => x.TimeSlots)
                 .NotEmpty()
