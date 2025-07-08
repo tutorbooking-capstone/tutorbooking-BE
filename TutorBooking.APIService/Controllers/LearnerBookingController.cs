@@ -41,14 +41,13 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpGet("learners/{tutorId}/time-slots")]
-        public async Task<IActionResult> GetTimeSlotRequestsByTutor(
-            [FromRoute] string tutorId)
+        [HttpGet("tutors/{tutorId}/time-slots")]
+        public async Task<IActionResult> GetTimeSlotRequestByTutor([FromRoute] string tutorId)
         {
-            var requests = await _service.GetTimeSlotRequestsByTutorAsync(tutorId);
-            return Ok(new BaseResponseModel<List<LearnerTimeSlotResponseDTO>>(
-                data: requests,
-                message: "Danh sách yêu cầu khung giờ"
+            var request = await _service.GetTimeSlotRequestByTutorAsync(tutorId);
+            return Ok(new BaseResponseModel<LearnerTimeSlotResponseDTO>(
+                data: request,
+                message: "Thông tin chi tiết yêu cầu khung giờ"
             ));
         }
 

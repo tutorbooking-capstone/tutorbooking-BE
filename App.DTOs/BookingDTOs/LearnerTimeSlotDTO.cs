@@ -2,6 +2,7 @@
 using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
 using FluentValidation;
+using System.Text.Json;
 
 namespace App.DTOs.BookingDTOs
 {
@@ -9,6 +10,8 @@ namespace App.DTOs.BookingDTOs
     public class LearnerTimeSlotRequestDTO
     {
         public string TutorId { get; set; } = string.Empty;
+        public string? LessonId { get; set; }
+        public DateTime ExpectedStartDate { get; set; }
         public List<TimeSlotPair> TimeSlots { get; set; } = new();
     }
 
@@ -24,17 +27,24 @@ namespace App.DTOs.BookingDTOs
     {
         public string Id { get; set; } = string.Empty;
         public string TutorId { get; set; } = string.Empty;
-        public DayInWeek DayInWeek { get; set; }
-        public int SlotIndex { get; set; }
+        public string LearnerId { get; set; } = string.Empty;
+        public string? LessonId { get; set; }
+        public DateTime ExpectedStartDate { get; set; }
+        public List<TimeSlotPair> TimeSlots { get; set; } = new();
 
-        public static Expression<Func<LearnerTimeSlotRequest, LearnerTimeSlotResponseDTO>> Projection =>
-            r => new LearnerTimeSlotResponseDTO
+        public static LearnerTimeSlotResponseDTO FromEntity(LearnerTimeSlotRequest request)
+        {
+            var slots = JsonSerializer.Deserialize<List<TimeSlotPair>>(request.RequestedSlotsJson) ?? new List<TimeSlotPair>();
+            return new LearnerTimeSlotResponseDTO
             {
-                Id = r.Id,
-                TutorId = r.TutorId,
-                DayInWeek = r.DayInWeek,
-                SlotIndex = r.SlotIndex
+                Id = request.Id,
+                TutorId = request.TutorId,
+                LearnerId = request.LearnerId,
+                LessonId = request.LessonId,
+                ExpectedStartDate = request.ExpectedStartDate,
+                TimeSlots = slots
             };
+        }
     }
     #endregion
 
@@ -91,18 +101,24 @@ namespace App.DTOs.BookingDTOs
     #region Mapping
     public static class LearnerTimeSlotDTOExtensions
     {
-        public static List<LearnerTimeSlotRequest> ToEntities(
-            this LearnerTimeSlotRequestDTO request, 
+        public static LearnerTimeSlotRequest ToEntity(
+            this LearnerTimeSlotRequestDTO request,
             string learnerId)
         {
-            return request.TimeSlots
-                .Select(slot => LearnerTimeSlotRequest.Create(
-                    learnerId,
-                    request.TutorId,
-                    slot.DayInWeek,
-                    slot.SlotIndex
-                ))
-                .ToList();
+            var requestedSlots = request.TimeSlots
+                .Select(slot => new RequestedSlot
+                {
+                    DayInWeek = slot.DayInWeek,
+                    SlotIndex = slot.SlotIndex
+                });
+
+            return LearnerTimeSlotRequest.Create(
+                learnerId,
+                request.TutorId,
+                request.LessonId,
+                request.ExpectedStartDate,
+                requestedSlots
+            );
         }
     }
     #endregion
@@ -129,6 +145,16 @@ namespace App.DTOs.BookingDTOs
             RuleFor(x => x.TutorId)
                 .NotEmpty()
                 .WithMessage("Tutor ID is required.");
+
+            RuleFor(x => x.LessonId)
+                .NotEmpty()
+                .When(x => x.LessonId != null)
+                .WithMessage("Lesson ID cannot be an empty string if provided.");
+
+            RuleFor(x => x.ExpectedStartDate)
+                .NotEmpty()
+                .GreaterThan(DateTime.UtcNow)
+                .WithMessage("Expected start date must be in the future.");
 
             RuleFor(x => x.TimeSlots)
                 .NotEmpty()

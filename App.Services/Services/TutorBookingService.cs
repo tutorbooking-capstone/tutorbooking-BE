@@ -11,6 +11,7 @@ using App.Repositories.Models.Booking;
 using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
+using System.Text.Json;
 
 namespace App.Services.Services
 {
@@ -72,39 +73,37 @@ namespace App.Services.Services
             return await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
                 .ExistEntities()
                 .Include(r => r.Learner)
-                .ThenInclude(l => l.User)
+                .ThenInclude(l => l!.User)
                 .Where(r => r.TutorId == tutorId)
-                .GroupBy(r => new { r.LearnerId, FullName = r.Learner!.User!.FullName ?? "" })
-                .Select(g => new LearnerInfoDTO
+                .Select(r => new LearnerInfoDTO
                 {
-                    LearnerId = g.Key.LearnerId,
-                    LearnerName = g.Key.FullName,
-                    HasUnviewed = g.Any(r => !r.LastViewedAt.HasValue),
-                    LatestRequestTime = g.Max(r => r.CreatedAt)
+                    LearnerId = r.LearnerId,
+                    LearnerName = r.Learner!.User!.FullName ?? "",
+                    HasUnviewed = !r.LastViewedAt.HasValue,
+                    LatestRequestTime = r.CreatedAt
                 })
                 .OrderByDescending(x => x.LatestRequestTime)
                 .ToListAsync();
         }
 
-        public async Task<List<LearnerTimeSlotResponseDTO>> GetTimeSlotRequestsByLearnerAsync(string learnerId)
+        public async Task<LearnerTimeSlotResponseDTO?> GetTimeSlotRequestByLearnerAsync(string learnerId)
         {
             var tutorId = GetAuthenticatedTutorId();
             var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
             
-            // Get requests
-            var requests = await repo.ExistEntities()
-                .Where(r => r.LearnerId == learnerId && r.TutorId == tutorId)
-                .ToListAsync();
+            var request = await repo.ExistEntities()
+                .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == tutorId);
 
-            // Mark as viewed
-            foreach (var request in requests)
+            if (request == null) return null;
+
+            if (!request.LastViewedAt.HasValue)
             {
                 var updateFields = request.MarkAsViewed();
                 repo.UpdateFields(request, updateFields);
+                await _unitOfWork.SaveAsync();
             }
-            await _unitOfWork.SaveAsync();
 
-            return requests.Select(LearnerTimeSlotResponseDTO.Projection.Compile()).ToList();
+            return LearnerTimeSlotResponseDTO.FromEntity(request);
         }
 
         public async Task<TutorBookingOfferResponse> CreateBookingOfferAsync(CreateTutorBookingOfferRequest request)

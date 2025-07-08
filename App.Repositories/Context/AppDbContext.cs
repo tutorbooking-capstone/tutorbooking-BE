@@ -377,8 +377,15 @@ namespace App.Repositories.Context
                     .HasForeignKey(lts => lts.TutorId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // Relationship with Lesson
+                builder.HasOne(lts => lts.Lesson)
+                    .WithMany()
+                    .HasForeignKey(lts => lts.LessonId)
+                    .IsRequired(false)
+                    .OnDelete(DeleteBehavior.SetNull);
+
                 // Unique constraint to prevent duplicate requests
-                builder.HasIndex(lts => new { lts.LearnerId, lts.TutorId, lts.DayInWeek, lts.SlotIndex })
+                builder.HasIndex(lts => new { lts.LearnerId, lts.TutorId })
                     .IsUnique();
             });
             #endregion

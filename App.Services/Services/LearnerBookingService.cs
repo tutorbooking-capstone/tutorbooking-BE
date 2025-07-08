@@ -9,6 +9,7 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Repositories.Models.Booking;
+using System.Text.Json;
 
 namespace App.Services.Services
 {
@@ -55,27 +56,31 @@ namespace App.Services.Services
         {
             var learnerId = GetAuthenticatedLearnerId();
             await ValidateTutorExistsAsync(request.TutorId);
+            if (!string.IsNullOrEmpty(request.LessonId))
+            {
+                var lessonRepo = _unitOfWork.GetRepository<Lesson>();
+                var lesson = await lessonRepo.GetByIdAsync(request.LessonId);
+                if (lesson == null)
+                    throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Lesson not found.");
+            }
 
             var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
 
-            // Delete all existing requests for this learner-tutor pair
-            var existingRequests = await repo.ExistEntities()
-                .Where(r => r.LearnerId == learnerId && r.TutorId == request.TutorId)
-                .ToListAsync();
+            var existingRequest = await repo.ExistEntities()
+                .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == request.TutorId);
 
-            if (existingRequests.Any())
+            if (existingRequest != null)
             {
-                repo.DeleteRange(existingRequests);
-                await _unitOfWork.SaveAsync();
+                repo.Delete(existingRequest);
             }
 
-            // Insert all new requests from the DTO
-            var newRequests = request.ToEntities(learnerId);
-            if (newRequests.Any())
+            if (request.TimeSlots.Any())
             {
-                repo.InsertRange(newRequests);
-                await _unitOfWork.SaveAsync();
+                var newRequest = request.ToEntity(learnerId);
+                repo.Insert(newRequest);
             }
+            
+            await _unitOfWork.SaveAsync();
         }
 
         public async Task DeleteTimeSlotRequestsAsync(string tutorId)
@@ -84,27 +89,27 @@ namespace App.Services.Services
             await ValidateTutorExistsAsync(tutorId);
 
             var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
-            var requestsToDelete = await repo.ExistEntities()
-                .Where(r => r.LearnerId == learnerId && r.TutorId == tutorId)
-                .ToListAsync();
+            var requestToDelete = await repo.ExistEntities()
+                .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == tutorId);
 
-            if (requestsToDelete.Any())
+            if (requestToDelete != null)
             {
-                repo.DeleteRange(requestsToDelete);
+                repo.Delete(requestToDelete);
                 await _unitOfWork.SaveAsync();
             }
         }
 
-        public async Task<List<LearnerTimeSlotResponseDTO>> GetTimeSlotRequestsByTutorAsync(string tutorId)
+        public async Task<LearnerTimeSlotResponseDTO?> GetTimeSlotRequestByTutorAsync(string tutorId)
         {
             var learnerId = GetAuthenticatedLearnerId();
             await ValidateTutorExistsAsync(tutorId);
 
-            return await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
+            var request = await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
                 .ExistEntities()
-                .Where(r => r.LearnerId == learnerId && r.TutorId == tutorId)
-                .Select(LearnerTimeSlotResponseDTO.Projection)
-                .ToListAsync();
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == tutorId);
+            
+            return request == null ? null : LearnerTimeSlotResponseDTO.FromEntity(request);
         }
 
         public async Task<List<TutorBookingOfferResponse>> GetBookingOffersForLearnerAsync()
@@ -170,14 +175,13 @@ namespace App.Services.Services
                 .ToListAsync();
 
             return requests
-                .GroupBy(r => r.TutorId)
-                .Select(g => new TutorInfoDTO
+                .Select(r => new TutorInfoDTO
                 {
-                    TutorId = g.Key,
-                    TutorName = g.First().Tutor?.User?.FullName ?? string.Empty,
-                    TutorAvatarUrl = g.First().Tutor?.User?.ProfilePictureUrl ?? string.Empty,
-                    LatestRequestTime = g.Max(r => r.CreatedAt),
-                    TutorBookingOfferId = offerLookup.GetValueOrDefault(g.Key, string.Empty)
+                    TutorId = r.TutorId,
+                    TutorName = r.Tutor?.User?.FullName ?? string.Empty,
+                    TutorAvatarUrl = r.Tutor?.User?.ProfilePictureUrl ?? string.Empty,
+                    LatestRequestTime = r.CreatedAt,
+                    TutorBookingOfferId = offerLookup.GetValueOrDefault(r.TutorId, string.Empty)
                 })
                 .OrderByDescending(x => x.LatestRequestTime)
                 .ToList();

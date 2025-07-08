@@ -5,7 +5,7 @@ namespace App.Services.Interfaces
     public interface ITutorBookingService
     {
         Task<List<LearnerInfoDTO>> GetAllTimeSlotRequestsForTutorAsync();
-        Task<List<LearnerTimeSlotResponseDTO>> GetTimeSlotRequestsByLearnerAsync(string learnerId);
+        Task<LearnerTimeSlotResponseDTO?> GetTimeSlotRequestByLearnerAsync(string learnerId);
         
         Task<TutorBookingOfferResponse> CreateBookingOfferAsync(CreateTutorBookingOfferRequest request);
         Task<List<TutorBookingOfferResponse>> GetAllBookingOffersByTutorAsync();
