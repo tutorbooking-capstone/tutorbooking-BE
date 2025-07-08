@@ -36,6 +36,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             Brief = t.Brief,
             Description = t.Description,
             TeachingMethod = t.TeachingMethod,
+            ProfileImageUrl = t.User == null ? string.Empty : t.User.ProfilePictureUrl ?? string.Empty,
             //VerificationStatus = t.Languages.Any(),
             BecameTutorAt = t.BecameTutorAt,
             ApplicationId = t.Application != null ? t.Application.Id : null
