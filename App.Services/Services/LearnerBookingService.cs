@@ -70,8 +70,10 @@ namespace App.Services.Services
 
             // If no time slots are provided, it means the user wants to delete their request.
             if (!request.TimeSlots.Any())
+            {
                 if (existingRequest != null)
                     repo.Delete(existingRequest);
+            }
             else
             {
                 var requestedSlots = request.TimeSlots.Select(s => new RequestedSlot
