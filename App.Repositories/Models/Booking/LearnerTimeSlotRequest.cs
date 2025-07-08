@@ -6,11 +6,22 @@ using System.Text.Json;
 
 namespace App.Repositories.Models
 {
-    // Helper class for serialization, not an entity.
-    public class RequestedSlot
+    public class RequestedSlot : IEquatable<RequestedSlot>
     {
         public DayInWeek DayInWeek { get; set; }
         public int SlotIndex { get; set; }
+
+        public bool Equals(RequestedSlot? other)
+        {
+            if (other is null) return false;
+            return DayInWeek == other.DayInWeek && SlotIndex == other.SlotIndex;
+        }
+
+        public override bool Equals(object? obj)
+            => Equals(obj as RequestedSlot);
+
+        public override int GetHashCode()
+            => HashCode.Combine(DayInWeek, SlotIndex);
     }
 
     public class LearnerTimeSlotRequest : CoreEntity
@@ -28,6 +39,27 @@ namespace App.Repositories.Models
         public virtual Lesson? Lesson { get; set; }
 
         #region Behavior
+        public Expression<Func<LearnerTimeSlotRequest, object>>[] Update(
+            string? lessonId,
+            DateTime expectedStartDate,
+            IEnumerable<RequestedSlot> slots)
+        {
+            LessonId = lessonId;
+            ExpectedStartDate = expectedStartDate;
+            RequestedSlotsJson = JsonSerializer.Serialize(slots.Distinct());
+            CreatedAt = DateTime.UtcNow; // Treat update as a new "creation" time for the request
+            LastViewedAt = null; // Reset viewed status on update
+
+            return
+            [
+                x => x.LessonId!,
+                x => x.ExpectedStartDate,
+                x => x.RequestedSlotsJson,
+                x => x.CreatedAt,
+                x => x.LastViewedAt!
+            ];
+        }
+
         public static LearnerTimeSlotRequest Create(
             string learnerId,
             string tutorId,

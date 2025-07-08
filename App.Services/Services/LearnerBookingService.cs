@@ -65,17 +65,32 @@ namespace App.Services.Services
             }
 
             var repo = _unitOfWork.GetRepository<LearnerTimeSlotRequest>();
-
             var existingRequest = await repo.ExistEntities()
                 .FirstOrDefaultAsync(r => r.LearnerId == learnerId && r.TutorId == request.TutorId);
 
-            if (existingRequest != null)
-                repo.Delete(existingRequest);
-
-            if (request.TimeSlots.Any())
+            // If no time slots are provided, it means the user wants to delete their request.
+            if (!request.TimeSlots.Any())
+                if (existingRequest != null)
+                    repo.Delete(existingRequest);
+            else
             {
-                var newRequest = request.ToEntity(learnerId);
-                repo.Insert(newRequest);
+                var requestedSlots = request.TimeSlots.Select(s => new RequestedSlot
+                {
+                    DayInWeek = s.DayInWeek,
+                    SlotIndex = s.SlotIndex
+                });
+
+                if (existingRequest != null)
+                {
+                    var updateFields = existingRequest.Update(request.LessonId, request.ExpectedStartDate, requestedSlots);
+                    repo.UpdateFields(existingRequest, updateFields);
+                }
+                else
+                {
+                    // No request exists, create a new one.
+                    var newRequest = LearnerTimeSlotRequest.Create(learnerId, request.TutorId, request.LessonId, request.ExpectedStartDate, requestedSlots);
+                    repo.Insert(newRequest);
+                }
             }
             
             await _unitOfWork.SaveAsync();
