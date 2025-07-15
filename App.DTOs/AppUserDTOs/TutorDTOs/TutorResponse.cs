@@ -17,6 +17,9 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
 		public string ProfileImageUrl  { get; set; } = string.Empty;
 		//public VerificationStatus VerificationStatus { get; set; }
         public DateTime? BecameTutorAt { get; set; }
+        public float AverageTeachingQuality { get; set; } 
+        public float AverageAttitude { get; set; } 
+        public float AverageCommitment { get; set; } 
         public string? ApplicationId { get; set; }
         
         // Scheduling information

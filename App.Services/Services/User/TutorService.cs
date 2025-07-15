@@ -15,6 +15,8 @@ using Microsoft.Extensions.Logging;
 using App.Core.Mapper;
 using App.Repositories.Models.Scheduling;
 using System.Security.Cryptography;
+using App.Repositories.Models.Rating;
+using App.DTOs.RatingDTOs;
 
 namespace App.Services.Services.User
 {
@@ -23,16 +25,19 @@ namespace App.Services.Services.User
         #region DI Constructor
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly IBookingSlotRatingService _bookingSlotRatingService;
         private readonly ILogger<TutorService> _logger;
 
         public TutorService(
             IUnitOfWork unitOfWork,
             IUserService userService,
-            ILogger<TutorService> logger)
+            ILogger<TutorService> logger,
+            IBookingSlotRatingService bookingSlotRatingService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
             _logger = logger;
+            _bookingSlotRatingService = bookingSlotRatingService;
         }
         #endregion
 
@@ -210,6 +215,18 @@ namespace App.Services.Services.User
                 .Where(tl => tutorIds.Contains(tl.TutorId))
                 .ToListAsync();
 
+            var tutorRatings = _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
+                .Where(r => tutorIds.Contains(r.TutorId))
+                .GroupBy(r => r.TutorId)
+                .ToDictionary(r => r.Key, r => new TutorRatingResponse()
+                {
+                    TutorId = r.Key,
+                    AverageTeachingQuality = r.Average(t => t.TeachingQuality),
+                    AverageAttitude = r.Average(t => t.Attitude),
+                    AverageCommitment = r.Average(t => t.Commitment)
+                });
+                
+
             // Build maps once to avoid redundant processing
             var tutorMap = relevantTutors.ToDictionary(t => t.UserId);
             var tutorLanguagesMap = tutorLanguages
@@ -239,20 +256,30 @@ namespace App.Services.Services.User
 
                 // Get top 6 tutors by "rating"
                 var topTutors = languageTutorsWithProficiency
+                    //.Select(async x => {
+                    //    var mockRating = GetMockRating(x.Tutor, x.Proficiency);
+                    //    return new {
+                    //        x.Tutor,
+                    //        MockRating = mockRating
+                    //    };
+                    //})
+                    //.OrderByDescending(x => x.MockRating)
                     .Select(x => {
-                        var mockRating = GetMockRating(x.Tutor, x.Proficiency);
-                        return new {
+                        var rating = tutorRatings.FirstOrDefault(t => t.Equals(x.Tutor.UserId)).Value ?? new TutorRatingResponse();
+                        var averageRating = (rating.AverageTeachingQuality + rating.AverageAttitude + rating.AverageCommitment) / 3;
+                        return new
+                        {
                             x.Tutor,
-                            MockRating = mockRating
+                            Rating = averageRating,
                         };
                     })
-                    .OrderByDescending(x => x.MockRating)
+                    .OrderByDescending(x => x.Rating)
                     .Take(6)
                     .Select(x => x.Tutor.ToTutorCardDTO(
                         tutorLanguagesMap.TryGetValue(x.Tutor.UserId, out var languages)
                             ? languages
                             : new List<TutorLanguage>(),
-                        x.MockRating
+                        x.Rating
                     ))
                     .ToList();
 
@@ -478,15 +505,20 @@ namespace App.Services.Services.User
                     .Where(b => b.TutorId == trimmedId)
                     .Select(BookingSlotDTO.ProjectionExpression)
                     .ToListAsync();
-                
+
                 return (tutor, tutorHashtags, tutorLanguages, patterns, bookings);
             });
-            
+
+            var tutorRatings = await _bookingSlotRatingService.GetTutorRatingAsync(id);
+
             var response = result.tutor;
             response.Hashtags = result.tutorHashtags;
             response.Languages = result.tutorLanguages;
             response.AvailabilityPatterns = result.patterns;
             response.BookingSlots = result.bookings;
+            response.AverageTeachingQuality = tutorRatings.AverageTeachingQuality;
+            response.AverageAttitude = tutorRatings.AverageAttitude;
+            response.AverageCommitment = tutorRatings.AverageCommitment;
 
             return response;
         }
@@ -576,23 +608,31 @@ namespace App.Services.Services.User
 
 		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page =1, int size =20)
 		{
-			var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-				.Include(t => t.User)
-				.OrderByDescending(t => t.BecameTutorAt)
-				.Skip((page-1) * size).Take(size)
-				.ToListAsync();
+            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                    .Include(t => t.User)
+                    .OrderByDescending(t => t.BecameTutorAt)
+                    .Skip((page - 1) * size).Take(size)
+                    .ToListAsync();
 
-			var tutorResponses = new List<TutorCardDTO>();
-			foreach (var tutor in tutors)
-			{
-				tutorResponses.Add(tutor.ToTutorCardDTO(
-					await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
-					.Where(t => t.TutorId.Equals(tutor.UserId))
-					.ToListAsync(), 
-					GetMockRating(tutor, 4)));	
-			}	
+                var tutorResponses = new List<TutorCardDTO>();
+                foreach (var tutor in tutors)
+                {
+                    var tutorRating = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
+                        .Where(e => e.TutorId.Equals(tutor.UserId))
+                        .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                        .DefaultIfEmpty().AverageAsync();
 
-			return tutorResponses;
+                    tutorResponses.Add(tutor.ToTutorCardDTO(
+                        await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
+                        .Where(t => t.TutorId.Equals(tutor.UserId))
+                        .ToListAsync(),
+                        tutorRating));
+                }
+                return tutorResponses;
+            });
+			return response;
 		}
     }
 }

@@ -1,4 +1,5 @@
-﻿using App.Repositories.Models.Scheduling;
+﻿using App.Repositories.Models.Rating;
+using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
 
 namespace App.Repositories.Models.User
@@ -12,6 +13,7 @@ namespace App.Repositories.Models.User
         public virtual AppUser? User { get; set; }
         public virtual ICollection<BookingSlot>? BookingSlots { get; set; }
         public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
+        public virtual ICollection<BookingSlotRating>? BookingSlotRatings { get; set; }
 
         #region Behavior
         public Expression<Func<Learner, object>>[] UpdateLearningLanguage(

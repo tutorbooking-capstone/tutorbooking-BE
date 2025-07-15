@@ -2,6 +2,7 @@ using App.Repositories.Models;
 using App.Repositories.Models.Booking;
 using App.Repositories.Models.Chat;
 using App.Repositories.Models.Papers;
+using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -37,6 +38,7 @@ namespace App.Repositories.Context
         public DbSet<BookingSlot> BookingSlots { get; set; }
         public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
         public DbSet<BookedSlot> BookedSlots { get; set; }
+        public DbSet<BookingSlotRating> BookingSlotRatings { get; set; }
         public DbSet<TutorBookingOffer> TutorBookingOffers { get; set; }
         public DbSet<OfferedSlot> OfferedSlots { get; set; }
 
@@ -233,6 +235,11 @@ namespace App.Repositories.Context
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
+            modelBuilder.Entity<BookingSlot>()
+                .HasOne(bs => bs.BookingSlotRating)
+                .WithOne(br => br.BookingSlot)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // AvailabilitySlot relationships
             modelBuilder.Entity<AvailabilitySlot>()
                 .HasOne(a => a.WeeklyPattern)
@@ -241,7 +248,7 @@ namespace App.Repositories.Context
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // BookedSlot relationships
+            // BookingSlot relationships
             modelBuilder.Entity<BookedSlot>()
                 .HasOne(bs => bs.BookingSlot)
                 .WithMany(bs => bs.BookedSlots)
@@ -388,6 +395,27 @@ namespace App.Repositories.Context
                 builder.HasIndex(lts => new { lts.LearnerId, lts.TutorId })
                     .IsUnique();
             });
+            #endregion
+
+            #region Rating Configuration
+            // 1 BookingSlotRating => 1 BookingSlot
+            modelBuilder.Entity<BookingSlotRating>()
+                .HasOne(br => br.BookingSlot)
+                .WithOne(bs => bs.BookingSlotRating)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // 1 BookingSlotRating => 1 Tutor
+            modelBuilder.Entity<BookingSlotRating>()
+                .HasOne(br => br.Tutor)
+                .WithMany(t => t.BookingSlotRatings)
+                .HasForeignKey(br => br.TutorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BookingSlotRating>()
+                .HasOne(br => br.Learner)
+                .WithMany(l => l.BookingSlotRatings)
+                .HasForeignKey(br => br.LearnerId)
+                .OnDelete(DeleteBehavior.SetNull);
             #endregion
         }
     }

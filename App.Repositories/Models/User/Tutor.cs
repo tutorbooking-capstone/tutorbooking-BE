@@ -1,5 +1,6 @@
 ﻿using System.Linq.Expressions;
 using App.Repositories.Models.Papers;
+using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 
 namespace App.Repositories.Models.User
@@ -29,6 +30,7 @@ namespace App.Repositories.Models.User
         public virtual ICollection<WeeklyAvailabilityPattern> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityPattern>();
         public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
         public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
+        public virtual ICollection<BookingSlotRating> BookingSlotRatings { get; set; }
 
         #region Behavior
         //public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)

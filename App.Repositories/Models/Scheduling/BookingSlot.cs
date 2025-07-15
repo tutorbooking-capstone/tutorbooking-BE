@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.Repositories.Models.Rating;
 using App.Repositories.Models.User;
 
 namespace App.Repositories.Models.Scheduling
@@ -8,10 +9,12 @@ namespace App.Repositories.Models.Scheduling
         public string TutorId { get; set; } = string.Empty;
         public string? LearnerId { get; set; }
         public string? Note { get; set; } // General note for the entire booking (e.g. Google Meet link for all sessions)
+        public string? BookingSlotRatingId { get; set; }
 
         public virtual Tutor? Tutor { get; set; }
         public virtual Learner? Learner { get; set; }
         public virtual ICollection<BookedSlot>? BookedSlots { get; set; }
+        public virtual BookingSlotRating? BookingSlotRating { get; set; }
     }
 }
 
