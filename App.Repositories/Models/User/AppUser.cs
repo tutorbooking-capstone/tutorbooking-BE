@@ -83,7 +83,8 @@ namespace App.Repositories.Models.User
             string? fullName,
             DateTime? dateOfBirth,
             Gender? gender,
-            string? timezone = null)
+            string? timezone = null,
+            string? phoneNumber = null)
         {
             var updatedFields = new List<Expression<Func<AppUser, object>>>();
 
@@ -109,6 +110,12 @@ namespace App.Repositories.Models.User
             {
                 Timezone = timezone;
                 updatedFields.Add(x => x.Timezone);
+            }
+
+            if (phoneNumber != null && PhoneNumber != phoneNumber) 
+            { 
+                PhoneNumber = phoneNumber;
+                updatedFields.Add(x => x.PhoneNumber);
             }
 
             return updatedFields.ToArray();
