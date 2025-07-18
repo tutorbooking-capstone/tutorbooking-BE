@@ -132,7 +132,8 @@ namespace App.Services.Services.User
                 request.FullName,
                 request.DateOfBirth,
                 request.Gender,
-                request.Timezone
+                request.Timezone,
+                request.PhoneNumber
             );
 
             if (updatedFields.Length > 0)

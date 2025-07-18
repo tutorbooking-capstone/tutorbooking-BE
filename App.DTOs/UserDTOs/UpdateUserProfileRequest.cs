@@ -14,7 +14,8 @@ namespace App.DTOs.UserDTOs
         string? FullName = null,
         DateTime? DateOfBirth = null,
         Gender? Gender = null,
-        string? Timezone = null
+        string? Timezone = null,
+        string? PhoneNumber = null
     );
     #endregion
 
@@ -68,6 +69,13 @@ namespace App.DTOs.UserDTOs
                 .IsInEnum()
                 .When(x => x.Gender.HasValue)
                 .WithMessage("Giới tính không hợp lệ (0 - Khác, 1 - Nam, 2 - Nữ).");
+
+            When(x => x.PhoneNumber != null, () =>
+            {
+                RuleFor(x => x.PhoneNumber)
+                .Matches(@"^\+?[0-9]{10,15}$").When(x => !string.IsNullOrEmpty(x.PhoneNumber))
+                .WithMessage("Số điện thoại không hợp lệ");
+            });
         }
     }
     #endregion
