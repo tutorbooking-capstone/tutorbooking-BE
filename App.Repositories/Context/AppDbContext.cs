@@ -1,6 +1,7 @@
 using App.Repositories.Models;
 using App.Repositories.Models.Booking;
 using App.Repositories.Models.Chat;
+using App.Repositories.Models.Legal;
 using App.Repositories.Models.Papers;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
@@ -57,6 +58,11 @@ namespace App.Repositories.Context
         public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
         public DbSet<BankAccount> BankAccounts { get; set; }
         public DbSet<FeeConfig> FeeConfigs { get; set; }
+
+        // Legal Documents
+        public DbSet<LegalDocument> LegalDocuments { get; set; }
+        public DbSet<LegalDocumentVersion> LegalDocumentVersions { get; set; }
+        public DbSet<LegalDocumentAcceptance> LegalDocumentAcceptances { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -278,17 +284,17 @@ namespace App.Repositories.Context
                 builder.HasKey(o => o.Id);
 
                 builder.HasOne(o => o.Tutor)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.TutorId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 builder.HasOne(o => o.Learner)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.LearnerId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 builder.HasOne(o => o.Lesson)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.LessonId)
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.SetNull);
@@ -426,6 +432,44 @@ namespace App.Repositories.Context
                 .WithMany(l => l.BookingSlotRatings)
                 .HasForeignKey(br => br.LearnerId)
                 .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
+            #region LegalDocument Configuration
+            // Cấu hình được cải tiến để đảm bảo toàn vẹn dữ liệu cho các tài liệu pháp lý.
+
+            // LegalDocument -> LegalDocumentVersion (1-M)
+            // Khi một tài liệu gốc bị xóa, tất cả các phiên bản của nó cũng sẽ bị xóa theo.
+            modelBuilder.Entity<LegalDocumentVersion>()
+                .HasOne(version => version.LegalDocument)
+                .WithMany(doc => doc.Versions)
+                .HasForeignKey(version => version.LegalDocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // LegalDocumentVersion -> LegalDocumentAcceptance (1-M)
+            // Ngăn chặn việc xóa một phiên bản tài liệu nếu đã có người dùng chấp thuận nó.
+            // Điều này quan trọng cho việc kiểm toán và lưu trữ lịch sử.
+            modelBuilder.Entity<LegalDocumentAcceptance>()
+                .HasOne(acceptance => acceptance.LegalDocumentVersion)
+                .WithMany(version => version.LegalDocumentAcceptances)
+                .HasForeignKey(acceptance => acceptance.LegalDocumentVersionId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // AppUser -> LegalDocumentAcceptance (1-M)
+            // Khi một người dùng bị xóa, các bản ghi chấp thuận của họ cũng sẽ bị xóa.
+            modelBuilder.Entity<LegalDocumentAcceptance>()
+                .HasOne(acceptance => acceptance.AppUser)
+                .WithMany(user => user.LegalDocumentAcceptances)
+                .HasForeignKey(acceptance => acceptance.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // LegalDocument -> LegalDocumentAcceptance (1-M)
+            // Ngăn chặn việc xóa tài liệu gốc nếu đã có bất kỳ sự chấp thuận nào liên quan.
+            modelBuilder.Entity<LegalDocumentAcceptance>()
+                .HasOne(acceptance => acceptance.LegalDocument)
+                .WithMany(doc => doc.LegalDocumentAcceptances)
+                .HasForeignKey(acceptance => acceptance.LegalDocumentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             #endregion
 
             #region Wallet Configuration
