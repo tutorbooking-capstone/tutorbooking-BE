@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Data;
 using System.Security.Cryptography;
+using App.Repositories.Models;
 
 namespace App.Services.Services.User
 {
@@ -119,6 +120,20 @@ namespace App.Services.Services.User
             // Create Learner entity
             var learner = newUser.BecomeLearner(newUser.Id);
             _unitOfWork.GetRepository<Learner>().Insert(learner);
+            await _unitOfWork.SaveAsync();
+
+            // Create wallet for the new user
+            var wallet = new Wallet
+            {
+                UserId = newUser.Id,
+                Type = WalletType.Personal,
+                Balance = 0,
+                Currency = "VND",
+                Status = WalletStatus.Active
+            };
+
+            wallet.TrackCreate(newUser.Id);
+            _unitOfWork.GetRepository<Wallet>().Insert(wallet);
             await _unitOfWork.SaveAsync();
 
             string greeting = $"Chào {model.FullName},";
@@ -495,6 +510,20 @@ namespace App.Services.Services.User
                 // Create Learner entity
                 var learner = user.BecomeLearner(user.Id);
                 _unitOfWork.GetRepository<Learner>().Insert(learner);
+                await _unitOfWork.SaveAsync();
+
+                // Create wallet for the new user
+                var wallet = new Wallet
+                {
+                    UserId = user.Id,
+                    Type = WalletType.Personal,
+                    Balance = 0,
+                    Currency = "VND",
+                    Status = WalletStatus.Active
+                };
+
+                wallet.TrackCreate(user.Id);
+                _unitOfWork.GetRepository<Wallet>().Insert(wallet);
                 await _unitOfWork.SaveAsync();
                 #endregion
             }

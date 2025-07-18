@@ -23,5 +23,10 @@ namespace App.Services.Infras
                 return null;
             }
         }
+
+        public bool IsInRole(string roleName)
+        {
+            return _userService.IsInRole(roleName);
+        }
     }
 }

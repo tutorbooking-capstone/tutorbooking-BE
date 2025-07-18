@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250715142846_AddRatingTable")]
+    partial class AddRatingTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -89,65 +92,6 @@ namespace App.Repositories.Migrations
                     b.HasIndex("TutorApplicationId");
 
                     b.ToTable("application_revisions");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.BankAccount", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AccountHolderName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("account_holder_name");
-
-                    b.Property<string>("AccountNumber")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("account_number");
-
-                    b.Property<string>("BankName")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("bank_name");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_bank_accounts");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_bank_accounts_user_id");
-
-                    b.ToTable("bank_accounts");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
@@ -416,85 +360,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("chat_messages");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.DepositRequest", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("amount");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("GatewayTransactionId")
-                        .HasColumnType("text")
-                        .HasColumnName("gateway_transaction_id");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<string>("PaymentGateway")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("text")
-                        .HasDefaultValue("PayOS")
-                        .HasColumnName("payment_gateway");
-
-                    b.Property<string>("PayosOrderToken")
-                        .HasColumnType("text")
-                        .HasColumnName("payos_order_token");
-
-                    b.Property<string>("PayosOrderUrl")
-                        .HasColumnType("text")
-                        .HasColumnName("payos_order_url");
-
-                    b.Property<string>("PayosQrCode")
-                        .HasColumnType("text")
-                        .HasColumnName("payos_qr_code");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_deposit_requests");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_deposit_requests_user_id");
-
-                    b.ToTable("deposit_requests");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
                 {
                     b.Property<string>("DocumentId")
@@ -575,46 +440,6 @@ namespace App.Repositories.Migrations
                         .HasName("pk_hashtags");
 
                     b.ToTable("hashtags");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.HeldFund", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("amount");
-
-                    b.Property<string>("BookedSlotId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("booked_slot_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<DateTime>("ReleaseAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("release_at");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("resolved_at");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id")
-                        .HasName("pk_held_funds");
-
-                    b.HasIndex("BookedSlotId")
-                        .HasDatabaseName("ix_held_funds_booked_slot_id");
-
-                    b.ToTable("held_funds");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.LearnerTimeSlotRequest", b =>
@@ -933,40 +758,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("tutor_applications");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Payment.FeeConfig", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("FeeCode")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("fee_code");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_active");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer")
-                        .HasColumnName("type");
-
-                    b.Property<decimal>("Value")
-                        .HasColumnType("decimal(18, 4)")
-                        .HasColumnName("value");
-
-                    b.HasKey("Id")
-                        .HasName("pk_fee_configs");
-
-                    b.ToTable("fee_configs");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Rating.BookingSlotRating", b =>
                 {
                     b.Property<string>("Id")
@@ -1167,55 +958,6 @@ namespace App.Repositories.Migrations
                     b.HasIndex("TutorId");
 
                     b.ToTable("weekly_availability_patterns");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Transaction", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("amount");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<string>("ReferenceId")
-                        .HasColumnType("text")
-                        .HasColumnName("reference_id");
-
-                    b.Property<string>("SourceWalletId")
-                        .HasColumnType("text")
-                        .HasColumnName("source_wallet_id");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.Property<string>("TargetWalletId")
-                        .HasColumnType("text")
-                        .HasColumnName("target_wallet_id");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer")
-                        .HasColumnName("type");
-
-                    b.HasKey("Id")
-                        .HasName("pk_transactions");
-
-                    b.HasIndex("SourceWalletId");
-
-                    b.HasIndex("TargetWalletId");
-
-                    b.ToTable("transactions");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
@@ -1478,144 +1220,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("tutors");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Wallet", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<decimal>("Balance")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("balance");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("currency");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer")
-                        .HasColumnName("type");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_wallets");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ix_wallets_user_id");
-
-                    b.ToTable("wallets");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.WithdrawalRequest", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("BankAccountId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("bank_account_id");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("completed_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("Fees")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("fees");
-
-                    b.Property<decimal>("GrossAmount")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("gross_amount");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<decimal>("NetAmount")
-                        .HasColumnType("decimal(18, 2)")
-                        .HasColumnName("net_amount");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("text")
-                        .HasColumnName("rejection_reason");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_withdrawal_requests");
-
-                    b.HasIndex("BankAccountId")
-                        .HasDatabaseName("ix_withdrawal_requests_bank_account_id");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_withdrawal_requests_user_id");
-
-                    b.ToTable("withdrawal_requests");
-                });
-
             modelBuilder.Entity("AppUserChatConversation", b =>
                 {
                     b.Property<string>("AppUsersId")
@@ -1820,18 +1424,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Staff");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.BankAccount", b =>
-                {
-                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_bank_accounts___users_user_id");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.AppUser", "AppUser")
@@ -1934,18 +1526,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("ChatConversation");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.DepositRequest", b =>
-                {
-                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_deposit_requests___users_user_id");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
                 {
                     b.HasOne("App.Repositories.Models.Papers.Document", "Document")
@@ -1973,18 +1553,6 @@ namespace App.Repositories.Migrations
                         .WithMany("FileUploads")
                         .HasForeignKey("ChatMessageId")
                         .HasConstraintName("fk_file_upload_chat_messages_chat_message_id");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.HeldFund", b =>
-                {
-                    b.HasOne("App.Repositories.Models.Scheduling.BookedSlot", "BookedSlot")
-                        .WithMany()
-                        .HasForeignKey("BookedSlotId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_held_funds__booked_slots_booked_slot_id");
-
-                    b.Navigation("BookedSlot");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.LearnerTimeSlotRequest", b =>
@@ -2182,23 +1750,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Tutor");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Transaction", b =>
-                {
-                    b.HasOne("App.Repositories.Models.Wallet", "SourceWallet")
-                        .WithMany("SourceTransactions")
-                        .HasForeignKey("SourceWalletId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("App.Repositories.Models.Wallet", "TargetWallet")
-                        .WithMany("TargetTransactions")
-                        .HasForeignKey("TargetWalletId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("SourceWallet");
-
-                    b.Navigation("TargetWallet");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
                 {
                     b.HasOne("App.Repositories.Models.Hashtag", "Hashtag")
@@ -2264,38 +1815,6 @@ namespace App.Repositories.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_tutors___users_user_id");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Wallet", b =>
-                {
-                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
-                        .WithOne()
-                        .HasForeignKey("App.Repositories.Models.Wallet", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("fk_wallets___users_user_id");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.WithdrawalRequest", b =>
-                {
-                    b.HasOne("App.Repositories.Models.BankAccount", "BankAccount")
-                        .WithMany()
-                        .HasForeignKey("BankAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_withdrawal_requests_bank_accounts_bank_account_id");
-
-                    b.HasOne("App.Repositories.Models.User.AppUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_withdrawal_requests___users_user_id");
-
-                    b.Navigation("BankAccount");
 
                     b.Navigation("User");
                 });
@@ -2451,13 +1970,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Lessons");
 
                     b.Navigation("TimeSlotRequests");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Wallet", b =>
-                {
-                    b.Navigation("SourceTransactions");
-
-                    b.Navigation("TargetTransactions");
                 });
 #pragma warning restore 612, 618
         }

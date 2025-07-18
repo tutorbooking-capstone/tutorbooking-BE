@@ -1,4 +1,5 @@
-﻿using App.Core.Jsetting;
+﻿using System.Net.Http.Headers;
+using App.Core.Jsetting;
 using App.Core.Provider;
 using App.Services.Infras;
 using App.Services.Interfaces;
@@ -35,7 +36,6 @@ namespace App.Services
             services.AddScoped<ILearnerBookingService, LearnerBookingService>();
             services.AddScoped<ITutorBookingService, TutorBookingService>();
 
-
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();
             services.AddScoped<IDocumentService, DocumentService>();
@@ -53,6 +53,12 @@ namespace App.Services
             services.AddScoped<IDatabaseService, DatabaseService>();
             #endregion
 
+            #region Payment Services
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IDepositService, DepositService>();
+            services.AddPayosServices();
+            #endregion
+
             services.AddHttpContextAccessor();
 
             return services;
@@ -65,6 +71,7 @@ namespace App.Services
         {
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+            services.Configure<PayosSettings>(configuration.GetSection("PayOS"));
 
 
             services.AddJwtSettingsConfig(configuration);
@@ -72,6 +79,18 @@ namespace App.Services
             return services;
         }
         
+        public static IServiceCollection AddPayosServices(this IServiceCollection services)
+        {
+            // Đăng ký HttpClient cho PayOS
+            services.AddHttpClient("PayOS", client =>
+            {
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
+            services.AddScoped<IPayosService, PayosService>();
+            return services;
+        }
+
         public static IServiceCollection AddJwtSettingsConfig(
             this IServiceCollection services, 
             IConfiguration configuration)

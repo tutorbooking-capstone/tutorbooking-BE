@@ -3,5 +3,6 @@
     public interface ICurrentUserProvider
     {
         string? GetCurrentUserId();
+        bool IsInRole(string roleName);
     }
 }

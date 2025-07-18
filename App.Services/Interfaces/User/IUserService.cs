@@ -16,6 +16,7 @@ namespace App.Services.Interfaces.User
         Task ChangePasswordAsync(string userId, ChangePasswordRequest model);
 
         string GetCurrentUserId();
+        bool IsInRole(string roleName);
         Task<List<AppUser>> GetAllUsersAsync();
         Task<AppUser> GetCurrentUserAsync();
         Task<AppUser> GetUserByIdAsync(string userId);

@@ -74,6 +74,12 @@ namespace App.Services.Services.User
             return userId ?? throw new UnauthorizedException("Cannot get userId from NameIdentifier claim");
         }
 
+        public bool IsInRole(string roleName)
+        {
+            var user = _contextAccessor.HttpContext?.User;
+            return user?.IsInRole(roleName) ?? false;
+        }
+
         public async Task<AppUser> GetCurrentUserAsync()
             => await GetUserByIdAsync(GetCurrentUserId());
 

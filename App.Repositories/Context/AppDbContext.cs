@@ -7,6 +7,7 @@ using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using App.Repositories.Models.Payment;
 
 namespace App.Repositories.Context
 {
@@ -47,6 +48,15 @@ namespace App.Repositories.Context
         public DbSet<ChatConversationReadStatus> chatConversationReadStatuses { get; set; }
 
         public DbSet<LearnerTimeSlotRequest> LearnerTimeSlotRequests { get; set; }
+
+        // Payment related DbSets
+        public DbSet<Wallet> Wallets { get; set; }
+        public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<HeldFund> HeldFunds { get; set; }
+        public DbSet<DepositRequest> DepositRequests { get; set; }
+        public DbSet<WithdrawalRequest> WithdrawalRequests { get; set; }
+        public DbSet<BankAccount> BankAccounts { get; set; }
+        public DbSet<FeeConfig> FeeConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -304,24 +314,24 @@ namespace App.Repositories.Context
                 builder.HasKey(m => m.Id);
 
                 builder.Property(m => m.AppUserId)
-                       .IsRequired();
+                    .IsRequired();
 
                 builder.Property(m => m.ChatConversationId)
-                       .IsRequired();
+                    .IsRequired();
 
                 builder.Property(m => m.TextMessage)
-                       .IsRequired(false);
+                    .IsRequired(false);
 
                 builder.HasOne(m => m.AppUser)
-                       .WithMany()  // No explicit navigation property on AppUser for messages
-                       .HasForeignKey(m => m.AppUserId)
-                       .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
+                    .WithMany()  // No explicit navigation property on AppUser for messages
+                    .HasForeignKey(m => m.AppUserId)
+                    .OnDelete(DeleteBehavior.Restrict); // Prevent cascade deletion
 
                 // Relationship with ChatConversation
                 builder.HasOne(m => m.ChatConversation)
-                       .WithMany(c => c.ChatMessages)
-                       .HasForeignKey(m => m.ChatConversationId)
-                       .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
+                    .WithMany(c => c.ChatMessages)
+                    .HasForeignKey(m => m.ChatConversationId)
+                    .OnDelete(DeleteBehavior.Cascade); // Messages deleted when conversation is deleted
             });
 
             modelBuilder.Entity<ChatConversation>(builder =>
@@ -329,8 +339,8 @@ namespace App.Repositories.Context
                 builder.HasKey(c => c.Id);
 
                 builder.HasMany(c => c.AppUsers)
-                       .WithMany()// No explicit navigation property on AppUser for conversations	
-                       .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
+                    .WithMany()// No explicit navigation property on AppUser for conversations	
+                    .UsingEntity(j => j.ToTable("user_conversations")); // Configure join table name
             });
 
             modelBuilder.Entity<ChatConversationReadStatus>(builder =>
@@ -416,6 +426,105 @@ namespace App.Repositories.Context
                 .WithMany(l => l.BookingSlotRatings)
                 .HasForeignKey(br => br.LearnerId)
                 .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
+            #region Wallet Configuration
+            // Wallet -> AppUser (1:1)
+            modelBuilder.Entity<Wallet>()
+                .HasOne(w => w.User)
+                .WithOne()
+                .HasForeignKey<Wallet>(w => w.UserId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Ràng buộc unique cho mỗi người dùng chỉ có một ví
+            modelBuilder.Entity<Wallet>()
+                .HasIndex(w => w.UserId)
+                .IsUnique();
+                
+            // Mối quan hệ Transaction
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.SourceWallet)
+                .WithMany(w => w.SourceTransactions)
+                .HasForeignKey(t => t.SourceWalletId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            modelBuilder.Entity<Transaction>()
+                .HasOne(t => t.TargetWallet)
+                .WithMany(w => w.TargetTransactions)
+                .HasForeignKey(t => t.TargetWalletId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // HeldFund -> BookedSlot (M:1)
+            modelBuilder.Entity<HeldFund>()
+                .HasOne(h => h.BookedSlot)
+                .WithMany()
+                .HasForeignKey(h => h.BookedSlotId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            // DepositRequest -> AppUser (M:1)
+            modelBuilder.Entity<DepositRequest>()
+                .HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // WithdrawalRequest -> AppUser (M:1)
+            modelBuilder.Entity<WithdrawalRequest>()
+                .HasOne(w => w.User)
+                .WithMany()
+                .HasForeignKey(w => w.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // WithdrawalRequest -> BankAccount (M:1)
+            modelBuilder.Entity<WithdrawalRequest>()
+                .HasOne(w => w.BankAccount)
+                .WithMany()
+                .HasForeignKey(w => w.BankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+                
+            // BankAccount -> AppUser (M:1)
+            modelBuilder.Entity<BankAccount>()
+                .HasOne(b => b.User)
+                .WithMany()
+                .HasForeignKey(b => b.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Cấu hình kiểu dữ liệu decimal
+            modelBuilder.Entity<Wallet>()
+                .Property(w => w.Balance)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<Transaction>()
+                .Property(t => t.Amount)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<HeldFund>()
+                .Property(h => h.Amount)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<DepositRequest>()
+                .Property(d => d.Amount)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<WithdrawalRequest>()
+                .Property(w => w.GrossAmount)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<WithdrawalRequest>()
+                .Property(w => w.NetAmount)
+                .HasColumnType("decimal(18, 2)");
+                
+            modelBuilder.Entity<FeeConfig>()
+                .Property(f => f.Value)
+                .HasColumnType("decimal(18, 4)");
+                
+            // Giá trị mặc định cho PaymentGateway
+            modelBuilder.Entity<DepositRequest>()
+                .Property(d => d.PaymentGateway)
+                .HasDefaultValue("PayOS");
             #endregion
         }
     }
