@@ -1,6 +1,7 @@
 using App.Repositories.Models;
 using App.Repositories.Models.Booking;
 using App.Repositories.Models.Chat;
+using App.Repositories.Models.Legal;
 using App.Repositories.Models.Papers;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
@@ -268,17 +269,17 @@ namespace App.Repositories.Context
                 builder.HasKey(o => o.Id);
 
                 builder.HasOne(o => o.Tutor)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.TutorId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 builder.HasOne(o => o.Learner)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.LearnerId)
                     .OnDelete(DeleteBehavior.Cascade);
 
                 builder.HasOne(o => o.Lesson)
-                    .WithMany() 
+                    .WithMany()
                     .HasForeignKey(o => o.LessonId)
                     .IsRequired(false)
                     .OnDelete(DeleteBehavior.SetNull);
@@ -416,6 +417,31 @@ namespace App.Repositories.Context
                 .WithMany(l => l.BookingSlotRatings)
                 .HasForeignKey(br => br.LearnerId)
                 .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
+            #region LegalDocument Configuration
+
+            modelBuilder.Entity<LegalDocument>()
+                .HasMany(d => d.LegalDocumentAcceptances)
+                .WithOne(a => a.LegalDocument)
+                .HasForeignKey(a => a.LegalDocumentId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<LegalDocument>()
+                .HasMany(d => d.Versions)
+                .WithOne(v => v.LegalDocument)
+                .HasForeignKey(v => v.LegalDocumentId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<LegalDocumentAcceptance>()
+                .HasOne(a => a.AppUser)
+                .WithMany(u => u.LegalDocumentAcceptances)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+            modelBuilder.Entity<LegalDocumentAcceptance>()
+                .HasOne(a => a.LegalDocumentVersion)
+                .WithMany(v => v.LegalDocumentAcceptances)
+                .HasForeignKey(a => a.LegalDocumentVersionId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             #endregion
         }
     }

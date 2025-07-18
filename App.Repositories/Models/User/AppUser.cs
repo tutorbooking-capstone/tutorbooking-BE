@@ -1,5 +1,6 @@
 using App.Core.Base;
 using App.Repositories.Models.Chat;
+using App.Repositories.Models.Legal;
 using System.Linq.Expressions;
 
 namespace App.Repositories.Models.User
@@ -25,6 +26,7 @@ namespace App.Repositories.Models.User
 
         //Navigation Properties
         public virtual ICollection<ChatConversationReadStatus>? ChatConversationReadStatuses { get; set; }
+        public virtual ICollection<LegalDocumentAcceptance>? LegalDocumentAcceptances { get; set; }
 
         #region Behavior
         public void UpdateBasicInformation(
