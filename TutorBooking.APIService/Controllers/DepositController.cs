@@ -157,5 +157,23 @@ namespace TutorBooking.APIService.Controllers
                 return StatusCode(500, new { success = false, message = "Internal server error" });
             }
         }
+
+        [HttpGet("return")]
+        public async Task<IActionResult> ReturnFromPayment([FromQuery] string orderCode)
+        {
+            // Kiểm tra và cập nhật trạng thái
+            var updated = await _depositService.CheckAndUpdateDepositStatusAsync(orderCode);
+            
+            // Lấy thông tin đơn hàng
+            var depositRequest = await _depositService.GetDepositRequestByIdAsync(orderCode);
+            
+            return Ok(new BaseResponseModel<object>(
+                data: new {
+                    updated = updated,
+                    deposit = depositRequest
+                },
+                message: "Đã quay lại từ trang thanh toán"
+            ));
+        }
     }
 }

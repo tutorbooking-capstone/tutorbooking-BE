@@ -146,11 +146,14 @@ namespace App.Services.Services
         {
             try
             {
+                _logger.LogInformation("====== WEBHOOK CALLBACK RECEIVED ======");
                 _logger.LogInformation("Processing PayOS callback with params: {Params}", 
                     string.Join(", ", payosParams.Select(kv => $"{kv.Key}={kv.Value}")));
                 
                 // Verify callback signature - tạm thời bỏ qua xác thực chữ ký trong quá trình test
                 var isValid = await _payosService.VerifyCallbackAsync(payosParams);
+                _logger.LogInformation("Signature verification result: {IsValid}", isValid);
+                
                 if (!isValid)
                 {
                     _logger.LogWarning("Invalid PayOS callback signature");
@@ -162,9 +165,12 @@ namespace App.Services.Services
                 string? status = null;
                 string? transactionId = null;
                 
+                _logger.LogInformation("Extracting data from callback...");
+                
                 // Trích xuất dữ liệu từ callback
                 if (payosParams.TryGetValue("data", out var dataJson) && !string.IsNullOrEmpty(dataJson))
                 {
+                    _logger.LogInformation("Found data field in callback: {Data}", dataJson);
                     try
                     {
                         var dataObj = System.Text.Json.JsonSerializer.Deserialize<PayosCallbackData>(dataJson);
@@ -173,6 +179,12 @@ namespace App.Services.Services
                             requestId = dataObj.OrderCode?.ToString();
                             status = dataObj.Status;
                             transactionId = dataObj.TransactionId;
+                            _logger.LogInformation("Successfully parsed data object: OrderCode={OrderCode}, Status={Status}, TransactionId={TransactionId}",
+                                dataObj.OrderCode, dataObj.Status, dataObj.TransactionId);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Data object is null after deserialization");
                         }
                     }
                     catch (Exception ex)
@@ -180,19 +192,32 @@ namespace App.Services.Services
                         _logger.LogError(ex, "Error parsing data JSON from PayOS callback");
                     }
                 }
+                else
+                {
+                    _logger.LogInformation("No data field found in callback, checking top-level fields");
+                }
                 
                 // Fallback: lấy từ các tham số cấp cao nhất
                 if (string.IsNullOrEmpty(requestId) && payosParams.TryGetValue("orderCode", out var orderCode))
+                {
                     requestId = orderCode;
+                    _logger.LogInformation("Found orderCode in top-level fields: {OrderCode}", orderCode);
+                }
                     
                 if (string.IsNullOrEmpty(status) && payosParams.TryGetValue("status", out var statusValue))
+                {
                     status = statusValue;
+                    _logger.LogInformation("Found status in top-level fields: {Status}", statusValue);
+                }
                     
-                if (payosParams.TryGetValue("transactionId", out var transactionIdValue))
+                if (string.IsNullOrEmpty(transactionId) && payosParams.TryGetValue("transactionId", out var transactionIdValue))
+                {
                     transactionId = transactionIdValue;
+                    _logger.LogInformation("Found transactionId in top-level fields: {TransactionId}", transactionIdValue);
+                }
                     
                 // Log các giá trị đã trích xuất
-                _logger.LogInformation("Extracted values - RequestId: {RequestId}, Status: {Status}, TransactionId: {TransactionId}", 
+                _logger.LogInformation("Final extracted values - RequestId: {RequestId}, Status: {Status}, TransactionId: {TransactionId}", 
                     requestId, status, transactionId);
 
                 // Kiểm tra xem có đủ thông tin cần thiết không
@@ -210,6 +235,7 @@ namespace App.Services.Services
                 }
 
                 // Get deposit request
+                _logger.LogInformation("Looking up deposit request with ID: {RequestId}", requestId);
                 var depositRequest = await _unitOfWork.GetRepository<DepositRequest>()
                     .ExistEntities()
                     .FirstOrDefaultAsync(d => d.Id == requestId);
@@ -219,17 +245,23 @@ namespace App.Services.Services
                     _logger.LogWarning("Deposit request not found: {RequestId}", requestId);
                     return false;
                 }
+                
+                _logger.LogInformation("Found deposit request: ID={Id}, UserId={UserId}, Amount={Amount}, Status={Status}", 
+                    depositRequest.Id, depositRequest.UserId, depositRequest.Amount, depositRequest.Status);
 
                 // Process based on status
                 if (status != null && (status.Equals("PAID", StringComparison.OrdinalIgnoreCase) || 
                     status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase)))
                 {
+                    _logger.LogInformation("Payment status is PAID/COMPLETED. Updating deposit request status...");
+                    
                     // Update deposit request status
-                    // Đảm bảo transactionId không null khi truyền vào Complete
                     var updateFields = depositRequest.Complete(transactionId ?? string.Empty);
                     _unitOfWork.GetRepository<DepositRequest>().UpdateFields(depositRequest, updateFields);
+                    _logger.LogInformation("Deposit request status updated to Success");
 
                     // Get user's wallet
+                    _logger.LogInformation("Looking up wallet for user: {UserId}", depositRequest.UserId);
                     var wallet = await _unitOfWork.GetRepository<Wallet>()
                         .ExistEntities()
                         .FirstOrDefaultAsync(w => w.UserId == depositRequest.UserId);
@@ -239,8 +271,11 @@ namespace App.Services.Services
                         _logger.LogError("Wallet not found for user: {UserId}", depositRequest.UserId);
                         return false;
                     }
+                    
+                    _logger.LogInformation("Found wallet: ID={Id}, Balance={Balance}", wallet.Id, wallet.Balance);
 
                     // Create transaction record
+                    _logger.LogInformation("Creating transaction record...");
                     var transaction = Transaction.CreateDepositTransaction(
                         wallet.Id,
                         depositRequest.Amount,
@@ -248,30 +283,42 @@ namespace App.Services.Services
                     );
 
                     _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+                    _logger.LogInformation("Transaction record created: ID={Id}, Amount={Amount}", transaction.Id, transaction.Amount);
 
                     // Update wallet balance
                     var newBalance = wallet.Balance + depositRequest.Amount;
+                    _logger.LogInformation("Updating wallet balance from {OldBalance} to {NewBalance}", wallet.Balance, newBalance);
                     var walletUpdateFields = wallet.UpdateBalance(newBalance);
                     _unitOfWork.GetRepository<Wallet>().UpdateFields(wallet, walletUpdateFields);
 
                     await _unitOfWork.SaveAsync();
+                    _logger.LogInformation("Changes saved to database");
+                    _logger.LogInformation("====== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY ======");
                     return true;
                 }
                 else if (status != null && (status.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase) || 
                     status.Equals("FAILED", StringComparison.OrdinalIgnoreCase)))
                 {
+                    _logger.LogInformation("Payment status is CANCELLED/FAILED. Marking deposit as failed...");
+                    
                     // Mark deposit as failed
                     var updateFields = depositRequest.MarkAsFailed();
                     _unitOfWork.GetRepository<DepositRequest>().UpdateFields(depositRequest, updateFields);
                     await _unitOfWork.SaveAsync();
+                    
+                    _logger.LogInformation("Deposit request marked as failed");
+                    _logger.LogInformation("====== WEBHOOK PROCESSING COMPLETED (PAYMENT FAILED) ======");
                     return true;
                 }
 
+                _logger.LogWarning("Unhandled payment status: {Status}", status);
+                _logger.LogInformation("====== WEBHOOK PROCESSING ENDED WITHOUT ACTION ======");
                 return false;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error processing PayOS callback");
+                _logger.LogInformation("====== WEBHOOK PROCESSING FAILED WITH ERROR ======");
                 return false;
             }
         }
@@ -301,29 +348,43 @@ namespace App.Services.Services
 
         public async Task<bool> CheckAndUpdateDepositStatusAsync(string requestId)
         {
+            _logger.LogInformation("====== MANUAL STATUS CHECK STARTED ======");
+            _logger.LogInformation("Checking deposit status for request ID: {RequestId}", requestId);
+            
             var depositRequest = await _unitOfWork.GetRepository<DepositRequest>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(d => d.Id == requestId);
 
             if (depositRequest == null)
-                throw new ErrorException(
-                    StatusCodes.Status404NotFound,
-                    ErrorCode.NotFound,
-                    "Không tìm thấy yêu cầu nạp tiền");
+            {
+                _logger.LogWarning("Deposit request not found: {RequestId}", requestId);
+                return false;
+            }
+            
+            _logger.LogInformation("Found deposit request: ID={Id}, UserId={UserId}, Amount={Amount}, Status={Status}", 
+                depositRequest.Id, depositRequest.UserId, depositRequest.Amount, depositRequest.Status);
 
             // Only check pending deposits
             if (depositRequest.Status != DepositRequestStatus.Pending)
+            {
+                _logger.LogInformation("Deposit request is not pending (current status: {Status}). No action needed.", depositRequest.Status);
                 return false;
+            }
 
             try
             {
                 // Check payment status with PayOS
+                _logger.LogInformation("Checking payment status with PayOS API...");
                 var statusResponse = await _payosService.CheckOrderStatusAsync(depositRequest.Id);
+                _logger.LogInformation("PayOS response: Status={Status}, TransactionId={TransactionId}", 
+                    statusResponse.Status, statusResponse.TransactionId);
 
                 // Process based on status
                 if (statusResponse.Status.Equals("PAID", StringComparison.OrdinalIgnoreCase) || 
                     statusResponse.Status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogInformation("Payment status is PAID/COMPLETED. Processing payment...");
+                    
                     // Create dictionary for callback processing
                     var callbackParams = new Dictionary<string, string>
                     {
@@ -333,16 +394,29 @@ namespace App.Services.Services
                     };
 
                     // Process as if it was a callback
-                    return await ProcessPayosCallbackAsync(callbackParams);
+                    var result = await ProcessPayosCallbackAsync(callbackParams);
+                    _logger.LogInformation("Payment processing result: {Result}", result);
+                    _logger.LogInformation("====== MANUAL STATUS CHECK COMPLETED ======");
+                    return result;
                 }
                 else if (statusResponse.Status.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase) || 
                         statusResponse.Status.Equals("FAILED", StringComparison.OrdinalIgnoreCase))
                 {
+                    _logger.LogInformation("Payment status is CANCELLED/FAILED. Marking deposit as failed...");
+                    
                     // Mark as failed
                     var updateFields = depositRequest.MarkAsFailed();
                     _unitOfWork.GetRepository<DepositRequest>().UpdateFields(depositRequest, updateFields);
                     await _unitOfWork.SaveAsync();
+                    
+                    _logger.LogInformation("Deposit request marked as failed");
+                    _logger.LogInformation("====== MANUAL STATUS CHECK COMPLETED ======");
                     return true;
+                }
+                else
+                {
+                    _logger.LogInformation("Payment status is still PENDING. No action needed.");
+                    _logger.LogInformation("====== MANUAL STATUS CHECK COMPLETED ======");
                 }
 
                 // No change needed
@@ -351,6 +425,7 @@ namespace App.Services.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error checking deposit status with PayOS");
+                _logger.LogInformation("====== MANUAL STATUS CHECK FAILED WITH ERROR ======");
                 return false;
             }
         }
