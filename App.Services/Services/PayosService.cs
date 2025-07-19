@@ -46,15 +46,18 @@ namespace App.Services.Services
                 _logger.LogInformation("Creating payment request for order {OrderCode}, amount {Amount}", 
                     request.OrderCode, request.Amount);
                 
+                // Tạo mã đơn hàng số nguyên từ UUID
+                long numericOrderCode = Math.Abs(request.OrderCode.GetHashCode()) % 1000000000;
+                
                 // Chuẩn bị dữ liệu cho API PayOS
                 var requestData = new
                 {
-                    orderCode = request.OrderCode,
+                    orderCode = numericOrderCode, // Chuyển đổi thành số nguyên
                     amount = (int)request.Amount, // PayOS yêu cầu số tiền nguyên
                     description = request.Description,
                     cancelUrl = request.CancelUrl ?? request.ReturnUrl,
                     returnUrl = request.ReturnUrl,
-                    signature = GenerateSignature(request.OrderCode, request.Amount, request.ReturnUrl, request.CancelUrl ?? request.ReturnUrl, request.Description)
+                    signature = GenerateSignature(numericOrderCode.ToString(), request.Amount, request.ReturnUrl, request.CancelUrl ?? request.ReturnUrl, request.Description)
                 };
                 
                 _logger.LogInformation("PayOS request data: {RequestData}", System.Text.Json.JsonSerializer.Serialize(requestData));
@@ -275,7 +278,6 @@ namespace App.Services.Services
         private string GenerateSignature(string orderCode, decimal amount, string returnUrl, string cancelUrl, string description)
         {
             // Tạo chuỗi dữ liệu để tính chữ ký theo đúng định dạng của PayOS
-            // Chuỗi được sort theo alphabet: amount=$amount&cancelUrl=$cancelUrl&description=$description&orderCode=$orderCode&returnUrl=$returnUrl
             var dataToSign = $"amount={(int)amount}&cancelUrl={cancelUrl}&description={description}&orderCode={orderCode}&returnUrl={returnUrl}";
             _logger.LogDebug("Generating signature for data: {Data}", dataToSign);
             
