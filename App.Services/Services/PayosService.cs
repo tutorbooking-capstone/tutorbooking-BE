@@ -22,8 +22,8 @@ namespace App.Services.Services
         private string ChecksumKey => _configuration["PayOS:ChecksumKey"] ?? string.Empty;
         private string Environment => _configuration["PayOS:Environment"] ?? "Sandbox";
         private string BaseApiUrl => Environment == "Production" 
-            ? "https://123.456.789.123" // Thay bằng IP thực của api.payos.vn
-            : "https://234.567.890.234"; // Thay bằng IP thực của api-sandbox.payos.vn
+            ? "https://api.payos.vn" 
+            : "https://sandbox-api.payos.vn";
         
         public PayosService(
             IConfiguration configuration,
@@ -33,6 +33,9 @@ namespace App.Services.Services
             _configuration = configuration;
             _httpClient = httpClientFactory.CreateClient("PayOS");
             _logger = logger;
+            
+            // Tăng timeout cho HttpClient để xử lý kết nối chậm
+            _httpClient.Timeout = TimeSpan.FromSeconds(30);
         }
         
         public async Task<PayosPaymentResponse> CreatePaymentRequestAsync(PayosPaymentRequest request)
@@ -40,6 +43,8 @@ namespace App.Services.Services
             try
             {
                 ValidateConfiguration();
+                _logger.LogInformation("Creating payment request for order {OrderCode}, amount {Amount}", 
+                    request.OrderCode, request.Amount);
                 
                 // Chuẩn bị dữ liệu cho API PayOS
                 var requestData = new
@@ -52,34 +57,46 @@ namespace App.Services.Services
                     signature = GenerateSignature(request.OrderCode, request.Amount)
                 };
                 
+                _logger.LogInformation("PayOS request data: {RequestData}", System.Text.Json.JsonSerializer.Serialize(requestData));
+                
                 // Thiết lập headers
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("x-client-id", ClientId);
                 _httpClient.DefaultRequestHeaders.Add("x-api-key", ApiKey);
                 
+                _logger.LogInformation("Calling PayOS API: {Url}", $"{BaseApiUrl}/v2/payment-requests");
+                
                 // Gọi API PayOS
                 var response = await _httpClient.PostAsJsonAsync($"{BaseApiUrl}/v2/payment-requests", requestData);
                 
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("PayOS API response: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
+                
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("PayOS API error: {ErrorContent}", errorContent);
+                    _logger.LogError("PayOS API error: {StatusCode}, {ErrorContent}", 
+                        response.StatusCode, responseContent);
                     throw new ErrorException(
                         StatusCodes.Status502BadGateway,
                         ErrorCode.ServerError,
-                        "Lỗi khi gọi API PayOS");
+                        $"Lỗi khi gọi API PayOS: {response.StatusCode}");
                 }
                 
-                var responseData = await response.Content.ReadFromJsonAsync<PayosApiResponse>();
+                var responseData = System.Text.Json.JsonSerializer.Deserialize<PayosApiResponse>(responseContent);
                 
                 if (responseData?.Code != "00")
                 {
-                    _logger.LogError("PayOS API returned error: {ErrorCode} - {ErrorMessage}", responseData?.Code, responseData?.Message);
+                    _logger.LogError("PayOS API returned error: {ErrorCode} - {ErrorMessage}", 
+                        responseData?.Code, responseData?.Message);
                     throw new ErrorException(
                         StatusCodes.Status502BadGateway,
                         ErrorCode.ServerError,
                         $"Lỗi từ PayOS: {responseData?.Message}");
                 }
+                
+                _logger.LogInformation("PayOS payment request created successfully: {OrderUrl}", 
+                    responseData.Data.CheckoutUrl);
                 
                 return new PayosPaymentResponse
                 {
@@ -92,9 +109,17 @@ namespace App.Services.Services
             {
                 throw;
             }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Lỗi kết nối khi gọi API PayOS: {Message}", ex.Message);
+                throw new ErrorException(
+                    StatusCodes.Status503ServiceUnavailable,
+                    ErrorCode.ServerError,
+                    $"Không thể kết nối đến PayOS: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo yêu cầu thanh toán PayOS");
+                _logger.LogError(ex, "Lỗi không xác định khi tạo yêu cầu thanh toán PayOS");
                 throw new ErrorException(
                     StatusCodes.Status500InternalServerError,
                     ErrorCode.ServerError,
@@ -116,15 +141,14 @@ namespace App.Services.Services
                     return Task.FromResult(false);
                 }
 
-                // Đối với môi trường production, có thể cần xử lý đặc biệt với trường "data"
-                // Nếu "data" là một chuỗi JSON, cần xử lý nó đúng cách
-                Dictionary<string, string> flattenedParams = new Dictionary<string, string>();
+                // Xử lý dữ liệu để tính toán chữ ký
+                Dictionary<string, string> paramsToVerify = new Dictionary<string, string>();
                 foreach (var kv in callbackParams)
                 {
-                    if (kv.Key == "signature") continue;
-                    
-                    // Nếu là trường data, giữ nguyên giá trị JSON
-                    flattenedParams[kv.Key] = kv.Value;
+                    if (kv.Key != "signature")
+                    {
+                        paramsToVerify[kv.Key] = kv.Value;
+                    }
                 }
                 
                 // Log giá trị ChecksumKey (chỉ 4 ký tự đầu để bảo mật)
@@ -135,7 +159,7 @@ namespace App.Services.Services
                     maskedKey, Environment);
                     
                 // Tạo chuỗi dữ liệu để kiểm tra chữ ký theo thứ tự alphabet của key
-                var dataToVerify = string.Join("", flattenedParams
+                var dataToVerify = string.Join("", paramsToVerify
                     .OrderBy(kv => kv.Key)
                     .Select(kv => $"{kv.Key}{kv.Value}"));
                 
@@ -164,35 +188,46 @@ namespace App.Services.Services
             try
             {
                 ValidateConfiguration();
+                _logger.LogInformation("Checking order status for {OrderCode}", orderCode);
                 
                 // Thiết lập headers
                 _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("x-client-id", ClientId);
                 _httpClient.DefaultRequestHeaders.Add("x-api-key", ApiKey);
                 
+                string requestUrl = $"{BaseApiUrl}/v2/payment-requests/{orderCode}";
+                _logger.LogInformation("Calling PayOS API: {Url}", requestUrl);
+                
                 // Gọi API PayOS
-                var response = await _httpClient.GetAsync($"{BaseApiUrl}/v2/payment-requests/{orderCode}");
+                var response = await _httpClient.GetAsync(requestUrl);
+                
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogInformation("PayOS API response: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
                 
                 if (!response.IsSuccessStatusCode)
                 {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    _logger.LogError("PayOS API error: {ErrorContent}", errorContent);
+                    _logger.LogError("PayOS API error: {StatusCode}, {ErrorContent}", 
+                        response.StatusCode, responseContent);
                     throw new ErrorException(
                         StatusCodes.Status502BadGateway,
                         ErrorCode.ServerError,
-                        "Lỗi khi gọi API PayOS");
+                        $"Lỗi khi gọi API PayOS: {response.StatusCode}");
                 }
                 
-                var responseData = await response.Content.ReadFromJsonAsync<PayosApiResponse>();
+                var responseData = System.Text.Json.JsonSerializer.Deserialize<PayosApiResponse>(responseContent);
                 
                 if (responseData?.Code != "00")
                 {
-                    _logger.LogError("PayOS API returned error: {ErrorCode} - {ErrorMessage}", responseData?.Code, responseData?.Message);
+                    _logger.LogError("PayOS API returned error: {ErrorCode} - {ErrorMessage}", 
+                        responseData?.Code, responseData?.Message);
                     throw new ErrorException(
                         StatusCodes.Status502BadGateway,
                         ErrorCode.ServerError,
                         $"Lỗi từ PayOS: {responseData?.Message}");
                 }
+                
+                _logger.LogInformation("PayOS order status check successful: {Status}", responseData.Data.Status);
                 
                 return new PayosOrderStatusResponse
                 {
@@ -207,9 +242,17 @@ namespace App.Services.Services
             {
                 throw;
             }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Lỗi kết nối khi kiểm tra trạng thái đơn hàng PayOS: {Message}", ex.Message);
+                throw new ErrorException(
+                    StatusCodes.Status503ServiceUnavailable,
+                    ErrorCode.ServerError,
+                    $"Không thể kết nối đến PayOS: {ex.Message}");
+            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi kiểm tra trạng thái đơn hàng PayOS");
+                _logger.LogError(ex, "Lỗi không xác định khi kiểm tra trạng thái đơn hàng PayOS");
                 throw new ErrorException(
                     StatusCodes.Status500InternalServerError,
                     ErrorCode.NotFound,
@@ -219,22 +262,27 @@ namespace App.Services.Services
         
         private void ValidateConfiguration()
         {
-            if (string.IsNullOrEmpty(ClientId) || string.IsNullOrEmpty(ApiKey) || string.IsNullOrEmpty(ChecksumKey))
-            {
-                throw new ErrorException(
-                    StatusCodes.Status500InternalServerError,
-                    ErrorCode.ServerError,
-                    "Thiếu cấu hình PayOS trong appsettings.json");
-            }
+            if (string.IsNullOrEmpty(ClientId))
+                throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "Thiếu cấu hình PayOS:ClientId");
+                
+            if (string.IsNullOrEmpty(ApiKey))
+                throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "Thiếu cấu hình PayOS:ApiKey");
+                
+            if (string.IsNullOrEmpty(ChecksumKey))
+                throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "Thiếu cấu hình PayOS:ChecksumKey");
         }
         
         private string GenerateSignature(string orderCode, decimal amount)
         {
             // Tạo chuỗi dữ liệu để tính chữ ký
             var dataToSign = $"amount={amount * 100}&orderCode={orderCode}";
+            _logger.LogDebug("Generating signature for data: {Data}", dataToSign);
             
             // Tính HMAC-SHA256
-            return CalculateHMACSHA256(dataToSign, ChecksumKey);
+            var signature = CalculateHMACSHA256(dataToSign, ChecksumKey);
+            _logger.LogDebug("Generated signature: {Signature}", signature);
+            
+            return signature;
         }
         
         private string CalculateHMACSHA256(string data, string key)
