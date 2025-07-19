@@ -26,7 +26,7 @@ namespace App.DTOs.PaymentDTOs
 
     public class PayosOrderStatusResponse
     {
-        public string OrderCode { get; set; } = string.Empty;
+        public long OrderCode { get; set; }
         public string Status { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string? TransactionId { get; set; }
@@ -52,7 +52,7 @@ namespace App.DTOs.PaymentDTOs
     public class PayosApiData
     {
         [JsonPropertyName("orderCode")]
-        public string OrderCode { get; set; } = string.Empty;
+        public long OrderCode { get; set; }
         
         [JsonPropertyName("amount")]
         public int Amount { get; set; }
