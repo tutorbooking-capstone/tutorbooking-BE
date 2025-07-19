@@ -80,4 +80,34 @@ namespace App.DTOs.PaymentDTOs
     }
     
     #endregion
+
+    public class PayosCallbackData
+    {
+        [JsonPropertyName("orderCode")]
+        public long OrderCode { get; set; }
+        
+        [JsonPropertyName("status")]
+        public string? Status { get; set; }
+        
+        [JsonPropertyName("transactionId")]
+        public string? TransactionId { get; set; }
+        
+        [JsonPropertyName("amount")]
+        public int Amount { get; set; }
+        
+        [JsonPropertyName("description")]
+        public string? Description { get; set; }
+        
+        [JsonPropertyName("reference")]
+        public string? Reference { get; set; }
+        
+        [JsonPropertyName("transactionDateTime")]
+        public string? TransactionDateTime { get; set; }
+        
+        [JsonPropertyName("code")]
+        public string? Code { get; set; }
+        
+        [JsonPropertyName("desc")]
+        public string? Desc { get; set; }
+    }
 }

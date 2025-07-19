@@ -158,6 +158,21 @@ namespace TutorBooking.APIService.Controllers
             }
         }
 
+        [HttpGet("callback")]
+        [AllowAnonymous]
+        public async Task<IActionResult> PayosCallbackGet([FromQuery] string orderCode, [FromQuery] string status)
+        {
+            _logger.LogInformation("Received GET callback from PayOS: OrderCode={OrderCode}, Status={Status}", orderCode, status);
+            
+            if (string.IsNullOrEmpty(orderCode))
+            {
+                return BadRequest(new { success = false, message = "OrderCode is required" });
+            }
+            
+            // Chuyển hướng người dùng đến trang kết quả thanh toán
+            return Redirect($"/payment-result?orderCode={orderCode}&status={status}");
+        }
+
         [HttpGet("return")]
         public async Task<IActionResult> ReturnFromPayment([FromQuery] string orderCode)
         {

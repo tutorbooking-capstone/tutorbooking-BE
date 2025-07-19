@@ -9,6 +9,7 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json.Serialization;
 
 namespace App.Services.Services
 {
@@ -120,7 +121,7 @@ namespace App.Services.Services
             // Generate PayOS payment URL
             var request = _httpContextAccessor.HttpContext?.Request;
             var baseUrl = $"{request?.Scheme}://{request?.Host}";
-            var returnUrl = $"{baseUrl}/api/deposit/callback"; // URL đầy đủ
+            var returnUrl = $"{baseUrl}/api/deposit/check/{depositRequest.Id}"; // URL đầy đủ
 
             var payosRequest = new PayosPaymentRequest
             {
@@ -170,21 +171,18 @@ namespace App.Services.Services
                 // Trích xuất dữ liệu từ callback
                 if (payosParams.TryGetValue("data", out var dataJson) && !string.IsNullOrEmpty(dataJson))
                 {
-                    _logger.LogInformation("Found data field in callback: {Data}", dataJson);
                     try
                     {
+                        _logger.LogInformation("Parsing data JSON: {Data}", dataJson);
                         var dataObj = System.Text.Json.JsonSerializer.Deserialize<PayosCallbackData>(dataJson);
                         if (dataObj != null)
                         {
-                            requestId = dataObj.OrderCode?.ToString();
-                            status = dataObj.Status;
-                            transactionId = dataObj.TransactionId;
-                            _logger.LogInformation("Successfully parsed data object: OrderCode={OrderCode}, Status={Status}, TransactionId={TransactionId}",
-                                dataObj.OrderCode, dataObj.Status, dataObj.TransactionId);
-                        }
-                        else
-                        {
-                            _logger.LogWarning("Data object is null after deserialization");
+                            requestId = dataObj.OrderCode.ToString();
+                            // Sử dụng Code thay vì Status vì PayOS trả về "code": "00" cho thanh toán thành công
+                            status = dataObj.Code; 
+                            transactionId = dataObj.Reference; // Sử dụng Reference làm transaction ID
+                            _logger.LogInformation("Successfully parsed data object: OrderCode={OrderCode}, Code={Code}, Reference={Reference}",
+                                dataObj.OrderCode, dataObj.Code, dataObj.Reference);
                         }
                     }
                     catch (Exception ex)
@@ -491,14 +489,34 @@ namespace App.Services.Services
         #endregion
     }
 
-    // Thêm class này để deserialize dữ liệu callback
-    public class PayosCallbackData
-    {
-        public string? OrderCode { get; set; }
-        public string? Status { get; set; }
-        public string? TransactionId { get; set; }
-        public int Amount { get; set; }
-        public string? Description { get; set; }
-        // Các trường khác theo tài liệu PayOS
-    }
+    // // Thêm class này để deserialize dữ liệu callback
+    // public class PayosCallbackData
+    // {
+    //     [JsonPropertyName("orderCode")]
+    //     public long OrderCode { get; set; }
+        
+    //     [JsonPropertyName("status")]
+    //     public string? Status { get; set; }
+        
+    //     [JsonPropertyName("transactionId")]
+    //     public string? TransactionId { get; set; }
+        
+    //     [JsonPropertyName("amount")]
+    //     public int Amount { get; set; }
+        
+    //     [JsonPropertyName("description")]
+    //     public string? Description { get; set; }
+        
+    //     [JsonPropertyName("reference")]
+    //     public string? Reference { get; set; }
+        
+    //     [JsonPropertyName("transactionDateTime")]
+    //     public string? TransactionDateTime { get; set; }
+        
+    //     [JsonPropertyName("code")]
+    //     public string? Code { get; set; }
+        
+    //     [JsonPropertyName("desc")]
+    //     public string? Desc { get; set; }
+    // }
 }
