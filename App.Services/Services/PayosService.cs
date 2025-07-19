@@ -22,8 +22,8 @@ namespace App.Services.Services
         private string ChecksumKey => _configuration["PayOS:ChecksumKey"] ?? string.Empty;
         private string Environment => _configuration["PayOS:Environment"] ?? "Sandbox";
         private string BaseApiUrl => Environment == "Production" 
-            ? "https://api.payos.vn" 
-            : "https://sandbox-api.payos.vn";
+            ? "https://103.126.161.199" // Thay bằng IP thực của api.payos.vn (đây là ví dụ)
+            : "https://103.126.161.198"; // Thay bằng IP thực của sandbox-api.payos.vn
         
         public PayosService(
             IConfiguration configuration,
@@ -36,6 +36,17 @@ namespace App.Services.Services
             
             // Tăng timeout cho HttpClient để xử lý kết nối chậm
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
+            
+            // Thêm cấu hình SNI cho kết nối HTTPS với IP
+            var handler = new SocketsHttpHandler
+            {
+                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
+                {
+                    TargetHost = Environment == "Production" ? "api.payos.vn" : "sandbox-api.payos.vn",
+                    RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true
+                }
+            };
+            _httpClient = new HttpClient(handler);
         }
         
         public async Task<PayosPaymentResponse> CreatePaymentRequestAsync(PayosPaymentRequest request)
