@@ -97,20 +97,52 @@ namespace TutorBooking.APIService.Controllers
             
             try
             {
-                var callbackData = rawData as Dictionary<string, string>;
+                // Kiểm tra xem rawData có phải là một JSON object không
+                if (rawData == null)
+                {
+                    _logger.LogWarning("Received empty callback from PayOS");
+                    return BadRequest(new { success = false, message = "Callback data is null" });
+                }
+
+                // Nếu rawData là Newtonsoft.Json.Linq.JObject hoặc System.Text.Json.JsonElement
+                Dictionary<string, string>? callbackData = null;
+                
+                if (rawData is System.Text.Json.JsonElement jsonElement)
+                {
+                    callbackData = new Dictionary<string, string>();
+                    
+                    // Trích xuất dữ liệu từ JsonElement
+                    foreach (var property in jsonElement.EnumerateObject())
+                    {
+                        // Nếu property là một đối tượng phức tạp, chuyển nó thành JSON string
+                        if (property.Value.ValueKind == System.Text.Json.JsonValueKind.Object)
+                            callbackData[property.Name] = property.Value.ToString();
+                        else
+                            callbackData[property.Name] = property.Value.ToString();
+                    }
+                }
+                else
+                {
+                    // Thử chuyển đổi trực tiếp
+                    try
+                    {
+                        var json = System.Text.Json.JsonSerializer.Serialize(rawData);
+                        callbackData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>?>(json) 
+                                        ?? new Dictionary<string, string>();
+                    }
+                    catch
+                    {
+                        _logger.LogWarning("Could not convert rawData to Dictionary<string, string>");
+                    }
+                }
                 
                 if (callbackData == null || !callbackData.Any())
                 {
-                    // Try to read request body manually
-                    using var reader = new StreamReader(Request.Body);
-                    Request.Body.Position = 0; // Reset position
-                    var body = await reader.ReadToEndAsync();
-                    _logger.LogWarning("Received empty or invalid callback from PayOS. Raw body: {Body}", body);
-                    
-                    return BadRequest(new { success = false, message = "Callback data is null or empty or in wrong format." });
+                    _logger.LogWarning("Failed to parse callback data from PayOS");
+                    return BadRequest(new { success = false, message = "Invalid callback data format" });
                 }
                 
-                _logger.LogInformation("Received PayOS callback: {Data}", string.Join(", ", callbackData.Select(kv => $"{kv.Key}={kv.Value}")));
+                _logger.LogInformation("Parsed PayOS callback: {Data}", string.Join(", ", callbackData.Select(kv => $"{kv.Key}={kv.Value}")));
                 
                 var result = await _depositService.ProcessPayosCallbackAsync(callbackData);
                 
