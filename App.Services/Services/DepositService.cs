@@ -210,6 +210,13 @@ namespace App.Services.Services
                     return false;
                 }
 
+                // Xử lý đặc biệt cho callback test từ PayOS
+                if (requestId == "123" && Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Production")
+                {
+                    _logger.LogInformation("Received test callback from PayOS with orderCode 123. Acknowledging without processing.");
+                    return true; // Trả về thành công để PayOS biết webhook hoạt động
+                }
+
                 // Get deposit request
                 var depositRequest = await _unitOfWork.GetRepository<DepositRequest>()
                     .ExistEntities()
