@@ -22,8 +22,8 @@ namespace App.Services.Services
         private string ChecksumKey => _configuration["PayOS:ChecksumKey"] ?? string.Empty;
         private string Environment => _configuration["PayOS:Environment"] ?? "Sandbox";
         private string BaseApiUrl => Environment == "Production" 
-            ? "https://103.126.161.199" // Thay bằng IP thực của api.payos.vn (đây là ví dụ)
-            : "https://103.126.161.198"; // Thay bằng IP thực của sandbox-api.payos.vn
+            ? "https://api-merchant.payos.vn" 
+            : "https://sandbox-api-merchant.payos.vn";
         
         public PayosService(
             IConfiguration configuration,
@@ -36,17 +36,6 @@ namespace App.Services.Services
             
             // Tăng timeout cho HttpClient để xử lý kết nối chậm
             _httpClient.Timeout = TimeSpan.FromSeconds(30);
-            
-            // Thêm cấu hình SNI cho kết nối HTTPS với IP
-            var handler = new SocketsHttpHandler
-            {
-                SslOptions = new System.Net.Security.SslClientAuthenticationOptions
-                {
-                    TargetHost = Environment == "Production" ? "api.payos.vn" : "sandbox-api.payos.vn",
-                    RemoteCertificateValidationCallback = (sender, certificate, chain, errors) => true
-                }
-            };
-            _httpClient = new HttpClient(handler);
         }
         
         public async Task<PayosPaymentResponse> CreatePaymentRequestAsync(PayosPaymentRequest request)
@@ -61,11 +50,11 @@ namespace App.Services.Services
                 var requestData = new
                 {
                     orderCode = request.OrderCode,
-                    amount = (int)(request.Amount * 100), // PayOS yêu cầu số tiền * 100
+                    amount = (int)request.Amount, // PayOS yêu cầu số tiền nguyên
                     description = request.Description,
-                    returnUrl = request.ReturnUrl,
                     cancelUrl = request.CancelUrl ?? request.ReturnUrl,
-                    signature = GenerateSignature(request.OrderCode, request.Amount)
+                    returnUrl = request.ReturnUrl,
+                    signature = GenerateSignature(request.OrderCode, request.Amount, request.ReturnUrl, request.CancelUrl ?? request.ReturnUrl, request.Description)
                 };
                 
                 _logger.LogInformation("PayOS request data: {RequestData}", System.Text.Json.JsonSerializer.Serialize(requestData));
@@ -283,10 +272,11 @@ namespace App.Services.Services
                 throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "Thiếu cấu hình PayOS:ChecksumKey");
         }
         
-        private string GenerateSignature(string orderCode, decimal amount)
+        private string GenerateSignature(string orderCode, decimal amount, string returnUrl, string cancelUrl, string description)
         {
-            // Tạo chuỗi dữ liệu để tính chữ ký
-            var dataToSign = $"amount={amount * 100}&orderCode={orderCode}";
+            // Tạo chuỗi dữ liệu để tính chữ ký theo đúng định dạng của PayOS
+            // Chuỗi được sort theo alphabet: amount=$amount&cancelUrl=$cancelUrl&description=$description&orderCode=$orderCode&returnUrl=$returnUrl
+            var dataToSign = $"amount={(int)amount}&cancelUrl={cancelUrl}&description={description}&orderCode={orderCode}&returnUrl={returnUrl}";
             _logger.LogDebug("Generating signature for data: {Data}", dataToSign);
             
             // Tính HMAC-SHA256

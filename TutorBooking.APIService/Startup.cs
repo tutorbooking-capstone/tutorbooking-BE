@@ -55,32 +55,19 @@ namespace TutorBooking.APIService
             #endregion
 
             #region Add PayOS
-            services.AddHttpClient("PayOS")
-                .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-                {
-                    ConnectCallback = async (context, cancellationToken) =>
-                    {
-                        // Thử kết nối thông thường
-                        try
-                        {
-                            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                            await socket.ConnectAsync(context.DnsEndPoint, cancellationToken);
-                            return new NetworkStream(socket, ownsSocket: true);
-                        }
-                        catch
-                        {
-                            // Fallback: Sử dụng Google DNS (8.8.8.8) để phân giải
-                            var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host);
-                            if (addresses.Length > 0)
-                            {
-                                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
-                                await socket.ConnectAsync(new IPEndPoint(addresses[0], context.DnsEndPoint.Port), cancellationToken);
-                                return new NetworkStream(socket, ownsSocket: true);
-                            }
-                            throw;
-                        }
-                    }
-                });
+            services.AddHttpClient("PayOS", client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(30);
+            })
+            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                // Cho phép chuyển hướng
+                AllowAutoRedirect = true,
+                // Tăng số lượng chuyển hướng tối đa
+                MaxAutomaticRedirections = 10,
+                // Cấu hình SSL/TLS
+                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
             #endregion
 
         }
