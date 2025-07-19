@@ -107,24 +107,49 @@ namespace App.Services.Services
             try
             {
                 ValidateConfiguration();
+                _logger.LogInformation("Verifying PayOS callback with params: {Params}", 
+                    string.Join(", ", callbackParams.Select(kv => $"{kv.Key}={kv.Value}")));
                 
                 if (!callbackParams.TryGetValue("signature", out var signature) || string.IsNullOrEmpty(signature))
                 {
                     _logger.LogWarning("PayOS callback missing signature");
                     return Task.FromResult(false);
                 }
+
+                // Đối với môi trường production, có thể cần xử lý đặc biệt với trường "data"
+                // Nếu "data" là một chuỗi JSON, cần xử lý nó đúng cách
+                Dictionary<string, string> flattenedParams = new Dictionary<string, string>();
+                foreach (var kv in callbackParams)
+                {
+                    if (kv.Key == "signature") continue;
+                    
+                    // Nếu là trường data, giữ nguyên giá trị JSON
+                    flattenedParams[kv.Key] = kv.Value;
+                }
                 
-                // Tạo chuỗi dữ liệu để kiểm tra chữ ký
-                var dataToVerify = string.Join("", callbackParams
-                    .Where(kv => kv.Key != "signature")
+                // Log giá trị ChecksumKey (chỉ 4 ký tự đầu để bảo mật)
+                string maskedKey = !string.IsNullOrEmpty(ChecksumKey) && ChecksumKey.Length > 4 
+                    ? ChecksumKey.Substring(0, 4) + "..." 
+                    : "null or empty";
+                _logger.LogInformation("Using ChecksumKey starting with: {MaskedKey}, Environment: {Environment}", 
+                    maskedKey, Environment);
+                    
+                // Tạo chuỗi dữ liệu để kiểm tra chữ ký theo thứ tự alphabet của key
+                var dataToVerify = string.Join("", flattenedParams
                     .OrderBy(kv => kv.Key)
                     .Select(kv => $"{kv.Key}{kv.Value}"));
                 
+                _logger.LogDebug("Data string for signature verification: {DataToVerify}", dataToVerify);
+                
                 // Tính HMAC-SHA256
                 var calculatedSignature = CalculateHMACSHA256(dataToVerify, ChecksumKey);
+                _logger.LogDebug("Calculated signature: {CalculatedSignature}", calculatedSignature);
+                _logger.LogDebug("Received signature: {ReceivedSignature}", signature);
                 
                 // So sánh chữ ký
                 var isValid = string.Equals(calculatedSignature, signature, StringComparison.OrdinalIgnoreCase);
+                _logger.LogInformation("Signature verification result: {IsValid}", isValid);
+                
                 return Task.FromResult(isValid);
             }
             catch (Exception ex)
