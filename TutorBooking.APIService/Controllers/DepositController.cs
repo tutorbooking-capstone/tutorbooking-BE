@@ -90,24 +90,40 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpPost("callback")]
         [AllowAnonymous]
-        public async Task<IActionResult> PayosCallback([FromBody] Dictionary<string, string>? callbackData)
+        public async Task<IActionResult> PayosCallback([FromBody] object rawData)
         {
-            // --- FIX: Kiểm tra xem callbackData có null hay không ---
-            if (callbackData == null || !callbackData.Any())
+            // Log raw request body
+            _logger.LogInformation("Raw PayOS callback data: {RawData}", rawData);
+            
+            try
             {
-                _logger.LogWarning("Received an empty or null callback from PayOS.");
-                // Trả về BadRequest để báo cho PayOS biết có vấn đề, họ có thể thử lại.
-                return BadRequest(new { success = false, message = "Callback data is null or empty." });
+                var callbackData = rawData as Dictionary<string, string>;
+                
+                if (callbackData == null || !callbackData.Any())
+                {
+                    // Try to read request body manually
+                    using var reader = new StreamReader(Request.Body);
+                    Request.Body.Position = 0; // Reset position
+                    var body = await reader.ReadToEndAsync();
+                    _logger.LogWarning("Received empty or invalid callback from PayOS. Raw body: {Body}", body);
+                    
+                    return BadRequest(new { success = false, message = "Callback data is null or empty or in wrong format." });
+                }
+                
+                _logger.LogInformation("Received PayOS callback: {Data}", string.Join(", ", callbackData.Select(kv => $"{kv.Key}={kv.Value}")));
+                
+                var result = await _depositService.ProcessPayosCallbackAsync(callbackData);
+                
+                if (result)
+                    return Ok(new { success = true });
+                else
+                    return BadRequest(new { success = false });
             }
-
-            _logger.LogInformation("Received PayOS callback: {Data}", string.Join(", ", callbackData.Select(kv => $"{kv.Key}={kv.Value}")));
-            
-            var result = await _depositService.ProcessPayosCallbackAsync(callbackData);
-            
-            if (result)
-                return Ok(new { success = true });
-            else
-                return BadRequest(new { success = false });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing PayOS callback");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
         }
     }
 }
