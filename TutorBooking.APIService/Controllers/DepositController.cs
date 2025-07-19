@@ -90,8 +90,16 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpPost("callback")]
         [AllowAnonymous]
-        public async Task<IActionResult> PayosCallback([FromBody] Dictionary<string, string> callbackData)
+        public async Task<IActionResult> PayosCallback([FromBody] Dictionary<string, string>? callbackData)
         {
+            // --- FIX: Kiểm tra xem callbackData có null hay không ---
+            if (callbackData == null || !callbackData.Any())
+            {
+                _logger.LogWarning("Received an empty or null callback from PayOS.");
+                // Trả về BadRequest để báo cho PayOS biết có vấn đề, họ có thể thử lại.
+                return BadRequest(new { success = false, message = "Callback data is null or empty." });
+            }
+
             _logger.LogInformation("Received PayOS callback: {Data}", string.Join(", ", callbackData.Select(kv => $"{kv.Key}={kv.Value}")));
             
             var result = await _depositService.ProcessPayosCallbackAsync(callbackData);
