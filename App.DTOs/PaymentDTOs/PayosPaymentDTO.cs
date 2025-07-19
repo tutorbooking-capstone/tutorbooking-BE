@@ -19,9 +19,10 @@ namespace App.DTOs.PaymentDTOs
     
     public class PayosPaymentResponse
     {
-        public string OrderUrl { get; set; } = string.Empty;
-        public string OrderToken { get; set; } = string.Empty;
-        public string QrCode { get; set; } = string.Empty;
+        public string? OrderUrl { get; set; }
+        public string? OrderToken { get; set; }
+        public string? QrCode { get; set; }
+        public long NumericOrderCode { get; set; }
     }
 
     public class PayosOrderStatusResponse

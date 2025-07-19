@@ -137,6 +137,7 @@ namespace App.Services.Services
             depositRequest.PayosOrderUrl = paymentResponse.OrderUrl;
             depositRequest.PayosOrderToken = paymentResponse.OrderToken;
             depositRequest.PayosQrCode = paymentResponse.QrCode;
+            depositRequest.NumericOrderCode = paymentResponse.NumericOrderCode;
 
             await _unitOfWork.SaveAsync();
 
@@ -225,22 +226,29 @@ namespace App.Services.Services
                     return false;
                 }
 
+                // Chuyển đổi requestId sang kiểu long để tìm kiếm an toàn và hiệu quả
+                if (!long.TryParse(requestId, out var numericRequestId))
+                {
+                    _logger.LogWarning("Không thể chuyển đổi requestId '{RequestId}' từ callback sang dạng số.", requestId);
+                    return false;
+                }
+
                 // XỬ LÝ ĐẶC BIỆT CHO CALLBACK TEST
-                if (requestId == "123")
+                if (numericRequestId == 123)
                 {
                     _logger.LogInformation("Received test callback from PayOS with orderCode 123. Acknowledging without processing.");
                     return true; // Trả về thành công để PayOS biết webhook hoạt động
                 }
 
-                // Get deposit request
-                _logger.LogInformation("Looking up deposit request with ID: {RequestId}", requestId);
+                // Lấy yêu cầu nạp tiền bằng NumericOrderCode
+                _logger.LogInformation("Looking up deposit request with NumericOrderCode: {NumericRequestId}", numericRequestId);
                 var depositRequest = await _unitOfWork.GetRepository<DepositRequest>()
                     .ExistEntities()
-                    .FirstOrDefaultAsync(d => d.Id == requestId);
+                    .FirstOrDefaultAsync(d => d.NumericOrderCode == numericRequestId);
 
                 if (depositRequest == null)
                 {
-                    _logger.LogWarning("Deposit request not found: {RequestId}", requestId);
+                    _logger.LogWarning("Deposit request not found with NumericOrderCode: {NumericRequestId}", numericRequestId);
                     return false;
                 }
                 

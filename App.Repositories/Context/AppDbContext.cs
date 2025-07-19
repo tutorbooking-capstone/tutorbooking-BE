@@ -515,6 +515,10 @@ namespace App.Repositories.Context
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Index for NumericOrderCode for faster lookups from PayOS callbacks
+            modelBuilder.Entity<DepositRequest>()
+                .HasIndex(d => d.NumericOrderCode);
+
             // WithdrawalRequest -> AppUser (M:1)
             modelBuilder.Entity<WithdrawalRequest>()
                 .HasOne(w => w.User)

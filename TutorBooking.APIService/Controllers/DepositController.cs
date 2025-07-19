@@ -127,8 +127,7 @@ namespace TutorBooking.APIService.Controllers
                     try
                     {
                         var json = System.Text.Json.JsonSerializer.Serialize(rawData);
-                        callbackData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>?>(json) 
-                                        ?? new Dictionary<string, string>();
+                        callbackData = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>?>(json) ?? new Dictionary<string, string>();
                     }
                     catch
                     {

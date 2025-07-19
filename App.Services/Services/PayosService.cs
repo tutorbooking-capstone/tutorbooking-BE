@@ -105,7 +105,8 @@ namespace App.Services.Services
                 {
                     OrderUrl = responseData.Data.CheckoutUrl,
                     OrderToken = responseData.Data.PaymentLinkId,
-                    QrCode = responseData.Data.QrCode
+                    QrCode = responseData.Data.QrCode,
+                    NumericOrderCode = numericOrderCode
                 };
             }
             catch (CoreException)

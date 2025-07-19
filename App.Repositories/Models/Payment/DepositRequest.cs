@@ -26,6 +26,7 @@ namespace App.Repositories.Models
         public string? PayosOrderUrl { get; set; }
         public string? PayosOrderToken { get; set; }
         public string? PayosQrCode { get; set; }
+        public long? NumericOrderCode { get; set; }
         
         public virtual AppUser? User { get; set; }
         
