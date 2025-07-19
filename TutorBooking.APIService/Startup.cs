@@ -5,6 +5,8 @@ using TutorBooking.APIService.Middleware;
 using App.Core;
 using TutorBooking.APIService.Hubs.ChatHubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
+using System.Net.Sockets;
+using System.Net;
 
 namespace TutorBooking.APIService
 {
@@ -50,6 +52,35 @@ namespace TutorBooking.APIService
                         .AllowCredentials();
                 });
             });
+            #endregion
+
+            #region Add PayOS
+            services.AddHttpClient("PayOS")
+                .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+                {
+                    ConnectCallback = async (context, cancellationToken) =>
+                    {
+                        // Thử kết nối thông thường
+                        try
+                        {
+                            var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                            await socket.ConnectAsync(context.DnsEndPoint, cancellationToken);
+                            return new NetworkStream(socket, ownsSocket: true);
+                        }
+                        catch
+                        {
+                            // Fallback: Sử dụng Google DNS (8.8.8.8) để phân giải
+                            var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host);
+                            if (addresses.Length > 0)
+                            {
+                                var socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
+                                await socket.ConnectAsync(new IPEndPoint(addresses[0], context.DnsEndPoint.Port), cancellationToken);
+                                return new NetworkStream(socket, ownsSocket: true);
+                            }
+                            throw;
+                        }
+                    }
+                });
             #endregion
 
         }

@@ -22,8 +22,8 @@ namespace App.Services.Services
         private string ChecksumKey => _configuration["PayOS:ChecksumKey"] ?? string.Empty;
         private string Environment => _configuration["PayOS:Environment"] ?? "Sandbox";
         private string BaseApiUrl => Environment == "Production" 
-            ? "https://api.payos.vn" 
-            : "https://api-sandbox.payos.vn";  
+            ? "https://123.456.789.123" // Thay bằng IP thực của api.payos.vn
+            : "https://234.567.890.234"; // Thay bằng IP thực của api-sandbox.payos.vn
         
         public PayosService(
             IConfiguration configuration,
