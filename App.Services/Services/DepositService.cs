@@ -257,9 +257,10 @@ namespace App.Services.Services
 
                 // Process based on status
                 if (status != null && (status.Equals("PAID", StringComparison.OrdinalIgnoreCase) || 
-                    status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase)))
+                    status.Equals("COMPLETED", StringComparison.OrdinalIgnoreCase) ||
+                    status.Equals("00", StringComparison.OrdinalIgnoreCase)))
                 {
-                    _logger.LogInformation("Payment status is PAID/COMPLETED. Updating deposit request status...");
+                    _logger.LogInformation("Payment status is PAID/COMPLETED/00. Updating deposit request status...");
                     
                     // Update deposit request status
                     var updateFields = depositRequest.Complete(transactionId ?? string.Empty);
@@ -379,9 +380,17 @@ namespace App.Services.Services
 
             try
             {
+                if (depositRequest.NumericOrderCode == null)
+                {
+                    _logger.LogWarning("Deposit request {RequestId} does not have a NumericOrderCode. Cannot check status with PayOS.", requestId);
+                    return false;
+                }
+
+                var orderCode = depositRequest.NumericOrderCode.Value.ToString();
+
                 // Check payment status with PayOS
-                _logger.LogInformation("Checking payment status with PayOS API...");
-                var statusResponse = await _payosService.CheckOrderStatusAsync(depositRequest.Id);
+                _logger.LogInformation("Checking payment status with PayOS API for NumericOrderCode {NumericOrderCode}...", depositRequest.NumericOrderCode);
+                var statusResponse = await _payosService.CheckOrderStatusAsync(orderCode);
                 _logger.LogInformation("PayOS response: Status={Status}, TransactionId={TransactionId}", 
                     statusResponse.Status, statusResponse.TransactionId);
 
@@ -394,7 +403,7 @@ namespace App.Services.Services
                     // Create dictionary for callback processing
                     var callbackParams = new Dictionary<string, string>
                     {
-                        { "orderCode", depositRequest.Id },
+                        { "orderCode", orderCode },
                         { "status", statusResponse.Status },
                         { "transactionId", statusResponse.TransactionId ?? "MANUAL_CHECK" }
                     };
@@ -496,35 +505,4 @@ namespace App.Services.Services
         }
         #endregion
     }
-
-    // // Thêm class này để deserialize dữ liệu callback
-    // public class PayosCallbackData
-    // {
-    //     [JsonPropertyName("orderCode")]
-    //     public long OrderCode { get; set; }
-        
-    //     [JsonPropertyName("status")]
-    //     public string? Status { get; set; }
-        
-    //     [JsonPropertyName("transactionId")]
-    //     public string? TransactionId { get; set; }
-        
-    //     [JsonPropertyName("amount")]
-    //     public int Amount { get; set; }
-        
-    //     [JsonPropertyName("description")]
-    //     public string? Description { get; set; }
-        
-    //     [JsonPropertyName("reference")]
-    //     public string? Reference { get; set; }
-        
-    //     [JsonPropertyName("transactionDateTime")]
-    //     public string? TransactionDateTime { get; set; }
-        
-    //     [JsonPropertyName("code")]
-    //     public string? Code { get; set; }
-        
-    //     [JsonPropertyName("desc")]
-    //     public string? Desc { get; set; }
-    // }
 }

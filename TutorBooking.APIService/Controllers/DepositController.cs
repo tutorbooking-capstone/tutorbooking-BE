@@ -88,6 +88,31 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpGet("check/{id}")]
+        [AllowAnonymous]
+        public IActionResult PayosReturnUrl(
+            string id, 
+            [FromQuery] string status, 
+            [FromQuery] string? returnUrl = null)
+        {
+            _logger.LogInformation("User returned from PayOS for deposit {DepositId} with status {Status}", id, status);
+
+            // Kích hoạt kiểm tra trạng thái ở backend.
+            // Đây là fire-and-forget, webhook mới là nguồn tin cậy cuối cùng.
+            _ = _depositService.CheckAndUpdateDepositStatusAsync(id);
+
+            // Nếu có returnUrl được cung cấp, chuyển hướng người dùng về đó
+            if (!string.IsNullOrEmpty(returnUrl))
+                return Redirect(returnUrl);
+
+            // Nếu không có returnUrl, trả về một thông báo JSON như hiện tại
+            var message = status.Equals("PAID", StringComparison.OrdinalIgnoreCase)
+                ? "Thanh toán thành công. Số dư của bạn sẽ được cập nhật sau ít phút."
+                : "Thanh toán không thành công hoặc đã bị hủy.";
+
+            return Ok(new BaseResponseModel<object>(message: message));
+        }
+
         [HttpPost("callback")]
         [AllowAnonymous]
         public async Task<IActionResult> PayosCallback([FromBody] object rawData)
@@ -157,37 +182,39 @@ namespace TutorBooking.APIService.Controllers
             }
         }
 
-        [HttpGet("callback")]
-        [AllowAnonymous]
-        public async Task<IActionResult> PayosCallbackGet([FromQuery] string orderCode, [FromQuery] string status)
-        {
-            _logger.LogInformation("Received GET callback from PayOS: OrderCode={OrderCode}, Status={Status}", orderCode, status);
+        // Đã được thay thế bằng [HttpGet("check/{id}")] để xử lý returnUrl
+        // [HttpGet("callback")]
+        // [AllowAnonymous]
+        // public async Task<IActionResult> PayosCallbackGet([FromQuery] string orderCode, [FromQuery] string status)
+        // {
+        //     _logger.LogInformation("Received GET callback from PayOS: OrderCode={OrderCode}, Status={Status}", orderCode, status);
             
-            if (string.IsNullOrEmpty(orderCode))
-            {
-                return BadRequest(new { success = false, message = "OrderCode is required" });
-            }
+        //     if (string.IsNullOrEmpty(orderCode))
+        //     {
+        //         return BadRequest(new { success = false, message = "OrderCode is required" });
+        //     }
             
-            // Chuyển hướng người dùng đến trang kết quả thanh toán
-            return Redirect($"/payment-result?orderCode={orderCode}&status={status}");
-        }
+        //     // Chuyển hướng người dùng đến trang kết quả thanh toán
+        //     return Redirect($"/payment-result?orderCode={orderCode}&status={status}");
+        // }
 
-        [HttpGet("return")]
-        public async Task<IActionResult> ReturnFromPayment([FromQuery] string orderCode)
-        {
-            // Kiểm tra và cập nhật trạng thái
-            var updated = await _depositService.CheckAndUpdateDepositStatusAsync(orderCode);
+        // Đã được thay thế bằng [HttpGet("check/{id}")]
+        // [HttpGet("return")]
+        // public async Task<IActionResult> ReturnFromPayment([FromQuery] string orderCode)
+        // {
+        //     // Kiểm tra và cập nhật trạng thái
+        //     var updated = await _depositService.CheckAndUpdateDepositStatusAsync(orderCode);
             
-            // Lấy thông tin đơn hàng
-            var depositRequest = await _depositService.GetDepositRequestByIdAsync(orderCode);
+        //     // Lấy thông tin đơn hàng
+        //     var depositRequest = await _depositService.GetDepositRequestByIdAsync(orderCode);
             
-            return Ok(new BaseResponseModel<object>(
-                data: new {
-                    updated = updated,
-                    deposit = depositRequest
-                },
-                message: "Đã quay lại từ trang thanh toán"
-            ));
-        }
+        //     return Ok(new BaseResponseModel<object>(
+        //         data: new {
+        //             updated = updated,
+        //             deposit = depositRequest
+        //         },
+        //         message: "Đã quay lại từ trang thanh toán"
+        //     ));
+        // }
     }
 }
