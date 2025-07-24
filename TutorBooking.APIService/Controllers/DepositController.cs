@@ -181,40 +181,5 @@ namespace TutorBooking.APIService.Controllers
                 return StatusCode(500, new { success = false, message = "Internal server error" });
             }
         }
-
-        // Đã được thay thế bằng [HttpGet("check/{id}")] để xử lý returnUrl
-        // [HttpGet("callback")]
-        // [AllowAnonymous]
-        // public async Task<IActionResult> PayosCallbackGet([FromQuery] string orderCode, [FromQuery] string status)
-        // {
-        //     _logger.LogInformation("Received GET callback from PayOS: OrderCode={OrderCode}, Status={Status}", orderCode, status);
-            
-        //     if (string.IsNullOrEmpty(orderCode))
-        //     {
-        //         return BadRequest(new { success = false, message = "OrderCode is required" });
-        //     }
-            
-        //     // Chuyển hướng người dùng đến trang kết quả thanh toán
-        //     return Redirect($"/payment-result?orderCode={orderCode}&status={status}");
-        // }
-
-        // Đã được thay thế bằng [HttpGet("check/{id}")]
-        // [HttpGet("return")]
-        // public async Task<IActionResult> ReturnFromPayment([FromQuery] string orderCode)
-        // {
-        //     // Kiểm tra và cập nhật trạng thái
-        //     var updated = await _depositService.CheckAndUpdateDepositStatusAsync(orderCode);
-            
-        //     // Lấy thông tin đơn hàng
-        //     var depositRequest = await _depositService.GetDepositRequestByIdAsync(orderCode);
-            
-        //     return Ok(new BaseResponseModel<object>(
-        //         data: new {
-        //             updated = updated,
-        //             deposit = depositRequest
-        //         },
-        //         message: "Đã quay lại từ trang thanh toán"
-        //     ));
-        // }
     }
 }

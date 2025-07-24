@@ -69,7 +69,11 @@ namespace App.Repositories.Models
             };
         }
         
-        public static Transaction CreatePaymentTransaction(string sourceWalletId, decimal amount, string referenceId, string description)
+        public static Transaction CreatePaymentTransaction(
+            string sourceWalletId, 
+            decimal amount, 
+            string referenceId, 
+            string description)
         {
             return new Transaction
             {

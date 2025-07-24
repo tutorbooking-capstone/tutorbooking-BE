@@ -1,4 +1,4 @@
-﻿using App.Repositories.Models.Booking;
+﻿using App.Repositories.Models;
 using App.Repositories.Models.User;
 using FluentValidation;
 using System.Linq.Expressions;
@@ -53,7 +53,7 @@ namespace App.DTOs.BookingDTOs
             o => new TutorBookingOfferResponse
             {
                 Id = o.Id,
-                TotalPrice = o.TotalPrice,
+                TotalPrice = (o.Lesson != null ? o.Lesson.Price : 0) * o.OfferedSlots.Count,
                 CreatedAt = o.CreatedAt,
                 LessonId = o.Lesson != null ? o.Lesson.Id : "",
                 LessonName = o.Lesson != null ? o.Lesson.Name : "N/A",

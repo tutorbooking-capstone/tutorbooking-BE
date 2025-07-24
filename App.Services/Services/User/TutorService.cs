@@ -501,9 +501,9 @@ namespace App.Services.Services.User
                     .ToListAsync();
                     
                 // Get booking slots using projection
-                var bookings = await _unitOfWork.GetRepository<BookingSlot>().ExistEntities()
+                var bookings = await _unitOfWork.GetRepository<Booking>().ExistEntities()
                     .Where(b => b.TutorId == trimmedId)
-                    .Select(BookingSlotDTO.ProjectionExpression)
+                    .Select(BookingDTO.ProjectionExpression)
                     .ToListAsync();
 
                 return (tutor, tutorHashtags, tutorLanguages, patterns, bookings);
@@ -515,7 +515,7 @@ namespace App.Services.Services.User
             response.Hashtags = result.tutorHashtags;
             response.Languages = result.tutorLanguages;
             response.AvailabilityPatterns = result.patterns;
-            response.BookingSlots = result.bookings;
+            response.Bookings = result.bookings;
             response.AverageTeachingQuality = tutorRatings.AverageTeachingQuality;
             response.AverageAttitude = tutorRatings.AverageAttitude;
             response.AverageCommitment = tutorRatings.AverageCommitment;

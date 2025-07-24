@@ -1,6 +1,6 @@
 ﻿using App.Core.Base;
 
-namespace App.Repositories.Models.Booking
+namespace App.Repositories.Models
 {
     public class OfferedSlot : CoreEntity
     {

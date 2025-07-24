@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using App.Core.Jsetting;
 using App.Core.Provider;
+using App.Repositories.Models;
 using App.Services.Infras;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
@@ -31,7 +32,7 @@ namespace App.Services
             #endregion
 
             #region Another Services
-            services.AddScoped<ISeedService, SeedService>();
+            //services.AddScoped<ISeedService, SeedService>();
             services.AddScoped<IScheduleService, ScheduleService>();
             services.AddScoped<ILearnerBookingService, LearnerBookingService>();
             services.AddScoped<ITutorBookingService, TutorBookingService>();
@@ -55,12 +56,14 @@ namespace App.Services
             #endregion
 
             #region Payment Services
+            services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IDepositService, DepositService>();
             services.AddPayosServices();
             #endregion
 
             services.AddHttpContextAccessor();
+
 
             return services;
         }
@@ -73,7 +76,7 @@ namespace App.Services
             services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
             services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
             services.Configure<PayosSettings>(configuration.GetSection("PayOS"));
-
+            services.Configure<BookingSettings>(configuration.GetSection("BookingSettings"));
 
             services.AddJwtSettingsConfig(configuration);
             

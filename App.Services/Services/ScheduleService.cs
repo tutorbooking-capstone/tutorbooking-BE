@@ -61,7 +61,7 @@ namespace App.Services.Services
             var bookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
                 .ExistEntities()
                 .Where(bs => bs.BookedDate >= utcStartDate && bs.BookedDate <= utcEndDate)
-                .Include(bs => bs.BookingSlot) // Get booking details
+                .Include(bs => bs.Booking) // Get booking details
                 .ToListAsync();
 
             var result = new List<DailyAvailabilityDTO>();
@@ -97,7 +97,7 @@ namespace App.Services.Services
                         {
                             // Check if slot is booked on this date
                             var booking = bookedSlots.FirstOrDefault(bs => 
-                                bs.AvailabilitySlotId == slot.Id && 
+                                //bs.AvailabilitySlotId == slot.Id && 
                                 bs.BookedDate.Date == date.Date);
                             
                             timeSlots.Add(new TimeSlotDTO
@@ -106,9 +106,9 @@ namespace App.Services.Services
                                 StartTime = TimeSpan.FromMinutes(slot.SlotIndex * 30),
                                 EndTime = TimeSpan.FromMinutes((slot.SlotIndex + 1) * 30),
                                 Type = booking != null ? SlotType.Booked : slot.Type,
-                                BookingId = booking?.BookingSlotId,
-                                LearnerId = booking?.BookingSlot?.LearnerId,
-                                Note = booking?.BookingSlot?.Note
+                                BookingId = booking?.BookingId,
+                                LearnerId = booking?.Booking?.LearnerId,
+                                Note = booking?.Booking?.Note
                             });
                         }
 

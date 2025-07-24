@@ -121,7 +121,9 @@ namespace App.Services.Services
             // Generate PayOS payment URL
             var request = _httpContextAccessor.HttpContext?.Request;
             var baseUrl = $"{request?.Scheme}://{request?.Host}";
-            var returnUrl = $"{baseUrl}/api/deposit/check/{depositRequest.Id}"; // URL đầy đủ
+            // Update returnUrl and cancelUrl as per the request
+            var returnUrl = $"https://ngoai-ngu-ngay.vercel.app/payment-return?status=PAID&orderCode={depositRequest.Id}";
+            var cancelUrl = $"https://ngoai-ngu-ngay.vercel.app/payment-return?cancel=true&orderCode={depositRequest.Id}";
 
             var payosRequest = new PayosPaymentRequest
             {
@@ -129,7 +131,7 @@ namespace App.Services.Services
                 Amount = depositRequest.Amount,
                 Description = $"Nạp {depositRequest.Amount} VND vào ví",
                 ReturnUrl = returnUrl,
-                CancelUrl = returnUrl // Hoặc một trang hủy giao dịch khác
+                CancelUrl = cancelUrl // Hoặc một trang hủy giao dịch khác
             };
             var paymentResponse = await _payosService.CreatePaymentRequestAsync(payosRequest);
 

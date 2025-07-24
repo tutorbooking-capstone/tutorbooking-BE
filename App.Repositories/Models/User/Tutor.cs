@@ -28,9 +28,9 @@ namespace App.Repositories.Models.User
         public virtual ICollection<TutorHashtag> Hashtags { get; set; } = new List<TutorHashtag>();
         public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
         public virtual ICollection<WeeklyAvailabilityPattern> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityPattern>();
-        public virtual ICollection<BookingSlot> BookingSlots { get; set; } = new List<BookingSlot>();
-        public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
-        public virtual ICollection<BookingSlotRating> BookingSlotRatings { get; set; }
+        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+        public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; } = new List<LearnerTimeSlotRequest>();
+        public virtual ICollection<BookingSlotRating> BookingSlotRatings { get; set; } = new List<BookingSlotRating>();
 
         #region Behavior
         //public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)

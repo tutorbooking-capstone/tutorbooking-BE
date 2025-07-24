@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250724042232_ChangeBookingNameTable")]
+    partial class ChangeBookingNameTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,45 +225,13 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("booking_slot_rating_id");
 
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
                     b.Property<string>("LearnerId")
                         .HasColumnType("text")
                         .HasColumnName("learner_id");
 
-                    b.Property<string>("LessonSnapshotId")
-                        .HasColumnType("text")
-                        .HasColumnName("lesson_snapshot_id");
-
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
-
-                    b.Property<string>("OriginalOfferId")
-                        .HasColumnType("text")
-                        .HasColumnName("original_offer_id");
 
                     b.Property<string>("TutorId")
                         .IsRequired()
@@ -271,9 +242,6 @@ namespace App.Repositories.Migrations
                         .HasName("pk_bookings");
 
                     b.HasIndex("LearnerId");
-
-                    b.HasIndex("LessonSnapshotId")
-                        .HasDatabaseName("ix_bookings_lesson_snapshot_id");
 
                     b.HasIndex("TutorId");
 
@@ -612,6 +580,9 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_held_funds");
 
+                    b.HasIndex("BookedSlotId")
+                        .HasDatabaseName("ix_held_funds_booked_slot_id");
+
                     b.ToTable("held_funds");
                 });
 
@@ -898,70 +869,6 @@ namespace App.Repositories.Migrations
                     b.HasIndex("TutorId");
 
                     b.ToTable("lessons");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.LessonSnapshot", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("Category")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("category");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("currency");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.Property<int>("DurationInMinutes")
-                        .HasColumnType("integer")
-                        .HasColumnName("duration_in_minutes");
-
-                    b.Property<string>("LanguageCode")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("language_code");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Note")
-                        .HasColumnType("text")
-                        .HasColumnName("note");
-
-                    b.Property<string>("OriginalLessonId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("original_lesson_id");
-
-                    b.Property<string>("Prerequisites")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("prerequisites");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric")
-                        .HasColumnName("price");
-
-                    b.Property<string>("TargetAudience")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("target_audience");
-
-                    b.HasKey("Id")
-                        .HasName("pk_lesson_snapshots");
-
-                    b.ToTable("lesson_snapshots");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.OfferedSlot", b =>
@@ -1337,6 +1244,11 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
+                    b.Property<string>("AvailabilitySlotId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("availability_slot_id");
+
                     b.Property<DateTime>("BookedDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("booked_date");
@@ -1345,38 +1257,6 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("booking_id");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<string>("HeldFundId")
-                        .HasColumnType("text")
-                        .HasColumnName("held_fund_id");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<int>("SlotIndex")
-                        .HasColumnType("integer")
-                        .HasColumnName("slot_index");
 
                     b.Property<string>("SlotNote")
                         .HasColumnType("text")
@@ -1389,11 +1269,11 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_booked_slots");
 
+                    b.HasIndex("AvailabilitySlotId")
+                        .HasDatabaseName("ix_booked_slots_availability_slot_id");
+
                     b.HasIndex("BookingId")
                         .HasDatabaseName("ix_booked_slots_booking_id");
-
-                    b.HasIndex("HeldFundId")
-                        .IsUnique();
 
                     b.ToTable("booked_slots");
                 });
@@ -2143,12 +2023,6 @@ namespace App.Repositories.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_bookings__learners_learner_temp_id");
 
-                    b.HasOne("App.Repositories.Models.LessonSnapshot", "LessonSnapshot")
-                        .WithMany()
-                        .HasForeignKey("LessonSnapshotId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_bookings__lesson_snapshots_lesson_snapshot_id");
-
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany("Bookings")
                         .HasForeignKey("TutorId")
@@ -2157,8 +2031,6 @@ namespace App.Repositories.Migrations
                         .HasConstraintName("fk_bookings__tutors_tutor_temp_id");
 
                     b.Navigation("Learner");
-
-                    b.Navigation("LessonSnapshot");
 
                     b.Navigation("Tutor");
                 });
@@ -2253,6 +2125,18 @@ namespace App.Repositories.Migrations
                         .WithMany("FileUploads")
                         .HasForeignKey("ChatMessageId")
                         .HasConstraintName("fk_file_upload_chat_messages_chat_message_id");
+                });
+
+            modelBuilder.Entity("App.Repositories.Models.HeldFund", b =>
+                {
+                    b.HasOne("App.Repositories.Models.Scheduling.BookedSlot", "BookedSlot")
+                        .WithMany()
+                        .HasForeignKey("BookedSlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_held_funds__booked_slots_booked_slot_id");
+
+                    b.Navigation("BookedSlot");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.LearnerTimeSlotRequest", b =>
@@ -2453,6 +2337,13 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.BookedSlot", b =>
                 {
+                    b.HasOne("App.Repositories.Models.Scheduling.AvailabilitySlot", "AvailabilitySlot")
+                        .WithMany()
+                        .HasForeignKey("AvailabilitySlotId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_booked_slots_availability_slots_availability_slot_id");
+
                     b.HasOne("App.Repositories.Models.Booking", "Booking")
                         .WithMany("BookedSlots")
                         .HasForeignKey("BookingId")
@@ -2460,15 +2351,9 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_booked_slots_bookings_booking_id");
 
-                    b.HasOne("App.Repositories.Models.HeldFund", "HeldFund")
-                        .WithOne("BookedSlot")
-                        .HasForeignKey("App.Repositories.Models.Scheduling.BookedSlot", "HeldFundId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .HasConstraintName("fk_booked_slots_held_funds_held_fund_id1");
+                    b.Navigation("AvailabilitySlot");
 
                     b.Navigation("Booking");
-
-                    b.Navigation("HeldFund");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
@@ -2721,11 +2606,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("ChatConversationReadStatuses");
 
                     b.Navigation("FileUploads");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.HeldFund", b =>
-                {
-                    b.Navigation("BookedSlot");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Legal.LegalDocument", b =>

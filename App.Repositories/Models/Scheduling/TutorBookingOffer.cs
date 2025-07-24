@@ -1,14 +1,13 @@
 ﻿using App.Core.Base;
 using App.Repositories.Models.User;
 
-namespace App.Repositories.Models.Booking
+namespace App.Repositories.Models
 {
     public class TutorBookingOffer : CoreEntity
     {
         public string TutorId { get; set; } = string.Empty;
         public string LearnerId { get; set; } = string.Empty;
         public string? LessonId { get; set; }
-        public decimal TotalPrice { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

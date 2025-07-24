@@ -2,6 +2,7 @@
 using App.Core.Constants;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
 using App.DTOs.RatingDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
@@ -32,12 +33,12 @@ namespace App.Services.Services
 
         public async Task<BookingSlotRating> CreateAsync(BookingSlotRatingRequest request)
         {
-            var bookingSlot = await _unitOfWork.GetRepository<BookingSlot>().ExistEntities()
+            var booking = await _unitOfWork.GetRepository<Booking>().ExistEntities()
                 .Include(b => b.BookedSlots)
                 .FirstOrDefaultAsync(b => b.Id.Equals(request.BookingSlotId));
-            BookingSlotEligibleForCreate(bookingSlot);
+            BookingEligibleForCreate(booking);
             
-            var entity = request.ToEntity(bookingSlot.TutorId, bookingSlot.LearnerId);
+            var entity = request.ToEntity(booking.TutorId, booking.LearnerId);
             _unitOfWork.GetRepository<BookingSlotRating>().Insert(entity);
             await _unitOfWork.SaveAsync();
             return entity;
@@ -113,13 +114,13 @@ namespace App.Services.Services
                 throw new ErrorException((int)StatusCode.Forbidden, ErrorCode.Forbidden, "EDIT_PERIOD_EXPIRED");
         }
 
-        private void BookingSlotEligibleForCreate(BookingSlot? bookingSlot)
+        private void BookingEligibleForCreate(Booking? booking)
         {
-            if (bookingSlot == null)
-                throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "BOOKING_SLOT_NOT_FOUND");
-            if (!bookingSlot.LearnerId.Equals(_userService.GetCurrentUserId()))
-                throw new ErrorException((int)StatusCode.Forbidden, ErrorCode.Forbidden, "BOOKING_SLOT_NOT_BELONG_TO_THE_LOGGED_IN_LEARNER");
-            if (!bookingSlot.BookedSlots.Any(b => b.Status == SlotStatus.Completed))
+            if (booking == null)
+                throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "BOOKING_NOT_FOUND");
+            if (!booking.LearnerId.Equals(_userService.GetCurrentUserId()))
+                throw new ErrorException((int)StatusCode.Forbidden, ErrorCode.Forbidden, "BOOKING_NOT_BELONG_TO_THE_LOGGED_IN_LEARNER");
+            if (!booking.BookedSlots.Any(b => b.Status == SlotStatus.Completed))
                 throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "REQUIRES_AT_LEAST_1_COMPLETED_SLOT");
         }
         #endregion

@@ -24,7 +24,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         
         // Scheduling information
         public List<WeeklyAvailabilityDTO> AvailabilityPatterns { get; set; } = new List<WeeklyAvailabilityDTO>();
-        public List<BookingSlotDTO> BookingSlots { get; set; } = new List<BookingSlotDTO>();
+        public List<BookingDTO> Bookings { get; set; } = new List<BookingDTO>();
         
         // Hashtags and Languages
         public List<HashtagDTO> Hashtags { get; set; } = new List<HashtagDTO>();
@@ -89,10 +89,10 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public SlotType Type { get; set; }
         public DayInWeek DayInWeek { get; set; }
         public int SlotIndex { get; set; }
-        public string? BookingSlotId { get; set; }
+        public string? BookingId { get; set; }
     }
 
-    public class BookingSlotDTO
+    public class BookingDTO
     {
         public string Id { get; set; } = string.Empty;
         public string? LearnerId { get; set; }
@@ -102,8 +102,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         
         public List<BookedSlotDTO> BookedSlots { get; set; } = new List<BookedSlotDTO>();
 
-        public static Expression<Func<BookingSlot, BookingSlotDTO>> ProjectionExpression => 
-        b => new BookingSlotDTO
+        public static Expression<Func<Booking, BookingDTO>> ProjectionExpression => 
+        b => new BookingDTO
         {
             Id = b.Id,
             LearnerId = b.LearnerId,
@@ -117,7 +117,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                 BookedDate = bs.BookedDate,
                 SlotNote = bs.SlotNote,
                 Status = bs.Status,
-                AvailabilitySlotId = bs.AvailabilitySlotId
+                AvailabilitySlotId = null
             }).ToList() 
             : new List<BookedSlotDTO>()
         };
