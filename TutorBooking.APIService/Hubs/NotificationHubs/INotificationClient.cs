@@ -1,10 +1,12 @@
-﻿namespace TutorBooking.APIService.Hubs.NotificationHubs
+﻿using App.DTOs.NotificationDTOs;
+
+namespace TutorBooking.APIService.Hubs.NotificationHubs
 {
 	public interface INotificationClient
 	{
-		Task ReceiveNotification(string message);
-
-		Task UserConnected(string username);
-		Task UserDisconnected(string username);
+		Task ReceiveNotification(int statusCode, NotificationResponse notification);
+		Task MarkAsReadResult(int statusCode, object data);
+		Task UserConnected(string message);
+		Task UserDisconnected(string message);
 	}
 }

@@ -1,19 +1,23 @@
-﻿using System;
+﻿using App.Repositories.Models.User;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace App.Repositories.Models
+namespace App.Repositories.Models.Notifications
 {
-	public class Notification
+	public class NotificationEntity
 	{
 		public string Id { get; set; } = Guid.NewGuid().ToString();
 		public ENotificationPriority NotificationPriority { get; set; }
 		public string Title { get; set; }
 		public string Content { get; set; }
-		public DateTime CreatedAt { get; set; }
+		public string? AdditionalData { get; set; }
+		public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 		public DateTime DeletedAt { get; set; }
+		public virtual ICollection<AppUser>? AppUsers { get; set; }
+		public virtual ICollection<AppUserNotification>? AppUserNotifications { get; set; }
 		
 	}
 

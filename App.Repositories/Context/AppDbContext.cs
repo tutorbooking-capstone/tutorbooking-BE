@@ -8,6 +8,8 @@ using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using App.Repositories.Models.Payment;
+using System.Reactive;
+using App.Repositories.Models.Notifications;
 
 namespace App.Repositories.Context
 {
@@ -63,6 +65,8 @@ namespace App.Repositories.Context
         public DbSet<LegalDocumentVersion> LegalDocumentVersions { get; set; }
         public DbSet<LegalDocumentAcceptance> LegalDocumentAcceptances { get; set; }
         public DbSet<LessonSnapshot> LessonSnapshots { get; set; }
+
+        public DbSet<NotificationEntity> NotificationEntities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -572,6 +576,26 @@ namespace App.Repositories.Context
                 .HasDefaultValue("PayOS");
             #endregion
 
+            #region NotificationEntities Configuration
+            modelBuilder.Entity<NotificationEntity>()
+                .HasKey(d => d.Id);
+
+            modelBuilder.Entity<NotificationEntity>()
+                .HasMany(e => e.AppUsers)
+                .WithMany(e => e.NotificationEntities)
+                .UsingEntity<AppUserNotification>(e =>
+                {
+                    e.HasOne(an => an.AppUser)
+                    .WithMany(a => a.AppUserNotifications)
+                    .HasForeignKey(an => an.AppUserId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                    e.HasOne(an => an.NotificationEntity)
+                    .WithMany(n => n.AppUserNotifications)
+                    .HasForeignKey(an => an.NotificationEntityId)
+                    .OnDelete(DeleteBehavior.SetNull);
+                });
+            #endregion
             #region Configuration For Booking
             modelBuilder.Entity<LessonSnapshot>()
                 .HasKey(ls => ls.Id);

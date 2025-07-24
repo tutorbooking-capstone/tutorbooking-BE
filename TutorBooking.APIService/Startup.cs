@@ -127,7 +127,7 @@ namespace TutorBooking.APIService
 					options.AllowStatefulReconnects = true;
 				});
 
-				endpoints.MapHub<NotificationHub>("/NotificationHub", options =>
+				endpoints.MapHub<NotificationHub>("/notification-hub", options =>
 				{
 					options.Transports =
 						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
