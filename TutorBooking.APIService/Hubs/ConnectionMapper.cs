@@ -39,5 +39,6 @@ namespace TutorBooking.APIService.Hubs
 	{
 		public string UserId { get; set; }
 		public string ConnectionId { get; set; }
+		public List<Role> Roles { get; set; } = new();
 	}
 }

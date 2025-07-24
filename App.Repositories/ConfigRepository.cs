@@ -18,7 +18,7 @@ namespace App.Repositories
         public static IServiceCollection AddAppRepositoriesConfig(
             this IServiceCollection services,
             IConfiguration configuration,
-            string connectionStringName = "DeployConnection")
+            string connectionStringName = "DefaultConnection")
         {
             services.AddAppDbContext(configuration, connectionStringName);
             services.AddModelsValidation();
