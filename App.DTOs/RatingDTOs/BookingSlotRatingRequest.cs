@@ -39,7 +39,7 @@ namespace App.DTOs.RatingDTOs
         {
             return new BookingSlotRating()
             {
-                BookingSlotId = request.BookingSlotId,
+                BookingId = request.BookingSlotId,
                 TutorId = tutorId,
                 LearnerId = LearnerId,
                 TeachingQuality = request.TeachingQuality,

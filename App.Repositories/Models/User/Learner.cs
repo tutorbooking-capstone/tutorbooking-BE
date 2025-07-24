@@ -1,5 +1,4 @@
 ﻿using App.Repositories.Models.Rating;
-using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
 
 namespace App.Repositories.Models.User
@@ -11,7 +10,7 @@ namespace App.Repositories.Models.User
         public int ProficiencyLevel { get; set; } = 1; //Represent the level of proficiency in the language (1-7 scale)
 
         public virtual AppUser? User { get; set; }
-        public virtual ICollection<BookingSlot>? BookingSlots { get; set; }
+        public virtual ICollection<Booking>? Bookings { get; set; }
         public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; }
         public virtual ICollection<BookingSlotRating>? BookingSlotRatings { get; set; }
 

@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
 using App.DTOs.RatingDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
@@ -15,7 +16,7 @@ namespace TutorBooking.UnitTests;
 public class BookingSlotRatingServiceCreateUnitTests
 {
     private Mock<IUnitOfWork> _mockUnitOfWork;
-    private Mock<IGenericRepository<BookingSlot>> _mockBookingSlotRepo;
+    private Mock<IGenericRepository<Booking>> _mockBookingRepo;
     private Mock<IGenericRepository<BookingSlotRating>> _mockBookingSlotRatingRepo;
     private Mock<IUserService> _mockUserService;
     private BookingSlotRatingService _service;
@@ -25,7 +26,7 @@ public class BookingSlotRatingServiceCreateUnitTests
     public void Setup()
     {
         _mockUnitOfWork = new Mock<IUnitOfWork>();
-        _mockBookingSlotRepo = new Mock<IGenericRepository<BookingSlot>>();
+        _mockBookingRepo = new Mock<IGenericRepository<Booking>>();
         _mockBookingSlotRatingRepo = new Mock<IGenericRepository<BookingSlotRating>>();
         _mockUserService = new Mock<IUserService>();
 
@@ -34,8 +35,8 @@ public class BookingSlotRatingServiceCreateUnitTests
             .Returns(_currentUserId);
 
         _mockUnitOfWork
-            .Setup(uow => uow.GetRepository<BookingSlot>())
-            .Returns(_mockBookingSlotRepo.Object);
+            .Setup(uow => uow.GetRepository<Booking>())
+            .Returns(_mockBookingRepo.Object);
         _mockUnitOfWork
             .Setup(uow => uow.GetRepository<BookingSlotRating>())
             .Returns(_mockBookingSlotRatingRepo.Object);
@@ -52,7 +53,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             BookingSlotId = Guid.NewGuid().ToString()
         };
 
-        var bookingSlot = new BookingSlot
+        var booking = new Booking
         {
             Id = request.BookingSlotId,
             LearnerId = _currentUserId,
@@ -64,7 +65,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             
         };
 
-        await SetupMockBookingSlot(bookingSlot);
+        await SetupMockBooking(booking);
 
         // Act
         var result = await _service.CreateAsync(request);
@@ -88,7 +89,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             BookingSlotId = Guid.NewGuid().ToString()
         };
 
-        await SetupMockBookingSlot(null);
+        await SetupMockBooking(null);
 
         // Act & Assert
         var exception = Assert.ThrowsAsync<ErrorException>(
@@ -107,7 +108,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             BookingSlotId = Guid.NewGuid().ToString()
         };
 
-        var bookingSlot = new BookingSlot
+        var booking = new Booking
         {
             Id = request.BookingSlotId,
             LearnerId = "different-user-id",
@@ -118,7 +119,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             Tutor = new Tutor()
         };
 
-        await SetupMockBookingSlot(bookingSlot);
+        await SetupMockBooking(booking);
 
         // Act & Assert
         var exception = Assert.ThrowsAsync<ErrorException>(
@@ -137,7 +138,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             BookingSlotId = Guid.NewGuid().ToString()
         };
 
-        var bookingSlot = new BookingSlot
+        var booking = new Booking
         {
             Id = request.BookingSlotId,
             LearnerId = _currentUserId,
@@ -149,7 +150,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             Tutor = new Tutor()
         };
 
-        await SetupMockBookingSlot(bookingSlot);
+        await SetupMockBooking(booking);
 
         // Act & Assert
         var exception = Assert.ThrowsAsync<ErrorException>(
@@ -159,15 +160,15 @@ public class BookingSlotRatingServiceCreateUnitTests
         Assert.That(exception.StatusCode, Is.EqualTo((int)StatusCode.BadRequest));
     }
 
-    private Task SetupMockBookingSlot(BookingSlot? bookingSlot)
+    private Task SetupMockBooking(Booking? booking)
     {
-        var bookingSlots = (bookingSlot != null ?
-            new List<BookingSlot> { bookingSlot } :
-            new List<BookingSlot>());
+        var bookings = (booking != null ?
+            new List<Booking> { booking } :
+            new List<Booking>());
 
-        var mockDbSet = bookingSlots.AsQueryable().BuildMockDbSet();
+        var mockDbSet = bookings.AsQueryable().BuildMockDbSet();
 
-        _mockBookingSlotRepo
+        _mockBookingRepo
             .Setup(r => r.ExistEntities())
             .Returns(mockDbSet.Object);
 
@@ -178,7 +179,7 @@ public class BookingSlotRatingServiceCreateUnitTests
     public void Cleanup()
     {
         _mockUnitOfWork = null;
-        _mockBookingSlotRepo = null;
+        _mockBookingRepo = null;
         _mockBookingSlotRatingRepo = null;
         _mockUserService = null;
         _service = null;

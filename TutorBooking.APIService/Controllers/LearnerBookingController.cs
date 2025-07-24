@@ -83,5 +83,13 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách gia sư đã gửi yêu cầu"
             ));
         }
+
+        [HttpPost("accept-offer")]
+        [Authorize(Roles = "Learner")]
+        public async Task<ActionResult<BookingResponse>> AcceptOffer(AcceptOfferRequest request)
+        {
+            var result = await _service.AcceptTutorOfferAsync(request);
+            return Ok(result);
+        }
     }
 }

@@ -7,11 +7,8 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using App.Repositories.Models.Booking;
-using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
-using System.Linq.Expressions;
-using System.Text.Json;
+using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Services
 {
@@ -119,7 +116,6 @@ namespace App.Services.Services
                 TutorId = tutorId,
                 LearnerId = request.LearnerId,
                 LessonId = request.LessonId,
-                TotalPrice = lesson.Price * request.OfferedSlots.Count,
                 OfferedSlots = request.OfferedSlots.Select(s => new OfferedSlot
                 {
                     SlotDateTime = s.SlotDateTime,
@@ -175,10 +171,9 @@ namespace App.Services.Services
                 SlotDateTime = s.SlotDateTime,
                 SlotIndex = s.SlotIndex,
             }).ToList();
-            offer.TotalPrice = offer.Lesson.Price * offer.OfferedSlots.Count;
             offer.UpdatedAt = DateTime.UtcNow;
             
-            offerRepo.UpdateFields(offer, o => o.TotalPrice, o => o.UpdatedAt!);
+            offerRepo.UpdateFields(offer, o => o.UpdatedAt!);
             slotRepo.InsertRange(offer.OfferedSlots);
             
             await _unitOfWork.SaveAsync();

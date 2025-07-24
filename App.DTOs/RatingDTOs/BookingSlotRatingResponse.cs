@@ -24,7 +24,7 @@ namespace App.DTOs.RatingDTOs
             return new BookingSlotRatingResponse()
             {
                 Id = entity.Id,
-                BookingSlotId = entity.BookingSlotId,
+                BookingSlotId = entity.BookingId,
                 TeachingQuality = entity.TeachingQuality,
                 Attitude = entity.Attitude,
                 Commitment = entity.Commitment,

@@ -37,7 +37,7 @@ namespace App.Services.Interfaces
 
         #region Scheduling Related Tables
         Task<List<WeeklyAvailabilityPattern>> GetAllWeeklyAvailabilityPatternsAsync();
-        Task<List<BookingSlot>> GetAllBookingSlotsAsync();
+        //Task<List<BookingSlot>> GetAllBookingSlotsAsync();
         Task<List<AvailabilitySlot>> GetAllAvailabilitySlotsAsync();
         #endregion
 

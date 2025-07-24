@@ -1,5 +1,4 @@
 using App.Repositories.Models;
-using App.Repositories.Models.Booking;
 using App.Repositories.Models.Chat;
 using App.Repositories.Models.Legal;
 using App.Repositories.Models.Papers;
@@ -37,7 +36,7 @@ namespace App.Repositories.Context
         public DbSet<DocumentFileUpload> DocumentFileUploads { get; set; }
 
         public DbSet<WeeklyAvailabilityPattern> WeeklyAvailabilityPatterns { get; set; }
-        public DbSet<BookingSlot> BookingSlots { get; set; }
+        public DbSet<Booking> Bookings { get; set; }
         public DbSet<AvailabilitySlot> AvailabilitySlots { get; set; }
         public DbSet<BookedSlot> BookedSlots { get; set; }
         public DbSet<BookingSlotRating> BookingSlotRatings { get; set; }
@@ -63,6 +62,7 @@ namespace App.Repositories.Context
         public DbSet<LegalDocument> LegalDocuments { get; set; }
         public DbSet<LegalDocumentVersion> LegalDocumentVersions { get; set; }
         public DbSet<LegalDocumentAcceptance> LegalDocumentAcceptances { get; set; }
+        public DbSet<LessonSnapshot> LessonSnapshots { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -236,24 +236,24 @@ namespace App.Repositories.Context
                 .HasForeignKey(w => w.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // BookingSlot -> Tutor (M:1)
-            modelBuilder.Entity<BookingSlot>()
+            // Booking -> Tutor (M:1)
+            modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Tutor)
-                .WithMany(t => t.BookingSlots)
+                .WithMany(t => t.Bookings)
                 .HasForeignKey(b => b.TutorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // BookingSlot -> Learner (M:1) optional
-            modelBuilder.Entity<BookingSlot>()
+            // Booking -> Learner (M:1) optional
+            modelBuilder.Entity<Booking>()
                 .HasOne(b => b.Learner)
-                .WithMany(l => l.BookingSlots)
+                .WithMany(l => l.Bookings)
                 .HasForeignKey(b => b.LearnerId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            modelBuilder.Entity<BookingSlot>()
+            modelBuilder.Entity<Booking>()
                 .HasOne(bs => bs.BookingSlotRating)
-                .WithOne(br => br.BookingSlot)
+                .WithOne(br => br.Booking)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // AvailabilitySlot relationships
@@ -266,16 +266,16 @@ namespace App.Repositories.Context
 
             // BookingSlot relationships
             modelBuilder.Entity<BookedSlot>()
-                .HasOne(bs => bs.BookingSlot)
+                .HasOne(bs => bs.Booking)
                 .WithMany(bs => bs.BookedSlots)
-                .HasForeignKey(bs => bs.BookingSlotId)
+                .HasForeignKey(bs => bs.BookingId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<BookedSlot>()
-                .HasOne(bs => bs.AvailabilitySlot)
-                .WithMany()
-                .HasForeignKey(bs => bs.AvailabilitySlotId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // modelBuilder.Entity<BookedSlot>()
+            //     .HasOne(bs => bs.AvailabilitySlot)
+            //     .WithMany()
+            //     .HasForeignKey(bs => bs.AvailabilitySlotId)
+            //     .OnDelete(DeleteBehavior.Cascade);
             #endregion
 
             #region TutorBookingOffer Configuration
@@ -303,9 +303,6 @@ namespace App.Repositories.Context
                     .WithOne(s => s.TutorBookingOffer)
                     .HasForeignKey(s => s.TutorBookingOfferId)
                     .OnDelete(DeleteBehavior.Cascade);
-
-                builder.Property(o => o.TotalPrice)
-                    .HasColumnType("decimal(18, 2)");
             });
 
             modelBuilder.Entity<OfferedSlot>(builder =>
@@ -414,9 +411,9 @@ namespace App.Repositories.Context
             #endregion
 
             #region Rating Configuration
-            // 1 BookingSlotRating => 1 BookingSlot
+            // 1 BookingSlotRating => 1 Booking
             modelBuilder.Entity<BookingSlotRating>()
-                .HasOne(br => br.BookingSlot)
+                .HasOne(br => br.Booking)
                 .WithOne(bs => bs.BookingSlotRating)
                 .OnDelete(DeleteBehavior.SetNull);
 
@@ -574,6 +571,24 @@ namespace App.Repositories.Context
                 .Property(d => d.PaymentGateway)
                 .HasDefaultValue("PayOS");
             #endregion
+
+            #region Configuration For Booking
+            modelBuilder.Entity<LessonSnapshot>()
+                .HasKey(ls => ls.Id);
+
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.LessonSnapshot)
+                .WithMany()
+                .HasForeignKey(b => b.LessonSnapshotId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<BookedSlot>()
+                .HasOne(bs => bs.HeldFund)
+                .WithOne(hf => hf.BookedSlot)
+                .HasForeignKey<BookedSlot>(bs => bs.HeldFundId)
+                .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
         }
     }
 }

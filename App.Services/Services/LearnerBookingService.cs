@@ -3,13 +3,13 @@ using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.BookingDTOs;
 using App.Repositories.Models;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using App.Repositories.Models.Booking;
-using System.Text.Json;
 
 namespace App.Services.Services
 {
@@ -200,6 +200,157 @@ namespace App.Services.Services
                 })
                 .OrderByDescending(x => x.LatestRequestTime)
                 .ToList();
+        }
+
+        public async Task<BookingResponse> AcceptTutorOfferAsync(AcceptOfferRequest request)
+        {
+            var learnerId = _currentUserProvider.GetCurrentUserId();
+            if (string.IsNullOrEmpty(learnerId))
+                throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "User not authenticated");
+
+            // Get the offer with all related data
+            var offer = await _unitOfWork.GetRepository<TutorBookingOffer>()
+                .ExistEntities()
+                .Include(o => o.OfferedSlots)
+                .Include(o => o.Lesson)
+                .Include(o => o.Tutor)
+                .FirstOrDefaultAsync(o => o.Id == request.OfferId && o.LearnerId == learnerId);
+
+            if (offer == null)
+                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or not intended for this learner");
+
+            if (offer.Lesson == null)
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "The lesson associated with this offer no longer exists");
+
+            // Calculate total price
+            var slotCount = offer.OfferedSlots.Count;
+            var totalPrice = offer.Lesson.Price * slotCount;
+
+            // Check if learner has enough balance
+            var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == learnerId);
+
+            if (learnerWallet == null)
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Learner wallet not found");
+
+            if (learnerWallet.Balance < totalPrice)
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Insufficient funds in wallet");
+
+            // Create a lesson snapshot
+            var lessonSnapshot = LessonSnapshot.CreateFromLesson(offer.Lesson);
+            
+            return await _unitOfWork.ExecuteInTransactionAsync(async () => {
+                // Insert lesson snapshot
+                _unitOfWork.GetRepository<LessonSnapshot>().Insert(lessonSnapshot);
+                
+                // Create booking
+                var booking = new Booking
+                {
+                    TutorId = offer.TutorId,
+                    LearnerId = learnerId,
+                    Note = $"Booking created from offer {offer.Id}",
+                    LessonSnapshotId = lessonSnapshot.Id,
+                    OriginalOfferId = offer.Id
+                };
+                
+                booking.TrackCreate(learnerId);
+                _unitOfWork.GetRepository<Booking>().Insert(booking);
+                
+                // Create booked slots and held funds
+                var bookedSlots = new List<BookedSlot>();
+                var heldFunds = new List<HeldFund>();
+                var systemWallet = await GetSystemWalletAsync();
+                
+                foreach (var offeredSlot in offer.OfferedSlots)
+                {
+                    // Calculate release time (24 hours after slot end time)
+                    var slotEndTime = offeredSlot.SlotDateTime.AddMinutes(offer.Lesson.DurationInMinutes);
+                    var releaseTime = slotEndTime.AddHours(24); // This should be configurable
+                    
+                    // Create held fund
+                    var heldFund = HeldFund.Create(string.Empty, offer.Lesson.Price, releaseTime);
+                    //heldFund.TrackCreate(learnerId);
+                    _unitOfWork.GetRepository<HeldFund>().Insert(heldFund);
+                    heldFunds.Add(heldFund);
+                    
+                    // Create booked slot
+                    var bookedSlot = new BookedSlot
+                    {
+                        BookingId = booking.Id,
+                        BookedDate = offeredSlot.SlotDateTime,
+                        SlotIndex = offeredSlot.SlotIndex,
+                        Status = SlotStatus.AwaitingConfirmation,
+                        HeldFundId = heldFund.Id
+                    };
+                    
+                    bookedSlot.TrackCreate(learnerId);
+                    _unitOfWork.GetRepository<BookedSlot>().Insert(bookedSlot);
+                    bookedSlots.Add(bookedSlot);
+                    
+                    // Update held fund with booked slot ID (circular reference)
+                    heldFund.BookedSlotId = bookedSlot.Id;
+                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, h => h.BookedSlotId);
+                }
+                
+                // Create transaction to move funds from learner wallet to system wallet (escrow)
+                var transaction = Transaction.CreatePaymentTransaction(
+                    learnerWallet.Id,
+                    totalPrice,
+                    booking.Id,
+                    $"Payment for booking {booking.Id} with {slotCount} slots"
+                );
+                
+                _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+                
+                // Update wallet balances
+                var learnerUpdateFields = learnerWallet.UpdateBalance(learnerWallet.Balance - totalPrice);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdateFields);
+                
+                var systemUpdateFields = systemWallet.UpdateBalance(systemWallet.Balance + totalPrice);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
+                
+                await _unitOfWork.SaveAsync();
+                
+                // Schedule release of funds using Hangfire
+                foreach (var heldFund in heldFunds)
+                {
+                    BackgroundJob.Schedule<IPaymentProcessingService>(
+                        service => service.ProcessHeldFundReleaseAsync(heldFund.Id),
+                        heldFund.ReleaseAt - DateTime.UtcNow
+                    );
+                }
+                
+                // Map to response
+                return new BookingResponse
+                {
+                    Id = booking.Id,
+                    TutorId = booking.TutorId,
+                    LearnerId = booking.LearnerId,
+                    LessonName = lessonSnapshot.Name,
+                    TotalPrice = totalPrice,
+                    SlotCount = slotCount,
+                    BookedSlots = bookedSlots.Select(bs => new BookedSlotDTO
+                    {
+                        Id = bs.Id,
+                        BookedDate = bs.BookedDate,
+                        SlotIndex = bs.SlotIndex,
+                        Status = bs.Status
+                    }).ToList()
+                };
+            });
+        }
+
+        private async Task<Wallet> GetSystemWalletAsync()
+        {
+            var systemWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.Type == WalletType.System);
+                
+            if (systemWallet == null)
+                throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "System wallet not found");
+                
+            return systemWallet;
         }
     }
 }

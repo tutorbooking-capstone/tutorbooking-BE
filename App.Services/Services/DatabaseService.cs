@@ -72,8 +72,8 @@ namespace App.Services.Services
         public async Task<List<WeeklyAvailabilityPattern>> GetAllWeeklyAvailabilityPatternsAsync()
             => await _dbContext.WeeklyAvailabilityPatterns.ToListAsync();
 
-        public async Task<List<BookingSlot>> GetAllBookingSlotsAsync()
-            => await _dbContext.BookingSlots.ToListAsync();
+        // public async Task<List<BookingSlot>> GetAllBookingSlotsAsync()
+        //     => await _dbContext.BookingSlots.ToListAsync();
 
         public async Task<List<AvailabilitySlot>> GetAllAvailabilitySlotsAsync()
             => await _dbContext.AvailabilitySlots.ToListAsync();
