@@ -82,6 +82,7 @@ namespace App.Services.Services
                     predicate.And(unreadOnlyPredicate);
 
                 var entities = await _unitOfWork.GetRepository<NotificationEntity>().ExistEntities()
+                .OrderByDescending(x => x.CreatedAt)
                 .Where(predicate)
                 .Skip((page -1) * size)
                 .Take(size)
