@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.DTOs.NotificationDTOs;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using App.Services.Services;
@@ -8,6 +9,7 @@ using Microsoft.Net.Http.Headers;
 using Org.BouncyCastle.Asn1.Ocsp;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace TutorBooking.APIService.Hubs.NotificationHubs
 {
@@ -84,7 +86,23 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             var securityToken = handler.ReadJwtToken(token);
             var roles = securityToken.Claims.Where(c => c.Type.Equals(ClaimTypes.Role)).Select(x => x.Value.ToRoleEnum()).ToList();
             return roles;
+        } 
+    }
+
+    public static class NotificationHubExtensions
+    {
+        public static async Task SendNotificationToUsersAsync(this IHubContext<NotificationHub, INotificationClient> hubContext, INotificationService notificationService, SendNotificationToUsersRequest request)
+        {
+            var response = await notificationService.CreateForUsersAsync(request);
+
+            var connectionIds = new List<string>();
+            foreach (var user in request.ReceiverUserIds)
+            {
+                string cId = NotificationHub._userIdMapper.FirstOrDefault(x => x.Key.Equals(user)).Value;
+                if (cId != null)
+                    connectionIds.Add(cId);
+            }
+            await hubContext.Clients.Clients(connectionIds).ReceiveNotification(200, response);
         }
-        
     }
 }

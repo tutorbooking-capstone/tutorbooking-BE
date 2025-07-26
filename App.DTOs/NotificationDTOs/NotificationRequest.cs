@@ -41,8 +41,8 @@ namespace App.DTOs.NotificationDTOs
                 .MaximumLength(300)
                 .WithMessage("CONTENT_MAX_300_CHARACTERS");
             RuleFor(x => x.AdditionalData)
-                .MaximumLength(300)
-                .WithMessage("ADDITIONAL_DATA_MAX_300_CHARACTERS");
+                .MaximumLength(1000)
+                .WithMessage("ADDITIONAL_DATA_MAX_1000_CHARACTERS");
         }
     }
 

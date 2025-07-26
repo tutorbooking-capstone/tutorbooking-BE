@@ -1,9 +1,14 @@
 ﻿using App.Core.Base;
 using App.DTOs.BookingDTOs;
 using App.Repositories.Models.User;
+using App.Repositories.Models.Notifications;
 using App.Services.Interfaces;
+using App.DTOs.NotificationDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using TutorBooking.APIService.Hubs.NotificationHubs;
+using System.Text.Json;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -13,10 +18,14 @@ namespace TutorBooking.APIService.Controllers
     public class LearnerBookingController : ControllerBase
     {
         private readonly ILearnerBookingService _service;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
 
-        public LearnerBookingController(ILearnerBookingService service)
+        public LearnerBookingController(ILearnerBookingService service, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext)
         {
             _service = service;
+            _notificationService = notificationService;
+            _hubContext = hubContext;
         }
 
         [HttpPut("time-slots")]
@@ -24,6 +33,23 @@ namespace TutorBooking.APIService.Controllers
             [FromBody] LearnerTimeSlotRequestDTO request)
         {
             await _service.UpdateTimeSlotRequestsAsync(request);
+
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST",
+                    Content = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        ExpectedStartDate = request.ExpectedStartDate,
+                        LessonId = request.LessonId,
+                    })
+                },
+                ReceiverUserIds = [request.TutorId]
+            });
+
             return Ok(new BaseResponseModel<object>(
                 data: null,
                 message: "Cập nhật yêu cầu khung giờ thành công!"
@@ -89,6 +115,23 @@ namespace TutorBooking.APIService.Controllers
         public async Task<ActionResult<BookingResponse>> AcceptOffer(AcceptOfferRequest request)
         {
             var result = await _service.AcceptTutorOfferAsync(request);
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = ENotificationPriority.Normal,
+                    Title = "PUSH_ON_LEARNER_ACCEPT_OFFER",
+                    Content = "PUSH_ON_LEARNER_ACCEPT_OFFER_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        Id = result.Id,
+                        LearnerId = result.LearnerId,
+                        LessonName = result.LessonName,
+                    })
+                },
+                ReceiverUserIds =[result.TutorId]
+            });
+
             return Ok(result);
         }
     }

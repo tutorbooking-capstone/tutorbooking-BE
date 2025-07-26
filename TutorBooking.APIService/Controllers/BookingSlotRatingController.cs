@@ -5,7 +5,10 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Org.BouncyCastle.Asn1.Ocsp;
+using System.Text.Json;
+using TutorBooking.APIService.Hubs.NotificationHubs;
 using static Google.Apis.Requests.BatchRequest;
 
 namespace TutorBooking.APIService.Controllers
@@ -15,10 +18,14 @@ namespace TutorBooking.APIService.Controllers
     public class BookingSlotRatingController : ControllerBase
     {
         private readonly IBookingSlotRatingService _bookingSlotRatingService;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
 
-        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService)
+        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext)
         {
             _bookingSlotRatingService = bookingSlotRatingService;
+            _notificationService = notificationService;
+            _hubContext = hubContext;
         }
 
         [HttpPost]
@@ -26,6 +33,25 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> CreateRating(BookingSlotRatingRequest request)
         {
             var response = await _bookingSlotRatingService.CreateAsync(request);
+
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = App.Repositories.Models.Notifications.ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_RATING_RECEIVED",
+                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        Id = response.Id,
+                        BookingId = response.BookingId,
+                        LearnerId = response.LearnerId,
+                        AverageRating = (response.TeachingQuality + response.Attitude + response.Commitment) / 3
+                    })
+                },
+                ReceiverUserIds = [response.TutorId]
+            });
+
             return Ok(new BaseResponseModel<object>(
                 data: response,
                 message: "SUCCESS"
