@@ -5,6 +5,8 @@ using TutorBooking.APIService.Middleware;
 using App.Core;
 using TutorBooking.APIService.Hubs.ChatHubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
+using Hangfire;
+using Hangfire.Dashboard;
 
 namespace TutorBooking.APIService
 {
@@ -96,6 +98,13 @@ namespace TutorBooking.APIService
 
             app.UseSwagger();
             app.UseSwaggerUI();
+            
+            // Thêm Hangfire Dashboard
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = env.IsDevelopment() ? Array.Empty<IDashboardAuthorizationFilter>() : new[] { new HangfireAuthorizationFilter() },
+                IsReadOnlyFunc = (context) => false
+            });
             #endregion
 
             app.UseHttpsRedirection();

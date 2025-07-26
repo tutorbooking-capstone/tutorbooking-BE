@@ -56,7 +56,7 @@ namespace App.Services.Services
                     "Không thể xác định người dùng hiện tại");
 
             // Ensure user has a wallet
-            await _walletService.CreateWalletIfNotExistsAsync(userId);
+            //await _walletService.CreateWalletIfNotExistsAsync(userId);
 
             // Create deposit request
             var depositRequest = new DepositRequest
@@ -297,7 +297,7 @@ namespace App.Services.Services
                     // Update wallet balance
                     var newBalance = wallet.Balance + depositRequest.Amount;
                     _logger.LogInformation("Updating wallet balance from {OldBalance} to {NewBalance}", wallet.Balance, newBalance);
-                    var walletUpdateFields = wallet.UpdateBalance(newBalance);
+                    var walletUpdateFields = wallet.AddBalance(depositRequest.Amount);
                     _unitOfWork.GetRepository<Wallet>().UpdateFields(wallet, walletUpdateFields);
 
                     await _unitOfWork.SaveAsync();
@@ -444,6 +444,110 @@ namespace App.Services.Services
                 _logger.LogError(ex, "Error checking deposit status with PayOS");
                 _logger.LogInformation("====== MANUAL STATUS CHECK FAILED WITH ERROR ======");
                 return false;
+            }
+        }
+
+        public async Task<DepositRequestResponse> CreateFakeDepositAsync(decimal amount)
+        {
+            var userId = _currentUserProvider.GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCode.Unauthorized,
+                    "Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+            }
+
+            var user = await _unitOfWork.GetRepository<AppUser>().GetByIdAsync(userId);
+            if (user == null)
+            {
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    $"Không tìm thấy người dùng với ID: {userId}");
+            }
+
+            var currentUserId = _currentUserProvider.GetCurrentUserId() ?? "system";
+
+            var depositRequest = new DepositRequest
+            {
+                UserId = userId,
+                Amount = amount,
+                PaymentGateway = "FAKE", // Đánh dấu đây là giao dịch giả
+                Status = DepositRequestStatus.Pending,
+                NumericOrderCode = new Random().NextInt64(100000000, 999999999) // Tạo code giả
+            };
+            
+            _unitOfWork.GetRepository<DepositRequest>().Insert(depositRequest);
+            await _unitOfWork.SaveAsync();
+
+            _logger.LogInformation("Đã tạo yêu cầu nạp tiền giả (fake deposit) cho User {UserId} với số tiền {Amount}. DepositId: {DepositId}",
+                userId, amount, depositRequest.Id);
+
+            // Ngay lập tức xử lý giao dịch
+            await ProcessSuccessfulDeposit(depositRequest, $"FAKE_{Guid.NewGuid()}");
+
+            // Lấy lại thông tin user để response có FullName
+            var response = DepositRequestResponse.FromEntity(depositRequest);
+            response.UserFullName = user.FullName ?? string.Empty;
+
+            return response;
+        }
+
+        private async Task ProcessSuccessfulDeposit(DepositRequest depositRequest, string gatewayTransactionId)
+        {
+            var wallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == depositRequest.UserId);
+            
+            if (wallet == null)
+            {
+                _logger.LogError("Không tìm thấy ví cho người dùng {UserId} khi xử lý callback.", depositRequest.UserId);
+                depositRequest.MarkAsFailed();
+                await _unitOfWork.SaveAsync();
+                return;
+            }
+            
+            var currentUserId = _currentUserProvider.GetCurrentUserId() ?? "system-callback";
+            
+            // Dùng transaction để đảm bảo toàn vẹn dữ liệu
+            await _unitOfWork.BeginTransactionAsync();
+            try
+            {
+                // 1. Cập nhật trạng thái yêu cầu nạp tiền
+                depositRequest.Complete(gatewayTransactionId);
+                depositRequest.TrackUpdate(currentUserId);
+                
+                // 2. Cập nhật số dư ví - Sử dụng AddBalance thay vì UpdateBalance
+                wallet.AddBalance(depositRequest.Amount);
+                wallet.TrackUpdate(currentUserId);
+
+                // 3. Tạo giao dịch (Transaction)
+                var transaction = Transaction.CreateDepositTransaction(
+                    targetWalletId: wallet.Id,
+                    amount: depositRequest.Amount,
+                    referenceId: depositRequest.Id
+                );
+                _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+
+                await _unitOfWork.SaveAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                _logger.LogInformation(
+                    "Đã xử lý thành công yêu cầu nạp tiền {DepositRequestId} cho người dùng {UserId}. Số tiền: {Amount}",
+                    depositRequest.Id, depositRequest.UserId, depositRequest.Amount);
+            }
+            catch (Exception ex)
+            {
+                await _unitOfWork.RollBackAsync();
+                _logger.LogError(ex, "Lỗi nghiêm trọng khi xử lý callback cho DepositRequestId {DepositRequestId}", depositRequest.Id);
+
+                // Cố gắng đánh dấu yêu cầu là thất bại nếu có lỗi
+                depositRequest.MarkAsFailed();
+                await _unitOfWork.SaveAsync();
+
+                // Ném lại lỗi để có thể theo dõi
+                throw;
             }
         }
 

@@ -17,13 +17,16 @@ namespace App.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly IBackgroundJobClient _backgroundJobClient;
 
         public LearnerBookingService(
             IUnitOfWork unitOfWork,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            IBackgroundJobClient backgroundJobClient)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
+            _backgroundJobClient = backgroundJobClient;
         }
 
         #region Private Helpers
@@ -304,18 +307,18 @@ namespace App.Services.Services
                 _unitOfWork.GetRepository<Transaction>().Insert(transaction);
                 
                 // Update wallet balances
-                var learnerUpdateFields = learnerWallet.UpdateBalance(learnerWallet.Balance - totalPrice);
+                var learnerUpdateFields = learnerWallet.SubtractBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdateFields);
                 
-                var systemUpdateFields = systemWallet.UpdateBalance(systemWallet.Balance + totalPrice);
+                var systemUpdateFields = systemWallet.AddBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
                 
                 await _unitOfWork.SaveAsync();
                 
-                // Schedule release of funds using Hangfire
+                // Schedule release of funds using Hangfire with injected client
                 foreach (var heldFund in heldFunds)
                 {
-                    BackgroundJob.Schedule<IPaymentProcessingService>(
+                    _backgroundJobClient.Schedule<IPaymentProcessingService>(
                         service => service.ProcessHeldFundReleaseAsync(heldFund.Id),
                         heldFund.ReleaseAt - DateTime.UtcNow
                     );

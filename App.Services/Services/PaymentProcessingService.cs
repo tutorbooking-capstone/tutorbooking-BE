@@ -125,10 +125,10 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
             
             // Update wallet balances
-            var systemUpdateFields = systemWallet.UpdateBalance(systemWallet.Balance - heldFund.Amount);
+            var systemUpdateFields = systemWallet.SubtractBalance(heldFund.Amount);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
             
-            var tutorUpdateFields = tutorWallet.UpdateBalance(tutorWallet.Balance + tutorAmount);
+            var tutorUpdateFields = tutorWallet.AddBalance(tutorAmount);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(tutorWallet, tutorUpdateFields);
             
             // Update held fund status
@@ -170,10 +170,10 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<Transaction>().Insert(refundTransaction);
             
             // Update wallet balances
-            var systemUpdateFields = systemWallet.UpdateBalance(systemWallet.Balance - heldFund.Amount);
+            var systemUpdateFields = systemWallet.SubtractBalance(heldFund.Amount);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
             
-            var learnerUpdateFields = learnerWallet.UpdateBalance(learnerWallet.Balance + heldFund.Amount);
+            var learnerUpdateFields = learnerWallet.AddBalance(heldFund.Amount);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdateFields);
             
             // Update held fund status

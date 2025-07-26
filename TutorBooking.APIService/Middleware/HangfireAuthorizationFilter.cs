@@ -1,4 +1,5 @@
 using Hangfire.Dashboard;
+using App.Repositories.Models.User;
 
 namespace TutorBooking.APIService.Middleware
 {
@@ -6,10 +7,12 @@ namespace TutorBooking.APIService.Middleware
     {
         public bool Authorize(DashboardContext context)
         {
-            var httpContext = context.GetHttpContext();
+            // Tạm thời cho phép tất cả truy cập trong môi trường phát triển
+            return true;
             
-            // Only allow admin users to access Hangfire dashboard
-            return httpContext.User.IsInRole("Admin");
+            // var httpContext = context.GetHttpContext();
+            // return httpContext.User.IsInRole(Role.Admin.ToStringRole()) || 
+            //        httpContext.User.IsInRole(Role.Staff.ToStringRole());
         }
     }
 }

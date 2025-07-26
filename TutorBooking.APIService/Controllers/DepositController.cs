@@ -181,5 +181,16 @@ namespace TutorBooking.APIService.Controllers
                 return StatusCode(500, new { success = false, message = "Internal server error" });
             }
         }
+
+        [HttpPost("fake")]
+        [Authorize] // Bất kỳ ai đăng nhập cũng có thể tự nạp tiền giả cho mình
+        public async Task<IActionResult> CreateFakeDeposit([FromBody] CreateFakeDepositRequest request)
+        {
+            var depositRequest = await _depositService.CreateFakeDepositAsync(request.Amount);
+            return Ok(new BaseResponseModel<DepositRequestResponse>(
+                data: depositRequest,
+                message: $"Nạp tiền giả thành công."
+            ));
+        }
     }
 }

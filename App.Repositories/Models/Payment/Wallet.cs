@@ -42,6 +42,23 @@ namespace App.Repositories.Models
             return [x => x.Balance];
         }
         
+        public Expression<Func<Wallet, object>>[] AddBalance(decimal amount)
+        {
+            if (amount == 0) return Array.Empty<Expression<Func<Wallet, object>>>();
+            
+            Balance += amount;
+            return [x => x.Balance];
+        }
+        
+        public Expression<Func<Wallet, object>>[] SubtractBalance(decimal amount)
+        {
+            if (amount <= 0) return Array.Empty<Expression<Func<Wallet, object>>>();
+            if (Balance < amount) throw new InvalidOperationException($"Insufficient balance. Current: {Balance}, Requested: {amount}");
+            
+            Balance -= amount;
+            return [x => x.Balance];
+        }
+        
         public Expression<Func<Wallet, object>>[] UpdateStatus(WalletStatus newStatus, string? updatedBy = null)
         {
             if (Status == newStatus) return Array.Empty<Expression<Func<Wallet, object>>>();

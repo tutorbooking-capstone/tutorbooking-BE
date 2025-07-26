@@ -5,6 +5,8 @@ using App.Repositories.States;
 using App.Repositories.UoW;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -67,6 +69,32 @@ namespace App.Repositories
             services.AddScoped<TutorStateManager>();
 
             services.AddScoped<StateOrchestrator>();
+
+            return services;
+        }
+
+        public static IServiceCollection AddHangfireServices(
+            this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            // Cấu hình Hangfire với PostgreSQL
+            services.AddHangfire(config =>
+            {
+                config.UsePostgreSqlStorage(options =>
+                {
+                    options.UseNpgsqlConnection(configuration.GetConnectionString("DeployConnection"));
+                });
+                
+                // Bỏ qua các công việc đã thất bại sau 3 lần thử lại
+                config.UseFilter(new AutomaticRetryAttribute { Attempts = 3 });
+            });
+            
+            // Đăng ký BackgroundJobClient để sử dụng với DI
+            services.AddHangfireServer(options =>
+            {
+                options.WorkerCount = 1; // Số lượng worker, có thể điều chỉnh tùy theo tài nguyên
+                options.Queues = new[] { "default" }; // Queue mặc định
+            });
 
             return services;
         }

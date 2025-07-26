@@ -25,5 +25,8 @@ namespace App.Services.Interfaces
         
         // Kiểm tra trạng thái nạp tiền
         Task<bool> CheckAndUpdateDepositStatusAsync(string requestId);
+
+        // Fake nạp tiền 
+        Task<DepositRequestResponse> CreateFakeDepositAsync(decimal amount);
     }
 }
