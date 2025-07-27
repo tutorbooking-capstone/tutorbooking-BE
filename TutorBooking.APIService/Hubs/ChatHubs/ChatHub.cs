@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.Core.Constants;
 using App.DTOs.ChatDTOs;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
@@ -194,7 +195,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
             }
             catch (Exception ex)
             {
-                throw;
+                throw new Exception($"FAILED_TO_GET_USER_ID_FROM_TOKEN \n {ex.Message}");
             }
         }
     }
