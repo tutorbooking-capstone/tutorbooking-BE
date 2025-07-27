@@ -83,7 +83,7 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             } 
             catch (Exception ex)
             {
-                throw new Exception("FAILED_TO_GET_USER_ID_FROM_TOKEN");
+                throw new Exception($"FAILED_TO_GET_USER_ID_FROM_TOKEN \n {ex.Message}");
             }      
         }
 
@@ -99,7 +99,7 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             }
             catch (Exception ex)
             {
-                throw new Exception( "FAILED_TO_GET_ROLE_FROM_TOKEN");
+                throw new Exception($"FAILED_TO_GET_ROLE_FROM_TOKEN \n {ex.Message}");
             }
         } 
     }
