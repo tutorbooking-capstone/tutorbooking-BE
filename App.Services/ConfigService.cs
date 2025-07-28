@@ -38,6 +38,7 @@ namespace App.Services
             services.AddScoped<IScheduleService, ScheduleService>();
             services.AddScoped<ILearnerBookingService, LearnerBookingService>();
             services.AddScoped<ITutorBookingService, TutorBookingService>();
+            services.AddScoped<IBookingService, BookingService>();
 
             services.AddScoped<IBlogService, BlogService>();
             services.AddScoped<IHashtagService, HashtagService>();
