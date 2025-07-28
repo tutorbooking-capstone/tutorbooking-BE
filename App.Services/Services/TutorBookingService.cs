@@ -116,6 +116,7 @@ namespace App.Services.Services
                 TutorId = tutorId,
                 LearnerId = request.LearnerId,
                 LessonId = request.LessonId,
+                ExpirationPeriod = TimeSpan.FromMinutes(30), // Mặc định 30 phút
                 OfferedSlots = request.OfferedSlots.Select(s => new OfferedSlot
                 {
                     SlotDateTime = s.SlotDateTime,

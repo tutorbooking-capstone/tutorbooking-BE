@@ -45,6 +45,9 @@ namespace App.DTOs.BookingDTOs
         public string LessonName { get; set; } = string.Empty;
         public decimal TotalPrice { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
+        public DateTime ExpirationTime { get; set; } // Thời gian hết hạn
+        public bool IsExpired { get; set; } // Trạng thái hết hạn
         public BookingUserInfo? Tutor { get; set; }
         public BookingUserInfo? Learner { get; set; }
         public List<OfferedSlotDTO> OfferedSlots { get; set; } = new List<OfferedSlotDTO>();
@@ -55,6 +58,9 @@ namespace App.DTOs.BookingDTOs
                 Id = o.Id,
                 TotalPrice = (o.Lesson != null ? o.Lesson.Price : 0) * o.OfferedSlots.Count,
                 CreatedAt = o.CreatedAt,
+                UpdatedAt = o.UpdatedAt,
+                ExpirationTime = (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod),
+                IsExpired = DateTime.UtcNow > (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod),
                 LessonId = o.Lesson != null ? o.Lesson.Id : "",
                 LessonName = o.Lesson != null ? o.Lesson.Name : "N/A",
                 PricePerSlot = o.Lesson != null ? o.Lesson.Price : 0,
