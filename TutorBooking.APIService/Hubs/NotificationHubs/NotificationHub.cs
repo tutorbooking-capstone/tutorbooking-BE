@@ -3,7 +3,9 @@ using App.Core.Constants;
 using App.DTOs.NotificationDTOs;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using App.Services.Services;
+using App.Services.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -15,93 +17,64 @@ using static Google.Apis.Requests.BatchRequest;
 
 namespace TutorBooking.APIService.Hubs.NotificationHubs
 {
-	[AllowAnonymous]
-	public class NotificationHub : Hub<INotificationClient>
-	{
+    [Authorize]
+    public class NotificationHub : Hub<INotificationClient>
+    {
         private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
         private readonly ILogger<NotificationHub> _logger;
 
         // UserId <-> ConnectionId
         public static Dictionary<string, string> _userIdMapper = new Dictionary<string, string>();
 
-        public NotificationHub(INotificationService notificationService, ILogger<NotificationHub> logger)
+        public NotificationHub(INotificationService notificationService, ILogger<NotificationHub> logger, IUserService userService)
         {
             _notificationService = notificationService;
             _logger = logger;
+            _userService = userService;
         }
 
         public override async Task OnConnectedAsync()
         {
-                await base.OnConnectedAsync();
-                var userId = GetUserId();
-                var roles = GetRole();
-                _userIdMapper.Remove(userId);
-                _userIdMapper.TryAdd(userId, Context.ConnectionId);
-                foreach (var role in GetRole())
-                    await Groups.AddToGroupAsync(Context.ConnectionId, role.ToStringRole());
-                await Clients.Client(Context.ConnectionId).UserConnected("CONNECTED_TO_NOTIFICATION_HUB");
-		}
+            await base.OnConnectedAsync();
+            var userId = _userService.GetCurrentUserId();
+            var roles = await _userService.GetUserRolesAsync(userId);
+            _userIdMapper.Remove(userId);
+            _userIdMapper.TryAdd(userId, Context.ConnectionId);
+            foreach (var role in roles)
+                await Groups.AddToGroupAsync(Context.ConnectionId, role);
+            await Clients.Client(Context.ConnectionId).UserConnected("CONNECTED_TO_NOTIFICATION_HUB");
+        }
 
-		public override async Task OnDisconnectedAsync(Exception? exception)
-		{
-			await base.OnDisconnectedAsync(exception);
-		}
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            await base.OnDisconnectedAsync(exception);
+            var userId = _userService.GetCurrentUserId();
+            _userIdMapper.Remove(userId);
+        }
 
         public async Task MarkAsRead(string notificationId)
         {
             try
             {
-                await _notificationService.MarkAsReadAsync(notificationId, GetUserId());
-                await Clients.Client(_userIdMapper.GetValueOrDefault(GetUserId())).MarkAsReadResult(200, "SUCCESS");
+                await _notificationService.MarkAsReadAsync(notificationId, _userService.GetCurrentUserId());
+                await Clients.Client(_userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId())).MarkAsReadResult(200, "SUCCESS");
             }
             catch (ErrorException ex)
             {
                 _logger.LogError(ex.ToString());
-                var connectionId = _userIdMapper.GetValueOrDefault(GetUserId());
+                var connectionId = _userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId());
                 if (connectionId != null)
                     await Clients.Client(connectionId).MarkAsReadResult(ex.StatusCode, ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                var connectionId = _userIdMapper.GetValueOrDefault(GetUserId());
+                var connectionId = _userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId());
                 if (connectionId != null)
                     await Clients.Client(connectionId).MarkAsReadResult(500, ex.Message);
-            }   
-        }
-
-
-        private string GetUserId()
-        {
-            try
-            {
-                var token = Context.GetHttpContext().Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim();
-                var handler = new JwtSecurityTokenHandler();
-                var securityToken = handler.ReadJwtToken(token);
-                var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-                return userId;
-            } 
-            catch (Exception ex)
-            {
-                throw new Exception($"FAILED_TO_GET_USER_ID_FROM_TOKEN \n {ex.Message}");
-            }      
-        }
-
-        private List<Role> GetRole()
-        {
-            try
-            {
-                var token = Context.GetHttpContext().Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim();
-                var handler = new JwtSecurityTokenHandler();
-                var securityToken = handler.ReadJwtToken(token);
-                var roles = securityToken.Claims.Where(c => c.Type.Equals(ClaimTypes.Role)).Select(x => x.Value.ToRoleEnum()).ToList();
-                return roles;
             }
-            catch (Exception ex)
-            {
-                throw new Exception($"FAILED_TO_GET_ROLE_FROM_TOKEN \n {ex.Message}");
-            }
-        } 
+        }
     }
 
     public static class NotificationHubExtensions
