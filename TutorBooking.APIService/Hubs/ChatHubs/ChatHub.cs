@@ -3,9 +3,11 @@ using App.Core.Constants;
 using App.DTOs.ChatDTOs;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Net.Http.Headers;
 using Org.BouncyCastle.Asn1.Ocsp;
 using Org.BouncyCastle.Security;
@@ -21,12 +23,14 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
     public class ChatHub : Hub<IChatClient>
     {
         private IChatService _chatService;
+        private IUserService _userService;
         private ILogger<ChatHub> _logger;
 
-        public ChatHub(IChatService chatService, ILogger<ChatHub> logger)
+        public ChatHub(IChatService chatService, ILogger<ChatHub> logger, IUserService userService)
         {
             _chatService = chatService;
             _logger = logger;
+            _userService = userService;
         }
 
         public override async Task OnConnectedAsync()
@@ -184,19 +188,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         /// <returns></returns>
         private string GetUserId()
         {
-            try
-            {
-                //var token = Context.GetHttpContext().Request.Query.FirstOrDefault(c => c.Key.Equals("access_token")).Value;
-                var token2 = Context.GetHttpContext().Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim();
-                var handler = new JwtSecurityTokenHandler();
-                var securityToken = handler.ReadJwtToken(token2);
-                var userId = securityToken.Claims.FirstOrDefault(c => c.Type.Equals(JwtRegisteredClaimNames.Sub)).Value;
-                return userId;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"FAILED_TO_GET_USER_ID_FROM_TOKEN \n {ex.Message}");
-            }
+            return _userService.GetCurrentUserId();
         }
     }
 }
