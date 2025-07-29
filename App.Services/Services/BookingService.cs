@@ -8,7 +8,6 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace App.Services.Services
 {
@@ -27,12 +26,7 @@ namespace App.Services.Services
 
         public async Task<BasePaginatedList<BookingListItemDTO>> GetLearnerBookingsAsync(int page = 1, int pageSize = 10)
         {
-            var learnerId = _currentUserProvider.GetCurrentUserId();
-            if (string.IsNullOrEmpty(learnerId))
-                throw new ErrorException(
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCode.Unauthorized,
-                    "User is not authenticated.");
+            var learnerId = GetCurrentUserIdOrThrow();
 
             var query = _unitOfWork.GetRepository<Booking>()
                 .ExistEntities()
@@ -48,12 +42,7 @@ namespace App.Services.Services
 
         public async Task<BasePaginatedList<BookingListItemDTO>> GetTutorBookingsAsync(int page = 1, int pageSize = 10)
         {
-            var tutorId = _currentUserProvider.GetCurrentUserId();
-            if (string.IsNullOrEmpty(tutorId))
-                throw new ErrorException(
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCode.Unauthorized,
-                    "User is not authenticated.");
+            var tutorId = GetCurrentUserIdOrThrow();
 
             var query = _unitOfWork.GetRepository<Booking>()
                 .ExistEntities()
@@ -69,12 +58,7 @@ namespace App.Services.Services
 
         public async Task<BookingDetailDTO> GetBookingDetailAsync(string bookingId)
         {
-            var userId = _currentUserProvider.GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                throw new ErrorException(
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCode.Unauthorized,
-                    "User is not authenticated.");
+            var userId = GetCurrentUserIdOrThrow();
 
             var booking = await _unitOfWork.GetRepository<Booking>()
                 .ExistEntities()
@@ -96,12 +80,7 @@ namespace App.Services.Services
 
         public async Task<BookingDetailDTO> GetBookingByIdAsync(string bookingId)
         {
-            var userId = _currentUserProvider.GetCurrentUserId();
-            if (string.IsNullOrEmpty(userId))
-                throw new ErrorException(
-                    StatusCodes.Status401Unauthorized,
-                    ErrorCode.Unauthorized,
-                    "User is not authenticated.");
+            var userId = GetCurrentUserIdOrThrow();
 
             bool isAdminOrStaff = _currentUserProvider.IsInRole(Role.Admin.ToStringRole()) || 
                                     _currentUserProvider.IsInRole(Role.Staff.ToStringRole());
@@ -146,6 +125,19 @@ namespace App.Services.Services
         }
 
         #region Private Helpers
+        private string GetCurrentUserIdOrThrow()
+        {
+            var userId = _currentUserProvider.GetCurrentUserId();
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized,
+                    ErrorCode.Unauthorized,
+                    "User is not authenticated.");
+            }
+            return userId;
+        }
+        
         private async Task<BasePaginatedList<BookingListItemDTO>> GetPaginatedBookingsAsync(
             IQueryable<Booking> query, int page, int pageSize)
         {

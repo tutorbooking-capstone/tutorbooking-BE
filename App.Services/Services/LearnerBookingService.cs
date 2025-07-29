@@ -19,6 +19,9 @@ namespace App.Services.Services
         private readonly ICurrentUserProvider _currentUserProvider;
         private readonly IBackgroundJobClient _backgroundJobClient;
 
+        // Định nghĩa hằng số thời gian tối thiểu (1 giờ)
+        private const int MIN_HOURS_BEFORE_BOOKING = 1;
+
         public LearnerBookingService(
             IUnitOfWork unitOfWork,
             ICurrentUserProvider currentUserProvider,
@@ -220,10 +223,65 @@ namespace App.Services.Services
                 .FirstOrDefaultAsync(o => o.Id == request.OfferId && o.LearnerId == learnerId);
 
             if (offer == null)
-                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or not intended for this learner");
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Offer not found or not intended for this learner");
 
             if (offer.Lesson == null)
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "The lesson associated with this offer no longer exists");
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    "The lesson associated with this offer no longer exists");
+
+            // Kiểm tra hạn sử dụng của offer
+            if (offer.IsExpired())
+            {
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    $"This offer has expired. Offers are valid for {offer.ExpirationPeriod.TotalMinutes} minutes after creation or update.");
+            }
+
+            // Kiểm tra thời gian của các slot
+            var now = DateTime.UtcNow;
+            var minAllowedTime = now.AddHours(MIN_HOURS_BEFORE_BOOKING);
+            
+            foreach (var slot in offer.OfferedSlots)
+            {
+                var slotStartTime = CalculateSlotStartTime(slot.SlotDateTime.Date, slot.SlotIndex);
+                if (slotStartTime <= minAllowedTime)
+                {
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        $"Cannot book slots that start less than {MIN_HOURS_BEFORE_BOOKING} hour(s) from now. Please contact the tutor for rescheduling.");
+                }
+            }
+
+            // Kiểm tra xem có slot nào đã được book trước đó không
+            // Lấy tất cả các BookedSlot của learner
+            var existingBookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
+                .ExistEntities()
+                .Include(bs => bs.Booking)
+                .Where(bs => bs.Booking!.LearnerId == learnerId && bs.Status != SlotStatus.Cancelled)
+                .Select(bs => new { bs.BookedDate.Date, bs.SlotIndex })
+                .ToListAsync();
+
+            // Kiểm tra xem có slot nào trong offer trùng với các slot đã book không
+            foreach (var offeredSlot in offer.OfferedSlots)
+            {
+                var slotDate = offeredSlot.SlotDateTime.Date;
+                var slotIndex = offeredSlot.SlotIndex;
+
+                if (existingBookedSlots.Any(bs => bs.Date == slotDate && bs.SlotIndex == slotIndex))
+                {
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        $"You already have a booking for slot {slotIndex} on {slotDate.ToString("dd/MM/yyyy")}. Please check your schedule.");
+                }
+            }
 
             // Calculate total price
             var slotCount = offer.OfferedSlots.Count;
@@ -267,13 +325,16 @@ namespace App.Services.Services
                 
                 foreach (var offeredSlot in offer.OfferedSlots)
                 {
+                    // Chỉ lấy ngày tháng năm, bỏ giờ phút giây
+                    var slotDate = offeredSlot.SlotDateTime.Date;
+                    
                     // Calculate release time (24 hours after slot end time)
-                    var slotEndTime = offeredSlot.SlotDateTime.AddMinutes(offer.Lesson.DurationInMinutes);
+                    var slotStartTime = CalculateSlotStartTime(slotDate, offeredSlot.SlotIndex);
+                    var slotEndTime = slotStartTime.AddMinutes(offer.Lesson.DurationInMinutes);
                     var releaseTime = slotEndTime.AddHours(24); // This should be configurable
                     
                     // Create held fund
                     var heldFund = HeldFund.Create(string.Empty, offer.Lesson.Price, releaseTime);
-                    //heldFund.TrackCreate(learnerId);
                     _unitOfWork.GetRepository<HeldFund>().Insert(heldFund);
                     heldFunds.Add(heldFund);
                     
@@ -281,7 +342,7 @@ namespace App.Services.Services
                     var bookedSlot = new BookedSlot
                     {
                         BookingId = booking.Id,
-                        BookedDate = offeredSlot.SlotDateTime,
+                        BookedDate = slotDate, // Chỉ lưu ngày tháng năm
                         SlotIndex = offeredSlot.SlotIndex,
                         Status = SlotStatus.AwaitingConfirmation,
                         HeldFundId = heldFund.Id
@@ -313,6 +374,8 @@ namespace App.Services.Services
                 var systemUpdateFields = systemWallet.AddBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
                 
+                // Xóa TutorBookingOffer - cascade delete Slot liên quan
+                _unitOfWork.GetRepository<TutorBookingOffer>().Delete(offer);
                 await _unitOfWork.SaveAsync();
                 
                 // Schedule release of funds using Hangfire with injected client
@@ -354,6 +417,17 @@ namespace App.Services.Services
                 throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "System wallet not found");
                 
             return systemWallet;
+        }
+
+        // Helper method to calculate actual start time from date and slot index
+        private DateTime CalculateSlotStartTime(DateTime date, int slotIndex)
+        {
+            // Giả sử mỗi slot là 30 phút và slot đầu tiên (index 0) bắt đầu lúc 8:00 sáng
+            // Bạn có thể điều chỉnh logic này theo cách tính slot của hệ thống của bạn
+            int hoursToAdd = slotIndex / 2; // Mỗi giờ có 2 slot (30 phút mỗi slot)
+            int minutesToAdd = (slotIndex % 2) * 30; // 0 hoặc 30 phút
+            
+            return date.AddHours(8 + hoursToAdd).AddMinutes(minutesToAdd);
         }
     }
 }
