@@ -17,6 +17,8 @@ using App.Repositories.Models.Scheduling;
 using System.Security.Cryptography;
 using App.Repositories.Models.Rating;
 using App.DTOs.RatingDTOs;
+using System.Linq.Expressions;
+using LinqKit;
 
 namespace App.Services.Services.User
 {
@@ -606,31 +608,41 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page =1, int size =20)
+		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes, int page =1, int size =20)
 		{
+            var predicate = PredicateBuilder.New<Tutor>(true);
+            if (languageCodes.Length >0)
+                predicate.And(t => t.Languages.Any(x => languageCodes.Contains(x.LanguageCode)));
+
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                    .Include(t => t.User)
+                    .Where(predicate)
                     .OrderByDescending(t => t.BecameTutorAt)
                     .Skip((page - 1) * size).Take(size)
+                    .Select(t => new TutorCardDTO()
+                    {
+                        TutorId = t.UserId,
+                        ProfileImageUrl = t.User.ProfilePictureUrl,
+                        FullName = t.User.FullName,
+                        NickName = t.NickName,
+                        Description = t.Description,
+                        IsProfessional = t.Languages.Any(),
+                        Rating = t.BookingSlotRatings.Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                                 .DefaultIfEmpty().Average(),
+                        Languages = t.Languages.OrderByDescending(l => l.IsPrimary)
+                                    .ThenByDescending(l => l.Proficiency)
+                                    .Select(l => new TutorCardLanguageDTO
+                                    {
+                                        LanguageCode = l.LanguageCode,
+                                        IsPrimary = l.IsPrimary,
+                                        Proficiency = l.Proficiency
+                                    })
+                                    .ToList()
+                                    })
                     .ToListAsync();
 
-                var tutorResponses = new List<TutorCardDTO>();
-                foreach (var tutor in tutors)
-                {
-                    var tutorRating = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
-                        .Where(e => e.TutorId.Equals(tutor.UserId))
-                        .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
-                        .DefaultIfEmpty().AverageAsync();
-
-                    tutorResponses.Add(tutor.ToTutorCardDTO(
-                        await _unitOfWork.GetRepository<TutorLanguage>().ExistEntities()
-                        .Where(t => t.TutorId.Equals(tutor.UserId))
-                        .ToListAsync(),
-                        tutorRating));
-                }
-                return tutorResponses;
+                return tutors;
             });
 			return response;
 		}

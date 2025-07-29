@@ -120,9 +120,9 @@ namespace TutorBooking.APIService.Controllers
 
 		[HttpGet("all")]
 		[AllowAnonymous]
-		public async Task<IActionResult> GetAllTutors(int page =1, int size =20)
+		public async Task<IActionResult> GetAllTutors([FromQuery]string[]? languageCodes, int page =1, int size =20)
 		{
-			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(page, size);
+			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, page, size);
 			return Ok(new BaseResponseModel<List<TutorCardDTO>>(
 				data: tutorCards,
 				message: "Danh sách gia sư."

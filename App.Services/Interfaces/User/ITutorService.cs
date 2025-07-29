@@ -20,7 +20,7 @@ namespace App.Services.Interfaces.User
         Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync();
         Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync();
         Task<List<TutorCardDTO>> GetTutorCardListAsync();
-		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(int page, int size);
+		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes, int page = 1, int size = 20);
 
 		// Status Management 
 		//Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
