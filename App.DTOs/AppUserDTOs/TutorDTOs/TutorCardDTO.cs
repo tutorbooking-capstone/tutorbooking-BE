@@ -13,6 +13,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public bool IsProfessional { get; set; }
         public double Rating { get; set; }
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
+        public List<DailyAvailabilityPatternDTO> AvailabilityPatterns { get; set; } = new();
     }
 
     public class TutorCardLanguageDTO

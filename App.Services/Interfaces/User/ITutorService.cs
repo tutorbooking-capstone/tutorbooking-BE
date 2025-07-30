@@ -1,5 +1,6 @@
 ﻿using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 
 namespace App.Services.Interfaces.User
@@ -20,7 +21,14 @@ namespace App.Services.Interfaces.User
         Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync();
         Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync();
         Task<List<TutorCardDTO>> GetTutorCardListAsync();
-		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes, int page = 1, int size = 20);
+		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes,
+            string? primaryLanguageCode,
+            DayInWeek[]? daysInWeek,
+            int[]? slotIndexes,
+            decimal? minPrice,
+            decimal? maxPrice,
+            int page = 1,
+            int size = 20);
 
 		// Status Management 
 		//Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);

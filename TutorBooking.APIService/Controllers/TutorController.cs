@@ -1,10 +1,12 @@
 ﻿using App.Core.Base;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -120,9 +122,16 @@ namespace TutorBooking.APIService.Controllers
 
 		[HttpGet("all")]
 		[AllowAnonymous]
-		public async Task<IActionResult> GetAllTutors([FromQuery]string[]? languageCodes, int page =1, int size =20)
+		public async Task<IActionResult> GetAllTutors([FromQuery] string[]? languageCodes,
+            [FromQuery] string? primaryLanguageCode,
+            [FromQuery] DayInWeek[]? daysInWeek,
+            [FromQuery] int[]? slotIndexes,
+            [FromQuery] decimal? minPrice,
+            [FromQuery] decimal? maxPrice,
+            int page = 1,
+            int size = 20)
 		{
-			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, page, size);
+			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, primaryLanguageCode, daysInWeek, slotIndexes,minPrice, maxPrice, page, size);
 			return Ok(new BaseResponseModel<List<TutorCardDTO>>(
 				data: tutorCards,
 				message: "Danh sách gia sư."

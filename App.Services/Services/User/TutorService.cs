@@ -1,24 +1,26 @@
 ﻿using App.Core.Base;
+using App.Core.Constants;
+using App.Core.Mapper;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.BlogDTOs;
 using App.DTOs.HashtagDTOs;
+using App.DTOs.RatingDTOs;
 using App.Repositories.Models;
+using App.Repositories.Models.Papers;
+using App.Repositories.Models.Rating;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
+using LinqKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using App.Core.Constants;
-using App.Repositories.Models.Papers;
+using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Microsoft.Extensions.Logging;
-using App.Core.Mapper;
-using App.Repositories.Models.Scheduling;
-using System.Security.Cryptography;
-using App.Repositories.Models.Rating;
-using App.DTOs.RatingDTOs;
+using StackExchange.Profiling.Internal;
 using System.Linq.Expressions;
-using LinqKit;
+using System.Security.Cryptography;
 
 namespace App.Services.Services.User
 {
@@ -608,12 +610,50 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes, int page =1, int size =20)
+		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(
+            string[]? languageCodes,
+            string? primaryLanguageCode,
+            DayInWeek[]? daysInWeek,
+            int[]? slotIndexes,
+            decimal? minPrice,
+            decimal? maxPrice,
+            int page =1,
+            int size =20
+            )
 		{
+
             var predicate = PredicateBuilder.New<Tutor>(true);
+
+            // language filter
             if (languageCodes.Length >0)
                 predicate.And(t => t.Languages.Any(x => languageCodes.Contains(x.LanguageCode)));
 
+            // primary Language filter
+            if (!primaryLanguageCode.IsNullOrWhiteSpace())
+                predicate.And(t => t.Languages.Any(x => x.LanguageCode.ToLower().Contains(primaryLanguageCode.ToLower()) && x.IsPrimary == true));
+
+            // timeslot filter
+            if (daysInWeek.Length > 0 || slotIndexes.Length > 0)
+            {
+                var dayPredicate = PredicateBuilder.New<AvailabilitySlot>(true);
+                if (daysInWeek.Length > 0)
+                    dayPredicate.And(t => daysInWeek.Contains(t.DayInWeek));
+                if (slotIndexes.Length > 0)
+                    dayPredicate.And(t => slotIndexes.Contains(t.SlotIndex));
+                predicate.And(t => t.AvailabilityPatterns.Any(a => a.Slots.AsQueryable().Any(dayPredicate)));
+            };
+
+            // price filter
+            if (minPrice.HasValue || maxPrice.HasValue)
+            {
+                var pricePredicate = PredicateBuilder.New<Lesson>(true);
+                if (minPrice.HasValue)
+                    pricePredicate.And(l => l.Price >= minPrice);
+                if (maxPrice.HasValue)
+                    pricePredicate.And(l => l.Price <= maxPrice);
+                predicate.And(t => t.Lessons.AsQueryable().Any(pricePredicate));
+            }
+                
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
@@ -627,9 +667,16 @@ namespace App.Services.Services.User
                         FullName = t.User.FullName,
                         NickName = t.NickName,
                         Description = t.Description,
-                        IsProfessional = t.Languages.Any(),
-                        Rating = t.BookingSlotRatings.Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
-                                 .DefaultIfEmpty().Average(),
+                        IsProfessional = t.BookingSlotRatings.Count >= 50 
+                                        && 
+                                        t.BookingSlotRatings
+                                        .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                                        .DefaultIfEmpty()
+                                        .Average() >= 4.5,
+                        Rating = t.BookingSlotRatings
+                                .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                                .DefaultIfEmpty()
+                                .Average(),
                         Languages = t.Languages.OrderByDescending(l => l.IsPrimary)
                                     .ThenByDescending(l => l.Proficiency)
                                     .Select(l => new TutorCardLanguageDTO
@@ -638,13 +685,29 @@ namespace App.Services.Services.User
                                         IsPrimary = l.IsPrimary,
                                         Proficiency = l.Proficiency
                                     })
-                                    .ToList()
-                                    })
+                                    .ToList(),
+                        AvailabilityPatterns = t.AvailabilityPatterns.
+                                                OrderByDescending(a => a.AppliedFrom)
+                                                .Take(1)
+                                                .SelectMany(a => a.Slots
+                                                                .GroupBy(slot => slot.DayInWeek)
+                                                                .Select(group => new DailyAvailabilityPatternDTO
+                                                                {
+                                                                    Day = group.Key,
+                                                                    Date = a.AppliedFrom.AddDays((int)group.Key),
+                                                                    TimeSlotIndex = group.Select(slot => slot.SlotIndex).OrderBy(x => x).ToList()
+                                                                }))
+                                                .ToList(),
+                    })
                     .ToListAsync();
-
                 return tutors;
             });
 			return response;
 		}
+
+        public void UselessMethod(DayInWeek[] daysInWeek, int[] slotIndexes)
+        {
+            Expression<Func<Tutor, bool>> testPredicate = t => t.AvailabilityPatterns.Any(a => a.Slots.Any(s => daysInWeek.Contains(s.DayInWeek) && slotIndexes.Contains(s.SlotIndex)));
+        }
     }
 }
