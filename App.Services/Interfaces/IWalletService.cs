@@ -1,5 +1,6 @@
 using App.Core.Base;
 using App.DTOs.PaymentDTOs;
+using App.Repositories.Models;
 
 namespace App.Services.Interfaces
 {
@@ -8,6 +9,7 @@ namespace App.Services.Interfaces
         // Wallet management
         Task<WalletResponse> GetWalletAsync(string? userId = null);
         Task<WalletResponse> GetSystemWalletAsync();
+        Task<Wallet> GetEscrowWalletAsync();
         Task<bool> CreateWalletIfNotExistsAsync(string userId);
         Task<bool> CreateWalletForAllUsersAsync();
         

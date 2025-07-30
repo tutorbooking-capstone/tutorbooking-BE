@@ -71,6 +71,7 @@ namespace App.Repositories.Models
         
         public static Transaction CreatePaymentTransaction(
             string sourceWalletId, 
+            string targetWalletId,   
             decimal amount, 
             string referenceId, 
             string description)
@@ -78,7 +79,7 @@ namespace App.Repositories.Models
             return new Transaction
             {
                 SourceWalletId = sourceWalletId,
-                TargetWalletId = null,  // Giữ trong escrow
+                TargetWalletId = targetWalletId,  
                 Amount = amount,
                 Type = TransactionType.Payment,
                 Status = TransactionStatus.Success,

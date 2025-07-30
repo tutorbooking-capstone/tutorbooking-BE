@@ -321,7 +321,7 @@ namespace App.Services.Services
                 // Create booked slots and held funds
                 var bookedSlots = new List<BookedSlot>();
                 var heldFunds = new List<HeldFund>();
-                var systemWallet = await GetSystemWalletAsync();
+                var escrowWallet = await GetEscrowWalletAsync();
                 
                 foreach (var offeredSlot in offer.OfferedSlots)
                 {
@@ -357,12 +357,13 @@ namespace App.Services.Services
                     _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, h => h.BookedSlotId);
                 }
                 
-                // Create transaction to move funds from learner wallet to system wallet (escrow)
+                // Create transaction to move funds from learner wallet to escrow wallet (escrow)
                 var transaction = Transaction.CreatePaymentTransaction(
                     learnerWallet.Id,
+                    escrowWallet.Id,
                     totalPrice,
                     booking.Id,
-                    $"Payment for booking {booking.Id} with {slotCount} slots"
+                    $"Payment for booking {booking.Id} with {slotCount} slots held in escrow"
                 );
                 
                 _unitOfWork.GetRepository<Transaction>().Insert(transaction);
@@ -371,8 +372,8 @@ namespace App.Services.Services
                 var learnerUpdateFields = learnerWallet.SubtractBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdateFields);
                 
-                var systemUpdateFields = systemWallet.AddBalance(totalPrice);
-                _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
+                var escrowUpdateFields = escrowWallet.AddBalance(totalPrice);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
                 
                 // Xóa TutorBookingOffer - cascade delete Slot liên quan
                 _unitOfWork.GetRepository<TutorBookingOffer>().Delete(offer);
@@ -417,6 +418,21 @@ namespace App.Services.Services
                 throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "System wallet not found");
                 
             return systemWallet;
+        }
+
+        private async Task<Wallet> GetEscrowWalletAsync()
+        {
+            var escrowWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.Type == WalletType.Escrow);
+                
+            if (escrowWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError, 
+                    ErrorCode.ServerError, 
+                    "Không tìm thấy ví escrow");
+            
+            return escrowWallet;
         }
 
         // Helper method to calculate actual start time from date and slot index

@@ -17,16 +17,19 @@ namespace App.Services.Services
         private readonly ILogger<PaymentProcessingService> _logger;
         private readonly decimal _platformFeePercentage = 0.1m; // 10% platform fee
         private readonly BookingSettings _bookingSettings;
+        private readonly IWalletService _walletService;
 
 
         public PaymentProcessingService(
             IUnitOfWork unitOfWork,
             ILogger<PaymentProcessingService> logger,
-            IOptions<BookingSettings> bookingSettings)
+            IOptions<BookingSettings> bookingSettings,
+            IWalletService walletService)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _bookingSettings = bookingSettings.Value;
+            _walletService = walletService;
         }
 
         public async Task ProcessHeldFundReleaseAsync(string heldFundId)
@@ -38,7 +41,7 @@ namespace App.Services.Services
                 var heldFund = await _unitOfWork.GetRepository<HeldFund>()
                     .ExistEntities()
                     .Include(h => h.BookedSlot)
-                    .ThenInclude(bs => bs.Booking)
+                    .ThenInclude(bs => bs!.Booking)
                     .FirstOrDefaultAsync(h => h.Id == heldFundId);
                 
                 if (heldFund == null)
@@ -68,6 +71,11 @@ namespace App.Services.Services
                 }
                 else if (heldFund.BookedSlot.Status == SlotStatus.Cancelled)
                 {
+                    if (string.IsNullOrEmpty(booking.LearnerId))
+                    {
+                        _logger.LogError("Booking {BookingId} associated with held fund {HeldFundId} has a null or empty LearnerId. Cannot process refund.", booking.Id, heldFund.Id);
+                        return;
+                    }
                     await RefundToLearner(heldFund, booking.LearnerId);
                 }
                 else
@@ -92,7 +100,8 @@ namespace App.Services.Services
         
         private async Task ReleaseToTutor(HeldFund heldFund, string tutorId)
         {
-            // Get system wallet
+            // Get escrow wallet
+            var escrowWallet = await _walletService.GetEscrowWalletAsync();
             var systemWallet = await GetSystemWalletAsync();
             
             // Get tutor wallet
@@ -113,7 +122,7 @@ namespace App.Services.Services
             // Create transactions
             var tutorTransaction = new Transaction
             {
-                SourceWalletId = systemWallet.Id,
+                SourceWalletId = escrowWallet.Id,
                 TargetWalletId = tutorWallet.Id,
                 Amount = tutorAmount,
                 Type = TransactionType.Payment,
@@ -122,16 +131,29 @@ namespace App.Services.Services
                 Description = $"Payment for completed session (HeldFund: {heldFund.Id})"
             };
             
-            _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
+            var feeTransaction = new Transaction
+            {
+                SourceWalletId = escrowWallet.Id,
+                TargetWalletId = systemWallet.Id,
+                Amount = platformFee,
+                Type = TransactionType.Fee,
+                Status = TransactionStatus.Success,
+                ReferenceId = heldFund.Id,
+                Description = $"Platform fee for session (HeldFund: {heldFund.Id})"
+            };
             
-            // Update wallet balances
-            var systemUpdateFields = systemWallet.SubtractBalance(heldFund.Amount);
+            _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
+            _unitOfWork.GetRepository<Transaction>().Insert(feeTransaction);
+            
+            var escrowUpdateFields = escrowWallet.SubtractBalance(heldFund.Amount);
+            _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
+            
+            var systemUpdateFields = systemWallet.AddBalance(platformFee);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
             
             var tutorUpdateFields = tutorWallet.AddBalance(tutorAmount);
             _unitOfWork.GetRepository<Wallet>().UpdateFields(tutorWallet, tutorUpdateFields);
             
-            // Update held fund status
             var heldFundUpdateFields = heldFund.UpdateStatus(HeldFundStatus.ReleasedToTutor);
             _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdateFields);
             

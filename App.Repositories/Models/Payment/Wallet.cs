@@ -9,7 +9,8 @@ namespace App.Repositories.Models
     public enum WalletType
     {
         Personal = 0,
-        System = 1
+        System = 1,
+        Escrow = 2
     }
 
     public enum WalletStatus

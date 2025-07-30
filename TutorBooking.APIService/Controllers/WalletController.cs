@@ -72,6 +72,17 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpGet("escrow")]
+        [AuthorizeRoles(Role.Admin)]
+        public async Task<IActionResult> GetEscrowWallet()
+        {
+            var escrowWallet = await _walletService.GetEscrowWalletAsync();
+            return Ok(new BaseResponseModel<WalletResponse>(
+                data: WalletResponse.FromEntity(escrowWallet, escrowWallet.Balance),
+                message: "Thông tin ví escrow."
+            ));
+        }
+
         // [HttpPost("create-for-all")]
         // //[AuthorizeRoles(Role.Admin)]    ### Just Comment For Test
         // [AllowAnonymous]

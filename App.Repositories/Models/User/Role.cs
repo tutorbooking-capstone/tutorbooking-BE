@@ -8,7 +8,8 @@ namespace App.Repositories.Models.User
         Admin,
         Tutor,
         Learner,
-        Staff
+        Staff,
+        Manager
     }
 
     #region Extensions

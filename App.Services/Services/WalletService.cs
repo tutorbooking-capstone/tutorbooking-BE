@@ -172,6 +172,26 @@ namespace App.Services.Services
                 _unitOfWork.GetRepository<Wallet>().Insert(systemWallet);
             }
             
+            // Tạo ví escrow nếu chưa tồn tại
+            var escrowWalletExists = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .AnyAsync(w => w.Type == WalletType.Escrow);
+                
+            if (!escrowWalletExists)
+            {
+                var escrowWallet = new Wallet
+                {
+                    UserId = null,
+                    Type = WalletType.Escrow,
+                    Balance = 0,
+                    Currency = "VND",
+                    Status = WalletStatus.Active
+                };
+                
+                escrowWallet.TrackCreate(GetCurrentActorId());
+                _unitOfWork.GetRepository<Wallet>().Insert(escrowWallet);
+            }
+            
             await _unitOfWork.SaveAsync();
             return true;
         }
@@ -251,6 +271,21 @@ namespace App.Services.Services
             
             // Ensure available balance is not negative
             return Math.Max(0, availableBalance);
+        }
+
+        public async Task<Wallet> GetEscrowWalletAsync()
+        {
+            var escrowWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.Type == WalletType.Escrow);
+                
+            if (escrowWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError, 
+                    ErrorCode.ServerError, 
+                    "Không tìm thấy ví escrow");
+                    
+            return escrowWallet;
         }
 
 
