@@ -62,6 +62,8 @@ namespace App.Services
             services.AddScoped<IPaymentProcessingService, PaymentProcessingService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IDepositService, DepositService>();
+            services.AddScoped<IWithdrawalService, WithdrawalService>();
+            services.AddScoped<IBankAccountService, BankAccountService>();
             services.AddScoped<IFeeService, FeeService>();
             services.AddPayosServices();
             #endregion
