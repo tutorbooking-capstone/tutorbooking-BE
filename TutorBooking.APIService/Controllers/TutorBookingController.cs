@@ -95,5 +95,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "Xóa đề nghị thành công."
             ));
         }
+
+        [HttpPatch("booked-slots/{bookedSlotId}/complete")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> MarkSlotAsCompleted([FromRoute] string bookedSlotId)
+        {
+            await _service.MarkSlotAsCompletedAsync(bookedSlotId);
+            return Ok(new BaseResponseModel<object>(
+                data: null,
+                message: "Successfully marked the slot as completed."
+            ));
+        }
     }
 }

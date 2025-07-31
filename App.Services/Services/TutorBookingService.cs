@@ -226,5 +226,78 @@ namespace App.Services.Services
 
             return offer;
         }
+
+        public async Task MarkSlotAsCompletedAsync(string bookedSlotId)
+        {
+            var tutorId = GetAuthenticatedTutorId();
+
+            var bookedSlotRepo = _unitOfWork.GetRepository<BookedSlot>();
+            var bookedSlot = await bookedSlotRepo.ExistEntities()
+                .Include(bs => bs.Booking)
+                .ThenInclude(b => b!.LessonSnapshot)
+                .FirstOrDefaultAsync(bs => bs.Id == bookedSlotId);
+
+
+            // Rule 1: Check if the slot exists
+            if (bookedSlot == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Booked slot not found.");
+
+            // Rule 2: Authorization: Check if the slot belongs to the authenticated tutor
+            if (bookedSlot.Booking?.TutorId != tutorId)
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden, 
+                    ErrorCode.Forbidden, 
+                    "You are not authorized to modify this booked slot.");
+
+            // Rule 3 (Optional Business Rule): Timing Check
+            // A tutor should only be able to mark a slot as complete *after* it has finished.
+            /*
+            if (bookedSlot.Booking?.LessonSnapshot != null)
+            {
+                var slotStartTime = CalculateSlotStartTime(bookedSlot.BookedDate, bookedSlot.SlotIndex);
+                var slotEndTime = slotStartTime.AddMinutes(bookedSlot.Booking.LessonSnapshot.DurationInMinutes);
+                if (DateTime.UtcNow < slotEndTime)
+                {
+                    throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Cannot mark a slot as complete before it has finished.");
+                }
+            }
+            */
+
+            try
+            {
+                // Call the entity's behavior method to handle state transition and get updated fields
+                var updateFields = bookedSlot.MarkAsCompleted(tutorId);
+
+                // Only save if there are actual changes
+                if (updateFields.Any())
+                {
+                    bookedSlotRepo.UpdateFields(bookedSlot, updateFields);
+                    await _unitOfWork.SaveAsync();
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    ex.Message);
+            }
+
+            // Note: Fund release is handled by a scheduled job. No immediate action here.
+        }
+
+        private DateTime CalculateSlotStartTime(DateTime date, int slotIndex)
+        {
+            // Business Rule: This logic assumes a fixed schedule (e.g., starting at 8 AM, 30 min slots).
+            // It should be centralized or made configurable if schedules are flexible.
+            int hoursToAdd = slotIndex / 2; // Each hour has 2 slots
+            int minutesToAdd = (slotIndex % 2) * 30; // 0 or 30 minutes
+            
+            // Using Date property to avoid time component issues from database
+            return date.Date.AddHours(8 + hoursToAdd).AddMinutes(minutesToAdd);
+        }
     }
 }

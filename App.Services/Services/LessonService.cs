@@ -126,5 +126,52 @@ namespace App.Services.Services
 
             return await GetLessonByIdAsync(lessonId);
         }
+
+        public async Task SeedLessonsAsync()
+        {
+            var tutors = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Include(t => t.User)
+                .Where(t => t.User != null && t.User.Email != null && t.User.Email.StartsWith("tutor") && t.User.Email.EndsWith("@gmail.com"))
+                .Select(t => t.User!)
+                .ToListAsync();
+
+            var random = new Random();
+            var lessonsToAdd = new List<Lesson>();
+
+            foreach (var tutor in tutors)
+            {
+                var hasLessons = await _unitOfWork.GetRepository<Lesson>().ExistEntities().AnyAsync(l => l.TutorId == tutor.Id);
+                if (hasLessons)
+                {
+                    continue;
+                }
+
+                var numberOfLessons = random.Next(1, 8); // 1 to 7 lessons
+                for (int i = 0; i < numberOfLessons; i++)
+                {
+                    lessonsToAdd.Add(new Lesson
+                    {
+                        Name = $"Sample Lesson {i + 1} by {tutor.FullName}",
+                        Description = "This is a comprehensive lesson covering the basics and advanced topics.",
+                        Note = "Seeded by system.",
+                        TargetAudience = "Beginners to Intermediate",
+                        Prerequisites = "No prior knowledge required.",
+                        LanguageCode = "en-US",
+                        Category = "General Knowledge",
+                        Price = random.Next(1000, 7001),
+                        Currency = "VND",
+                        DurationInMinutes = 30,
+                        TutorId = tutor.Id,
+                    });
+                }
+            }
+
+            if (lessonsToAdd.Any())
+            {
+                _unitOfWork.GetRepository<Lesson>().InsertRange(lessonsToAdd);
+                await _unitOfWork.SaveAsync();
+            }
+        }
     }
 }

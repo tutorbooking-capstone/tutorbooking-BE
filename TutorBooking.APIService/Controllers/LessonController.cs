@@ -3,6 +3,7 @@ using App.DTOs.LessonDTOs;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using App.Repositories.Models.User;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -56,5 +57,13 @@ namespace TutorBooking.APIService.Controllers
             await _lessonService.DeleteLessonAsync(id);
             return Ok(new BaseResponseModel<object>(null, "Lesson deleted successfully."));
         }
+
+        // [HttpPost("seed")]
+        // [AllowAnonymous]
+        // public async Task<IActionResult> SeedLessons()
+        // {
+        //     await _lessonService.SeedLessonsAsync();
+        //     return Ok(new BaseResponseModel<object>(null, "Successfully seeded lessons."));
+        // }
     }
 }

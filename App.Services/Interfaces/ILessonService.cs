@@ -9,5 +9,6 @@ namespace App.Services.Interfaces
         Task<LessonResponse> CreateLessonAsync(CreateLessonRequest request);
         Task<LessonResponse> UpdateLessonAsync(string lessonId, UpdateLessonRequest request);
         Task DeleteLessonAsync(string lessonId);
+        Task SeedLessonsAsync();
     }
 }

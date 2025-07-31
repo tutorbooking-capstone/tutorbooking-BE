@@ -1,4 +1,6 @@
 using App.Core.Base;
+using App.Core.Utils;
+using System.Linq.Expressions;
 
 namespace App.Repositories.Models.Scheduling
 {
@@ -23,5 +25,43 @@ namespace App.Repositories.Models.Scheduling
 
         public virtual Booking? Booking { get; set; }
         public virtual HeldFund? HeldFund { get; set; }
+
+        #region Behaviors
+        public Expression<Func<BookedSlot, object>>[] MarkAsCompleted(string updatedBy)
+        {
+            if (Status == SlotStatus.Completed) return Array.Empty<Expression<Func<BookedSlot, object>>>();
+            if (Status == SlotStatus.Cancelled)
+                throw new InvalidOperationException("Cannot complete a slot that has been cancelled.");
+
+            Status = SlotStatus.Completed;
+            LastUpdatedBy = updatedBy;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
+
+            return
+            [
+                x => x.Status,
+                x => x.LastUpdatedBy!,
+                x => x.LastUpdatedTime
+            ];
+        }
+
+        public Expression<Func<BookedSlot, object>>[] MarkAsCancelled(string updatedBy)
+        {
+            if (Status == SlotStatus.Cancelled) return Array.Empty<Expression<Func<BookedSlot, object>>>();
+            if (Status == SlotStatus.Completed)
+                throw new InvalidOperationException("Cannot cancel a slot that has been completed.");
+            
+            Status = SlotStatus.Cancelled;
+            LastUpdatedBy = updatedBy;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
+
+            return
+            [
+                x => x.Status,
+                x => x.LastUpdatedBy!,
+                x => x.LastUpdatedTime
+            ];
+        }
+        #endregion
     }
 }
