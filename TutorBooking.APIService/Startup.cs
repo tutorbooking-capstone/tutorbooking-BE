@@ -1,12 +1,14 @@
-﻿using App.Repositories;
-using App.Services;
+﻿using App.Core;
 using App.DTOs;
-using TutorBooking.APIService.Middleware;
-using App.Core;
-using TutorBooking.APIService.Hubs.ChatHubs;
-using TutorBooking.APIService.Hubs.NotificationHubs;
+using App.Repositories;
+using App.Services;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Hangfire;
 using Hangfire.Dashboard;
+using TutorBooking.APIService.Hubs.ChatHubs;
+using TutorBooking.APIService.Hubs.NotificationHubs;
+using TutorBooking.APIService.Middleware;
 
 namespace TutorBooking.APIService
 {
@@ -67,6 +69,13 @@ namespace TutorBooking.APIService
                 MaxAutomaticRedirections = 10,
                 // Cấu hình SSL/TLS
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+            });
+            #endregion
+
+            #region Firebase
+            FirebaseApp.Create(new AppOptions
+            {
+                Credential = GoogleCredential.FromFile("ngoaingungay-firebase-adminsdk-fbsvc-0855eb8d07.json"),
             });
             #endregion
 

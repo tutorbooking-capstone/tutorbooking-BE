@@ -15,5 +15,6 @@ namespace App.Services.Interfaces.User
         Task LogoutAsync(RefreshTokenRequest model);
         Task SeedRegisterAsync(RegisterRequest model);
         Task<LoginResponse> LoginGoogleAsync(string credential);
+        Task<LoginResponse> LoginFirebaseAsync();
     }
 }
