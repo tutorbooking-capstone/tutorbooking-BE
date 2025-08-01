@@ -67,11 +67,25 @@ namespace App.Services.Services.User
             if (user != null)
             {
                 var claims = user.Claims.Select(c => $"{c.Type}: {c.Value}");
-                //_logger.LogDebug("User claims: {ClaimsString}", string.Join(", \n", claims));
+                Console.WriteLine($"User claims for debugging:");
+                Console.WriteLine(string.Join(Environment.NewLine, claims));
+                
+                var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (userId != null)
+                {
+                    Console.WriteLine($"Successfully extracted userId: {userId}");
+                    return userId;
+                }
+                
+                Console.WriteLine("Warning: NameIdentifier claim not found in user claims");
+                Console.WriteLine("Available claims types: " + string.Join(", ", user.Claims.Select(c => c.Type)));
+            }
+            else
+            {
+                Console.WriteLine("Warning: No authenticated user found in HttpContext");
             }
 
-            var userId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return userId ?? throw new UnauthorizedException("Cannot get userId from NameIdentifier claim");
+            throw new UnauthorizedException("Cannot get userId from NameIdentifier claim. See logs for details.");
         }
 
         public bool IsInRole(string roleName)
