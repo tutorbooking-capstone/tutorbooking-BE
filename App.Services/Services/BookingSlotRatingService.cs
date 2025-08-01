@@ -85,6 +85,13 @@ namespace App.Services.Services
             return entity;
         }
 
+        public async Task<BookingSlotRating?> GetByBookingIdAsync(string bookingSlotId)
+        {
+            var entity = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
+                .FirstOrDefaultAsync(b => b.BookingId.Equals(bookingSlotId));
+            return entity;
+        }
+
         public async Task UpdateAsync(BookingSlotRatingUpdateRequest request)
         {
             var entity = await _unitOfWork.GetRepository<BookingSlotRating>().GetByIdAsync(request.Id);
@@ -119,7 +126,7 @@ namespace App.Services.Services
             if (booking == null)
                 throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "BOOKING_NOT_FOUND");
             if (!booking.LearnerId.Equals(_userService.GetCurrentUserId()))
-                throw new ErrorException((int)StatusCode.Forbidden, ErrorCode.Forbidden, "BOOKING_NOT_BELONG_TO_THE_LOGGED_IN_LEARNER");
+                throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "BOOKING_NOT_BELONG_TO_THE_LOGGED_IN_LEARNER");
             if (!booking.BookedSlots.Any(b => b.Status == SlotStatus.Completed))
                 throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "REQUIRES_AT_LEAST_1_COMPLETED_SLOT");
         }

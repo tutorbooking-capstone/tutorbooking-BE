@@ -7,6 +7,7 @@ namespace App.Services.Interfaces
     {
         Task<BookingSlotRating> CreateAsync(BookingSlotRatingRequest request);
         Task DeleteAsync(string id);
+        Task<BookingSlotRating?> GetByBookingIdAsync(string bookingSlotId);
         Task<BookingSlotRating> GetByIdAsync(string id);
         Task<TutorRatingResponse> GetTutorRatingAsync(string tutorId);
         Task UpdateAsync(BookingSlotRatingUpdateRequest request);
