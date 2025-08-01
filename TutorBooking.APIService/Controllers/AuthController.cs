@@ -117,5 +117,11 @@ namespace TutorBooking.APIService.Controllers
             return Ok(await _authService.LoginGoogleAsync(credential));
         }
 
+        [HttpPost("login-firebase")]
+        public async Task<IActionResult> LoginFirebase()
+        {
+            return Ok(await _authService.LoginFirebaseAsync());
+        }
+
     }
 }

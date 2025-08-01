@@ -2,18 +2,21 @@
 using App.Core.Constants;
 using App.Core.Utils;
 using App.DTOs.AuthDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces.User;
+using FirebaseAdmin.Auth;
 using Google.Apis.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Data;
+using Microsoft.Net.Http.Headers;
+using StackExchange.Profiling.Internal;
 using System.Security.Cryptography;
-using App.Repositories.Models;
 
 namespace App.Services.Services.User
 {
@@ -27,6 +30,7 @@ namespace App.Services.Services.User
         private readonly ITokenService _tokenService;
         private readonly ILogger<AuthService> _logger;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -35,7 +39,8 @@ namespace App.Services.Services.User
             IConfiguration configuration,
             ITokenService tokenService,
             ILogger<AuthService> logger,
-            IUnitOfWork unitOfWork)
+            IUnitOfWork unitOfWork,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager)); ;
             _roleManager = roleManager;
@@ -44,6 +49,7 @@ namespace App.Services.Services.User
             _tokenService = tokenService;
             _logger = logger;
             _unitOfWork = unitOfWork;
+            _httpContextAccessor = httpContextAccessor;
         }
         #endregion
 
@@ -535,6 +541,94 @@ namespace App.Services.Services.User
                 Token = tokenResponse,
                 Roles = roles.ToList(),
             };
+        }
+
+        public async Task<LoginResponse> LoginFirebaseAsync()
+        {
+            try
+            {
+                var token = _httpContextAccessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim(); ;
+                if (token.IsNullOrWhiteSpace())
+                    throw new ErrorException(400, ErrorCode.BadRequest, "FIREBASE_TOKEN_NOT_FOUND");
+
+                FirebaseToken decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(token);
+                string firebaseUid = decodedToken.Uid;
+                string? email = decodedToken.Claims.FirstOrDefault(c => c.Key.Equals("email")).Value.ToString();
+
+                var user = await _userManager.Users.FirstOrDefaultAsync(u => u.FirebaseUserId.Equals(firebaseUid));
+                if (user == null && !email.IsNullOrWhiteSpace())
+                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail.Equals(_userManager.KeyNormalizer.NormalizeEmail(email)));
+                if (user == null)
+                {
+                    #region create learner
+                    var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
+                    user = new AppUser
+                    {
+                        Id = Guid.NewGuid().ToString("N"),
+                        FirebaseUserId = firebaseUid,
+                        Email = email ?? "",
+                        UserName = email ?? "",
+                        NormalizedEmail = _userManager.KeyNormalizer.NormalizeEmail(email ?? ""),
+                        NormalizedUserName = _userManager.KeyNormalizer.NormalizeName(email ?? ""),
+                        FullName = email ?? "",
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                        PasswordHash = "",
+                        PhoneNumberConfirmed = false,
+                        EmailConfirmed = true,
+                        CreatedTime = DateTime.UtcNow,
+                    };
+
+                    var result = await _userManager.CreateAsync(user);
+                    user.TrackCreate(user.Id);
+                    if (!result.Succeeded)
+                        throw new ErrorException(
+                            StatusCodes.Status400BadRequest,
+                            ErrorCode.BadRequest,
+                            result.Errors.FirstOrDefault()?.Description ?? "Không thể tạo tài khoản");
+
+                    result = await _userManager.AddToRoleAsync(user, Role.Learner.ToString());
+                    if (!result.Succeeded)
+                    {
+                        await _userManager.DeleteAsync(user);
+                        throw new ErrorException(
+                            StatusCodes.Status400BadRequest,
+                            ErrorCode.BadRequest,
+                            result.Errors.FirstOrDefault()?.Description ?? "Không thể gán vai trò");
+                    }
+
+                    // Create Learner entity
+                    var learner = user.BecomeLearner(user.Id);
+                    _unitOfWork.GetRepository<Learner>().Insert(learner);
+                    await _unitOfWork.SaveAsync();
+
+                    // Create wallet for the new user
+                    var wallet = new Wallet
+                    {
+                        UserId = user.Id,
+                        Type = WalletType.Personal,
+                        Balance = 0,
+                        Currency = "VND",
+                        Status = WalletStatus.Active
+                    };
+
+                    wallet.TrackCreate(user.Id);
+                    _unitOfWork.GetRepository<Wallet>().Insert(wallet);
+                    await _unitOfWork.SaveAsync();
+                    #endregion
+                }
+
+                var roles = await _userManager.GetRolesAsync(user);
+                var tokenResponse = await _tokenService.GenerateTokens(user, roles);
+                return new LoginResponse
+                {
+                    Token = tokenResponse,
+                    Roles = roles.ToList(),
+                };
+            } 
+            catch (FirebaseAuthException ex) // Hide AuthException to prevent attacks
+            {
+                throw new ErrorException(401, ErrorCode.Unauthorized, "UNAUTHORIZED");
+            }
         }
     }
 
