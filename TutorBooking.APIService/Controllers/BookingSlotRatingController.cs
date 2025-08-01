@@ -80,6 +80,17 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpGet("booking/{bookingId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetByBookingId(string bookingId)
+        {
+            var response = await _bookingSlotRatingService.GetByBookingIdAsync(bookingId);
+            return Ok(new BaseResponseModel<object>(
+                data: response,
+                message: "SUCCESS"
+            ));
+        }
+
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> UpdateRating(BookingSlotRatingUpdateRequest request)
