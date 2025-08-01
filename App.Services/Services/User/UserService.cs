@@ -59,33 +59,39 @@ namespace App.Services.Services.User
                     ResponseCodeConstants.BADREQUEST, 
                     "Mật khẩu hiện tại không đúng hoặc mật khẩu mới không hợp lệ.");
         }
-
         public string GetCurrentUserId()
         {
             var user = _contextAccessor.HttpContext?.User;
+            var httpContextNull = _contextAccessor.HttpContext == null;
+            var userNull = user == null;
+            
+            string errorDetails = $"Debug details - HttpContext is null: {httpContextNull}, User is null: {userNull}";
             
             if (user != null)
             {
+                var isAuthenticated = user.Identity?.IsAuthenticated;
+                var authType = user.Identity?.AuthenticationType;
                 var claims = user.Claims.Select(c => $"{c.Type}: {c.Value}");
-                Console.WriteLine($"User claims for debugging:");
-                Console.WriteLine(string.Join(Environment.NewLine, claims));
+                var allClaimTypes = string.Join(", ", user.Claims.Select(c => c.Type));
+                
+                errorDetails += $"\nAuthentication status: {isAuthenticated}";
+                errorDetails += $"\nAuthentication type: {authType}";
+                errorDetails += $"\nAll claims:\n{string.Join(Environment.NewLine, claims)}";
                 
                 var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (userId != null)
                 {
-                    Console.WriteLine($"Successfully extracted userId: {userId}");
                     return userId;
                 }
                 
-                Console.WriteLine("Warning: NameIdentifier claim not found in user claims");
-                Console.WriteLine("Available claims types: " + string.Join(", ", user.Claims.Select(c => c.Type)));
+                errorDetails += $"\nNameIdentifier claim not found. Available claim types: {allClaimTypes}";
             }
             else
             {
-                Console.WriteLine("Warning: No authenticated user found in HttpContext");
+                errorDetails += $"\nHttpContext dump: {_contextAccessor.HttpContext}";
             }
 
-            throw new UnauthorizedException("Cannot get userId from NameIdentifier claim. See logs for details.");
+            throw new UnauthorizedException($"Cannot get userId from NameIdentifier claim. {errorDetails}");
         }
 
         public bool IsInRole(string roleName)
