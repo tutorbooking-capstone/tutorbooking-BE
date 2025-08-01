@@ -37,7 +37,15 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         public override async Task OnConnectedAsync()
         {
             await base.OnConnectedAsync();
-            var userId = _userService.GetCurrentUserId();
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogWarning("User ID not found in Hub Context for connection {ConnectionId}. Aborting connection.", Context.ConnectionId);
+                Context.Abort(); // Ngắt kết nối nếu không xác thực được
+                return;
+            }
+
             var roles = await _userService.GetUserRolesAsync(userId);
             _userIdMapper.Remove(userId);
             _userIdMapper.TryAdd(userId, Context.ConnectionId);
@@ -49,28 +57,45 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             await base.OnDisconnectedAsync(exception);
-            var userId = _userService.GetCurrentUserId();
-            _userIdMapper.Remove(userId);
+            // Lấy userId từ mapper thay vì context vì context có thể không còn đáng tin cậy
+            var userId = _userIdMapper.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            if(!string.IsNullOrEmpty(userId))
+            {
+                _userIdMapper.Remove(userId);
+            }
         }
 
         public async Task MarkAsRead(string notificationId)
         {
             try
             {
-                await _notificationService.MarkAsReadAsync(notificationId, _userService.GetCurrentUserId());
-                await Clients.Client(_userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId())).MarkAsReadResult(200, "SUCCESS");
+                var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userId))
+                {
+                    throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "User not authenticated");
+                }
+
+                await _notificationService.MarkAsReadAsync(notificationId, userId);
+
+                var connectionId = _userIdMapper.GetValueOrDefault(userId);
+                if(connectionId != null)
+                    await Clients.Client(connectionId).MarkAsReadResult(200, "SUCCESS");
             }
             catch (ErrorException ex)
             {
                 _logger.LogError(ex.ToString());
-                var connectionId = _userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId());
+                var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if(userId == null) return;
+                var connectionId = _userIdMapper.GetValueOrDefault(userId);
                 if (connectionId != null)
                     await Clients.Client(connectionId).MarkAsReadResult(ex.StatusCode, ex.Message);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-                var connectionId = _userIdMapper.GetValueOrDefault(_userService.GetCurrentUserId());
+                var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if(userId == null) return;
+                var connectionId = _userIdMapper.GetValueOrDefault(userId);
                 if (connectionId != null)
                     await Clients.Client(connectionId).MarkAsReadResult(500, ex.Message);
             }

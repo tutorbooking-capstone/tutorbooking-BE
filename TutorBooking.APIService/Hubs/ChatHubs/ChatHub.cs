@@ -188,7 +188,14 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         /// <returns></returns>
         private string GetUserId()
         {
-            return _userService.GetCurrentUserId();
+            var userId = Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                _logger.LogError("Cannot get userId from Hub Context for connection {ConnectionId}", Context.ConnectionId);
+                // Ném một HubException để client có thể xử lý lỗi này một cách an toàn
+                throw new HubException("User is not authenticated.");
+            }
+            return userId;
         }
     }
 }
