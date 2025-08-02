@@ -47,7 +47,7 @@ namespace TutorBooking.APIService.Controllers
                         BookingId = response.BookingId,
                         LearnerId = response.LearnerId,
                         AverageRating = (response.TeachingQuality + response.Attitude + response.Commitment) / 3
-                    })
+                    },new JsonSerializerOptions { WriteIndented = false })
                 },
                 ReceiverUserIds = [response.TutorId]
             });

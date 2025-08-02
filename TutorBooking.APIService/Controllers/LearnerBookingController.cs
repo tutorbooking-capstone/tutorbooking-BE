@@ -45,7 +45,7 @@ namespace TutorBooking.APIService.Controllers
                     {
                         ExpectedStartDate = request.ExpectedStartDate,
                         LessonId = request.LessonId,
-                    })
+                    }, new JsonSerializerOptions {WriteIndented = false})
                 },
                 ReceiverUserIds = [request.TutorId]
             });
@@ -127,7 +127,7 @@ namespace TutorBooking.APIService.Controllers
                         Id = result.Id,
                         LearnerId = result.LearnerId,
                         LessonName = result.LessonName,
-                    })
+                    }, new JsonSerializerOptions { WriteIndented = false })
                 },
                 ReceiverUserIds =[result.TutorId]
             });
