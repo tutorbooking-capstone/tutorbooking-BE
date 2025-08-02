@@ -1,14 +1,16 @@
 ﻿using App.Core.Base;
 using App.DTOs.BookingDTOs;
-using App.Repositories.Models.User;
-using App.Repositories.Models.Notifications;
-using App.Services.Interfaces;
 using App.DTOs.NotificationDTOs;
+using App.Repositories.Models.Notifications;
+using App.Repositories.Models.User;
+using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using TutorBooking.APIService.Hubs.NotificationHubs;
 using System.Text.Json;
+using TutorBooking.APIService.Hubs.NotificationHubs;
+using static Google.Apis.Requests.BatchRequest;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -20,12 +22,14 @@ namespace TutorBooking.APIService.Controllers
         private readonly ILearnerBookingService _service;
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
+        private readonly IUserService _userService;
 
-        public LearnerBookingController(ILearnerBookingService service, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext)
+        public LearnerBookingController(ILearnerBookingService service, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext, IUserService userService)
         {
             _service = service;
             _notificationService = notificationService;
             _hubContext = hubContext;
+            _userService = userService;
         }
 
         [HttpPut("time-slots")]
@@ -45,6 +49,7 @@ namespace TutorBooking.APIService.Controllers
                     {
                         ExpectedStartDate = request.ExpectedStartDate,
                         LessonId = request.LessonId,
+                        SenderId = _userService.GetCurrentUserId(),
                     }, new JsonSerializerOptions {WriteIndented = false})
                 },
                 ReceiverUserIds = [request.TutorId]
@@ -125,8 +130,8 @@ namespace TutorBooking.APIService.Controllers
                     AdditionalData = JsonSerializer.Serialize(new
                     {
                         Id = result.Id,
-                        LearnerId = result.LearnerId,
                         LessonName = result.LessonName,
+                        SenderId = result.LearnerId,
                     }, new JsonSerializerOptions { WriteIndented = false })
                 },
                 ReceiverUserIds =[result.TutorId]
