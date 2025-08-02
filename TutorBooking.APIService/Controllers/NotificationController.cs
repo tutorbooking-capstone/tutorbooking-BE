@@ -69,5 +69,27 @@ namespace TutorBooking.APIService.Controllers
                 message: "SUCCESS"
             ));
         }
+
+        [HttpPost("sender")]
+        [Authorize]
+        public async Task<IActionResult> GetSenderById(string userId)
+        {
+            var response = await _notificationService.GetSenderByIdAsync(userId);
+            return Ok(new BaseResponseModel<object>(
+                data: response,
+                message: "SUCCESS"
+            ));
+        }
+
+        [HttpPost("sender/tutor")]
+        [Authorize]
+        public async Task<IActionResult> GetTutorSenderById(string userId)
+        {
+            var response = await _notificationService.GetTutorSenderByIdAsync(userId);
+            return Ok(new BaseResponseModel<object>(
+                data: response,
+                message: "SUCCESS"
+            ));
+        }
     }
 }
