@@ -70,7 +70,7 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPost("sender")]
+        [HttpGet("sender")]
         [Authorize]
         public async Task<IActionResult> GetSenderById(string userId)
         {
@@ -81,7 +81,7 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPost("sender/tutor")]
+        [HttpGet("sender/tutor")]
         [Authorize]
         public async Task<IActionResult> GetTutorSenderById(string userId)
         {
