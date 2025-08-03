@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
 using App.DTOs.NotificationDTOs;
+using App.DTOs.UserDTOs;
 using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
@@ -116,6 +117,26 @@ namespace App.Services.Services
                 return true;
             });
         }
+
+        public async Task<NotificationSenderResponse> GetSenderByIdAsync(string id)
+        {
+            var user = await _unitOfWork.GetRepository<AppUser>().ExistEntities().FirstOrDefaultAsync(b => b.Id.Equals(id));
+            if (user == null)
+                throw new ErrorException(404, ErrorCode.NotFound, "NOT_FOUND");
+            return user.ToNotificationSenderResponse();
+        }
+
+        public async Task<NotificationSenderResponse> GetTutorSenderByIdAsync(string id)
+        {
+            var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .Include(b => b.User)
+                .FirstOrDefaultAsync(b => b.UserId.Equals(id));
+            if (tutor == null)
+                throw new ErrorException(404, ErrorCode.NotFound, "NOT_FOUND");
+            return tutor.ToNotificationSenderResponse();
+        }
+
+
 
         private async Task<NotificationResponse> CreateNotificationAsync(NotificationRequest request, ICollection<string> receiverUserIds)
         {
