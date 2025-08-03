@@ -62,7 +62,6 @@ namespace App.Services.Services
         {
             var userId = GetCurrentUserId();
 
-            // Get the bank account to validate ownership and store details
             var bankAccount = await _unitOfWork.GetRepository<BankAccount>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(b => b.Id == request.BankAccountId && b.UserId == userId);
@@ -73,7 +72,6 @@ namespace App.Services.Services
                     ErrorCode.BadRequest,
                     "Tài khoản ngân hàng không hợp lệ hoặc không thuộc về bạn");
 
-            // Get user's wallet
             var wallet = await _unitOfWork.GetRepository<Wallet>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(w => w.UserId == userId);
@@ -84,7 +82,6 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Không tìm thấy ví của bạn");
 
-            // Calculate available balance
             var availableBalance = await _walletService.CalculateAvailableBalanceAsync(wallet.Id);
             if (availableBalance < request.GrossAmount)
                 throw new ErrorException(
@@ -92,17 +89,10 @@ namespace App.Services.Services
                     ErrorCode.BadRequest,
                     $"Số dư khả dụng không đủ. Số dư khả dụng: {availableBalance}, Số tiền yêu cầu rút: {request.GrossAmount}");
 
-            // Calculate withdrawal fee
             var withdrawalFee = await _feeService.CalculateFeeAsync(FeeCodes.WITHDRAWAL_FEE, request.GrossAmount);
             var netAmount = request.GrossAmount - withdrawalFee;
 
-            // Create fee info JSON
-            var feeInfo = new Dictionary<string, decimal>
-            {
-                { "withdrawalFee", withdrawalFee }
-            };
-
-            // Prepare bank account info to store as JSON
+            var feeInfo = new Dictionary<string, decimal> { { "withdrawalFee", withdrawalFee } };
             var bankAccountInfo = new BankAccountInfo
             {
                 BankName = bankAccount.BankName,
@@ -110,7 +100,6 @@ namespace App.Services.Services
                 AccountHolderName = bankAccount.AccountHolderName
             };
 
-            // Create withdrawal request
             var withdrawalRequest = new WithdrawalRequest
             {
                 UserId = userId,
@@ -124,26 +113,61 @@ namespace App.Services.Services
 
             withdrawalRequest.TrackCreate(userId);
             _unitOfWork.GetRepository<WithdrawalRequest>().Insert(withdrawalRequest);
-            await _unitOfWork.SaveAsync();
+            await _unitOfWork.SaveAsync();  
 
-            // Get the complete entity with related data for response
-            var completeRequest = await _unitOfWork.GetRepository<WithdrawalRequest>()
-                .ExistEntities()
-                .Include(w => w.User)
-                .FirstOrDefaultAsync(w => w.Id == withdrawalRequest.Id);
+            // Thay đổi từ đây: Tạo HeldFund và chuyển tiền từ ví người dùng
+            return await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                try
+                {
+                    // Tạo HeldFund
+                    var heldFund = HeldFund.CreateForWithdrawal(withdrawalRequest.Id, request.GrossAmount);
+                    _unitOfWork.GetRepository<HeldFund>().Insert(heldFund);
 
-            return WithdrawalRequestResponse.FromEntity(completeRequest!);
+                    // Trừ tiền từ ví người dùng
+                    var walletUpdateFields = wallet.SubtractBalance(request.GrossAmount);
+                    _unitOfWork.GetRepository<Wallet>().UpdateFields(wallet, walletUpdateFields);
+
+                    // Tạo transaction ghi nhận việc chuyển tiền vào HeldFund
+                    var transaction = new Transaction
+                    {
+                        SourceWalletId = wallet.Id,
+                        TargetWalletId = null,  
+                        Amount = request.GrossAmount,
+                        Type = TransactionType.Withdrawal,
+                        Status = TransactionStatus.Pending,
+                        ReferenceId = withdrawalRequest.Id,
+                        Description = $"Giữ tiền cho yêu cầu rút về tài khoản {bankAccount.BankName} - {bankAccount.AccountNumber}"
+                    };
+                    _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+
+                    await _unitOfWork.SaveAsync();
+
+                    // Lấy thông tin đầy đủ để trả về
+                    var completeRequest = await _unitOfWork.GetRepository<WithdrawalRequest>()
+                        .ExistEntities()
+                        .Include(w => w.User)
+                        .FirstOrDefaultAsync(w => w.Id == withdrawalRequest.Id);
+
+                    return WithdrawalRequestResponse.FromEntity(completeRequest!);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Lỗi khi tạo yêu cầu rút tiền và giữ tiền");
+                    throw;
+                }
+            });
         }
 
         public async Task<BasePaginatedList<WithdrawalRequestResponse>> GetWithdrawalRequestsAsync(
-            int page = 1, 
-            int pageSize = 10, 
+            int page = 1,
+            int pageSize = 10,
             WithdrawalRequestStatus? status = null)
         {
             // Check if user is admin/manager/staff
             var userId = GetCurrentUserId();
-            var isAdminOrStaff = _currentUserProvider.IsInRole(Role.Admin.ToStringRole()) || 
-                                _currentUserProvider.IsInRole(Role.Staff.ToStringRole()) || 
+            var isAdminOrStaff = _currentUserProvider.IsInRole(Role.Admin.ToStringRole()) ||
+                                _currentUserProvider.IsInRole(Role.Staff.ToStringRole()) ||
                                 _currentUserProvider.IsInRole(Role.Manager.ToStringRole());
 
             // Build query
@@ -182,8 +206,8 @@ namespace App.Services.Services
         public async Task<WithdrawalRequestResponse> GetWithdrawalRequestByIdAsync(string requestId)
         {
             var userId = GetCurrentUserId();
-            var isAdminOrStaff = _currentUserProvider.IsInRole(Role.Admin.ToStringRole()) || 
-                                _currentUserProvider.IsInRole(Role.Staff.ToStringRole()) || 
+            var isAdminOrStaff = _currentUserProvider.IsInRole(Role.Admin.ToStringRole()) ||
+                                _currentUserProvider.IsInRole(Role.Staff.ToStringRole()) ||
                                 _currentUserProvider.IsInRole(Role.Manager.ToStringRole());
 
             var withdrawal = await _unitOfWork.GetRepository<WithdrawalRequest>()
@@ -216,12 +240,10 @@ namespace App.Services.Services
 
             var currentUserId = GetCurrentUserId();
 
-            // Get withdrawal request
             var withdrawalRepo = _unitOfWork.GetRepository<WithdrawalRequest>();
             var withdrawal = await withdrawalRepo
                 .ExistEntities()
                 .Include(w => w.User)
-                .Include(w => w.BankAccount)
                 .FirstOrDefaultAsync(w => w.Id == request.WithdrawalId);
 
             if (withdrawal == null)
@@ -230,18 +252,16 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Không tìm thấy yêu cầu rút tiền");
 
-            // Get user's wallet
-            var userWallet = await _unitOfWork.GetRepository<Wallet>()
+            var heldFund = await _unitOfWork.GetRepository<HeldFund>()
                 .ExistEntities()
-                .FirstOrDefaultAsync(w => w.UserId == withdrawal.UserId);
+                .FirstOrDefaultAsync(h => h.WithdrawalRequestId == withdrawal.Id);
 
-            if (userWallet == null)
+            if (heldFund == null)
                 throw new ErrorException(
                     StatusCodes.Status404NotFound,
                     ErrorCode.NotFound,
-                    "Không tìm thấy ví của người dùng");
+                    "Không tìm thấy thông tin tiền giữ cho yêu cầu rút tiền này");
 
-            // Get system wallet
             var systemWallet = await _unitOfWork.GetRepository<Wallet>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(w => w.Type == WalletType.System);
@@ -252,12 +272,11 @@ namespace App.Services.Services
                     ErrorCode.ServerError,
                     "Không tìm thấy ví hệ thống");
 
-            // Process withdrawal in a transaction
             return await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
                 try
                 {
-                    // First mark the request as processing
+                    // Đánh dấu withdrawal request đang xử lý
                     var processFields = withdrawal.Process();
                     if (processFields.Any())
                     {
@@ -265,31 +284,21 @@ namespace App.Services.Services
                         await _unitOfWork.SaveAsync();
                     }
 
-                    // Subtract from user's wallet
-                    var userWalletUpdateFields = userWallet.SubtractBalance(withdrawal.GrossAmount);
-                    _unitOfWork.GetRepository<Wallet>().UpdateFields(userWallet, userWalletUpdateFields);
-
-                    // Add fee to system wallet
+                    // Xử lý chuyển tiền
                     var feeAmount = withdrawal.GrossAmount - withdrawal.NetAmount;
+
+                    // Cộng tiền phí vào ví hệ thống
                     var systemWalletUpdateFields = systemWallet.AddBalance(feeAmount);
                     _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemWalletUpdateFields);
 
-                    // Create transaction records
-                    var withdrawalTransaction = new Transaction
-                    {
-                        SourceWalletId = userWallet.Id,
-                        TargetWalletId = null, // External bank account
-                        Amount = withdrawal.NetAmount,
-                        Type = TransactionType.Withdrawal,
-                        Status = TransactionStatus.Success,
-                        ReferenceId = withdrawal.Id,
-                        Description = $"Rút tiền về tài khoản ngân hàng {withdrawal.BankAccount?.BankName} - {withdrawal.BankAccount?.AccountNumber}"
-                    };
-                    _unitOfWork.GetRepository<Transaction>().Insert(withdrawalTransaction);
+                    // Cập nhật trạng thái HeldFund
+                    var heldFundUpdateFields = heldFund.UpdateStatus(HeldFundStatus.ReleasedToTutorBank);
+                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdateFields);
 
+                    // Tạo Transaction chuyển phí vào hệ thống
                     var feeTransaction = new Transaction
                     {
-                        SourceWalletId = userWallet.Id,
+                        SourceWalletId = null, // Từ HeldFund 
                         TargetWalletId = systemWallet.Id,
                         Amount = feeAmount,
                         Type = TransactionType.Fee,
@@ -299,7 +308,24 @@ namespace App.Services.Services
                     };
                     _unitOfWork.GetRepository<Transaction>().Insert(feeTransaction);
 
-                    // Mark withdrawal as completed
+                    // Tạo Transaction cho việc rút tiền ra ngoài
+                    var bankInfo = string.IsNullOrEmpty(withdrawal.BankAccountInfo) || withdrawal.BankAccountInfo == "{}" ?
+                        $"{withdrawal.BankAccount?.BankName} - {withdrawal.BankAccount?.AccountNumber}" :
+                        withdrawal.BankAccountInfo;
+
+                    var withdrawalTransaction = new Transaction
+                    {
+                        SourceWalletId = null, // Từ HeldFund (không phải wallet)
+                        TargetWalletId = null, // Đến ngân hàng bên ngoài
+                        Amount = withdrawal.NetAmount,
+                        Type = TransactionType.Withdrawal,
+                        Status = TransactionStatus.Success,
+                        ReferenceId = withdrawal.Id,
+                        Description = $"Rút tiền về tài khoản ngân hàng {bankInfo}"
+                    };
+                    _unitOfWork.GetRepository<Transaction>().Insert(withdrawalTransaction);
+
+                    // Đánh dấu withdrawal request hoàn thành
                     var completeFields = withdrawal.Complete();
                     withdrawalRepo.UpdateFields(withdrawal, completeFields);
 
@@ -334,12 +360,11 @@ namespace App.Services.Services
 
             var currentUserId = GetCurrentUserId();
 
-            // Get withdrawal request
+            // Lấy withdrawal request
             var withdrawalRepo = _unitOfWork.GetRepository<WithdrawalRequest>();
             var withdrawal = await withdrawalRepo
                 .ExistEntities()
                 .Include(w => w.User)
-                .Include(w => w.BankAccount)
                 .FirstOrDefaultAsync(w => w.Id == request.WithdrawalId);
 
             if (withdrawal == null)
@@ -348,19 +373,75 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Không tìm thấy yêu cầu rút tiền");
 
-            // Reject withdrawal
-            var rejectFields = withdrawal.Reject(request.RejectionReason);
-            if (!rejectFields.Any())
-                return WithdrawalRequestResponse.FromEntity(withdrawal);
+            // Lấy HeldFund liên quan
+            var heldFund = await _unitOfWork.GetRepository<HeldFund>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(h => h.WithdrawalRequestId == withdrawal.Id);
 
-            withdrawalRepo.UpdateFields(withdrawal, rejectFields);
-            await _unitOfWork.SaveAsync();
+            if (heldFund == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy thông tin tiền giữ cho yêu cầu rút tiền này");
 
-            _logger.LogInformation(
-                "Đã từ chối yêu cầu rút tiền {WithdrawalId} cho người dùng {UserId}. Lý do: {Reason}",
-                withdrawal.Id, withdrawal.UserId, request.RejectionReason);
+            // Lấy ví người dùng
+            var userWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == withdrawal.UserId);
 
-            return WithdrawalRequestResponse.FromEntity(withdrawal);
+            if (userWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy ví người dùng");
+
+            // Xử lý trong transaction
+            return await _unitOfWork.ExecuteInTransactionAsync(async () =>
+            {
+                try
+                {
+                    // Hoàn trả tiền vào ví người dùng
+                    var walletUpdateFields = userWallet.AddBalance(withdrawal.GrossAmount);
+                    _unitOfWork.GetRepository<Wallet>().UpdateFields(userWallet, walletUpdateFields);
+
+                    // Cập nhật trạng thái HeldFund
+                    var heldFundUpdateFields = heldFund.UpdateStatus(HeldFundStatus.RefundedToLearner);
+                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdateFields);
+
+                    // Tạo Transaction ghi nhận việc hoàn trả
+                    var refundTransaction = new Transaction
+                    {
+                        SourceWalletId = null, // Từ HeldFund
+                        TargetWalletId = userWallet.Id,
+                        Amount = withdrawal.GrossAmount,
+                        Type = TransactionType.Refund,
+                        Status = TransactionStatus.Success,
+                        ReferenceId = withdrawal.Id,
+                        Description = $"Hoàn tiền cho yêu cầu rút tiền bị từ chối. Lý do: {request.RejectionReason}"
+                    };
+                    _unitOfWork.GetRepository<Transaction>().Insert(refundTransaction);
+
+                    // Đánh dấu withdrawal request bị từ chối
+                    var rejectFields = withdrawal.Reject(request.RejectionReason);
+                    if (rejectFields.Any())
+                    {
+                        withdrawalRepo.UpdateFields(withdrawal, rejectFields);
+                    }
+
+                    await _unitOfWork.SaveAsync();
+
+                    _logger.LogInformation(
+                        "Đã từ chối yêu cầu rút tiền {WithdrawalId} cho người dùng {UserId}. Lý do: {Reason}",
+                        withdrawal.Id, withdrawal.UserId, request.RejectionReason);
+
+                    return WithdrawalRequestResponse.FromEntity(withdrawal);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Lỗi khi từ chối yêu cầu rút tiền {WithdrawalId}", withdrawal.Id);
+                    throw;
+                }
+            });
         }
 
         public Task<Dictionary<string, object>> GetWithdrawalMetadataAsync()
@@ -368,7 +449,7 @@ namespace App.Services.Services
             var metadata = new Dictionary<string, object>();
 
             // Add WithdrawalRequestStatus enum values
-            var statusValues = Enum.GetValues(typeof(WithdrawalRequestStatus))
+            var withdrawalStatusValues = Enum.GetValues(typeof(WithdrawalRequestStatus))
                 .Cast<WithdrawalRequestStatus>()
                 .Select(s => new
                 {
@@ -377,7 +458,31 @@ namespace App.Services.Services
                 })
                 .ToList();
 
-            metadata.Add("WithdrawalRequestStatus", statusValues);
+            metadata.Add("WithdrawalRequestStatus", withdrawalStatusValues);
+
+            // Add TransactionType enum values
+            var transactionTypeValues = Enum.GetValues(typeof(TransactionType))
+                .Cast<TransactionType>()
+                .Select(t => new
+                {
+                    Name = t.ToString(),
+                    Value = (int)t
+                })
+                .ToList();
+            
+            metadata.Add("TransactionType", transactionTypeValues);
+
+            // Add TransactionStatus enum values
+            var transactionStatusValues = Enum.GetValues(typeof(TransactionStatus))
+                .Cast<TransactionStatus>()
+                .Select(ts => new
+                {
+                    Name = ts.ToString(),
+                    Value = (int)ts
+                })
+                .ToList();
+            
+            metadata.Add("TransactionStatus", transactionStatusValues);
 
             return Task.FromResult(metadata);
         }

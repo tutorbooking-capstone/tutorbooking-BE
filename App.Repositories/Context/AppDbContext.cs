@@ -507,8 +507,23 @@ namespace App.Repositories.Context
                 .HasOne(h => h.BookedSlot)
                 .WithMany()
                 .HasForeignKey(h => h.BookedSlotId)
-                .OnDelete(DeleteBehavior.Restrict);
-                
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<HeldFund>()
+                .HasOne(h => h.WithdrawalRequest)
+                .WithMany()
+                .HasForeignKey(h => h.WithdrawalRequestId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<HeldFund>()
+                .HasOne(h => h.BookedSlot)
+                .WithMany()
+                .HasForeignKey(h => h.BookedSlotId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // DepositRequest -> AppUser (M:1)
             modelBuilder.Entity<DepositRequest>()
                 .HasOne(d => d.User)
@@ -612,6 +627,7 @@ namespace App.Repositories.Context
                 .HasForeignKey<BookedSlot>(bs => bs.HeldFundId)
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
+
 
         }
     }

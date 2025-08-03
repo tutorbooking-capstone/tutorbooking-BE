@@ -334,7 +334,7 @@ namespace App.Services.Services
                     var releaseTime = slotEndTime.AddHours(24); // This should be configurable
                     
                     // Create held fund
-                    var heldFund = HeldFund.Create(string.Empty, offer.Lesson.Price, releaseTime);
+                    var heldFund = HeldFund.CreateForBooking(string.Empty, offer.Lesson.Price, releaseTime);
                     _unitOfWork.GetRepository<HeldFund>().Insert(heldFund);
                     heldFunds.Add(heldFund);
                     
@@ -382,10 +382,11 @@ namespace App.Services.Services
                 // Schedule release of funds using Hangfire with injected client
                 foreach (var heldFund in heldFunds)
                 {
-                    _backgroundJobClient.Schedule<IPaymentProcessingService>(
-                        service => service.ProcessHeldFundReleaseAsync(heldFund.Id),
-                        heldFund.ReleaseAt - DateTime.UtcNow
-                    );
+                    if (heldFund.ReleaseAt.HasValue)
+                        _backgroundJobClient.Schedule<IPaymentProcessingService>(
+                            service => service.ProcessHeldFundReleaseAsync(heldFund.Id),
+                            heldFund.ReleaseAt.Value - DateTime.UtcNow
+                        );
                 }
                 
                 // Map to response

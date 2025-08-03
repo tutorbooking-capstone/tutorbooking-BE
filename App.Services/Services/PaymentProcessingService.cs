@@ -128,7 +128,7 @@ namespace App.Services.Services
                 Type = TransactionType.Payment,
                 Status = TransactionStatus.Success,
                 ReferenceId = heldFund.Id,
-                Description = $"Payment for completed session (HeldFund: {heldFund.Id})"
+                Description = $"Thanh toán cho buổi học đã hoàn thành (HeldFund: {heldFund.Id})"
             };
             
             var feeTransaction = new Transaction
@@ -139,7 +139,7 @@ namespace App.Services.Services
                 Type = TransactionType.Fee,
                 Status = TransactionStatus.Success,
                 ReferenceId = heldFund.Id,
-                Description = $"Platform fee for session (HeldFund: {heldFund.Id})"
+                Description = $"Phí nền tảng cho buổi học (HeldFund: {heldFund.Id})"
             };
             
             _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
@@ -186,7 +186,7 @@ namespace App.Services.Services
                 Type = TransactionType.Refund,
                 Status = TransactionStatus.Success,
                 ReferenceId = heldFund.Id,
-                Description = $"Refund for cancelled session (HeldFund: {heldFund.Id})"
+                Description = $"Hoàn tiền cho buổi học đã hủy (HeldFund: {heldFund.Id})"
             };
             
             _unitOfWork.GetRepository<Transaction>().Insert(refundTransaction);

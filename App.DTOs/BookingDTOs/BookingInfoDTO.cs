@@ -173,13 +173,12 @@ namespace App.DTOs.BookingDTOs
         }
     }
     
-    // DTO cho HeldFund
     public class HeldFundDTO
     {
         public string Id { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public HeldFundStatus Status { get; set; }
-        public DateTime ReleaseAt { get; set; }
+        public DateTime? ReleaseAt { get; set; }
         public DateTime? ResolvedAt { get; set; }
         public DateTime CreatedAt { get; set; }
         
