@@ -430,7 +430,7 @@ namespace App.Services.Services
                 throw new ErrorException(
                     StatusCodes.Status500InternalServerError, 
                     ErrorCode.ServerError, 
-                    "Không tìm thấy ví escrow");
+                    "Escrow wallet not found");
             
             return escrowWallet;
         }

@@ -18,6 +18,7 @@ namespace App.Repositories.Models
     {
         public string UserId { get; set; } = string.Empty;
         public string BankAccountId { get; set; } = string.Empty;
+        public string BankAccountInfo { get; set; } = "{}"; // JSON format for storing bank details
         public decimal GrossAmount { get; set; }
         public string Fees { get; set; } = "{}"; // Định dạng JSON
         public decimal NetAmount { get; set; }

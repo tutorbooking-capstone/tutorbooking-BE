@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250801050629_ConfigBaseUserForFirebase")]
+    partial class ConfigBaseUserForFirebase
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1942,11 +1945,6 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("bank_account_id");
-
-                    b.Property<string>("BankAccountInfo")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("bank_account_info");
 
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")

@@ -62,9 +62,12 @@ namespace App.Services.Services
         {
             var userId = GetCurrentUserId();
 
-            // Validate bank account ownership
-            var isValidBankAccount = await ValidateBankAccountOwnershipAsync(request.BankAccountId, userId);
-            if (!isValidBankAccount)
+            // Get the bank account to validate ownership and store details
+            var bankAccount = await _unitOfWork.GetRepository<BankAccount>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(b => b.Id == request.BankAccountId && b.UserId == userId);
+
+            if (bankAccount == null)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
@@ -99,11 +102,20 @@ namespace App.Services.Services
                 { "withdrawalFee", withdrawalFee }
             };
 
+            // Prepare bank account info to store as JSON
+            var bankAccountInfo = new BankAccountInfo
+            {
+                BankName = bankAccount.BankName,
+                AccountNumber = bankAccount.AccountNumber,
+                AccountHolderName = bankAccount.AccountHolderName
+            };
+
             // Create withdrawal request
             var withdrawalRequest = new WithdrawalRequest
             {
                 UserId = userId,
                 BankAccountId = request.BankAccountId,
+                BankAccountInfo = JsonSerializer.Serialize(bankAccountInfo),
                 GrossAmount = request.GrossAmount,
                 NetAmount = netAmount,
                 Fees = JsonSerializer.Serialize(feeInfo),
@@ -118,7 +130,6 @@ namespace App.Services.Services
             var completeRequest = await _unitOfWork.GetRepository<WithdrawalRequest>()
                 .ExistEntities()
                 .Include(w => w.User)
-                .Include(w => w.BankAccount)
                 .FirstOrDefaultAsync(w => w.Id == withdrawalRequest.Id);
 
             return WithdrawalRequestResponse.FromEntity(completeRequest!);

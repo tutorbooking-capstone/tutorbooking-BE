@@ -1,5 +1,6 @@
 using App.Repositories.Models;
 using FluentValidation;
+using System.Text.Json; // Added for JsonSerializer
 
 namespace App.DTOs.PaymentDTOs
 {
@@ -75,6 +76,13 @@ namespace App.DTOs.PaymentDTOs
         }
     }
 
+    public class BankAccountInfo
+    {
+        public string BankName { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
+        public string AccountHolderName { get; set; } = string.Empty;
+    }
+
     public class WithdrawalRequestResponse
     {
         public string Id { get; set; } = string.Empty;
@@ -87,11 +95,11 @@ namespace App.DTOs.PaymentDTOs
         public DateTime CreatedTime { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string? RejectionReason { get; set; }
-        public BankAccountResponse BankAccount { get; set; } = new BankAccountResponse();
+        public BankAccountInfo StoredBankAccountInfo { get; set; } = new BankAccountInfo();
 
         public static WithdrawalRequestResponse FromEntity(WithdrawalRequest entity)
         {
-            return new WithdrawalRequestResponse
+            var response = new WithdrawalRequestResponse
             {
                 Id = entity.Id,
                 UserId = entity.UserId,
@@ -103,14 +111,23 @@ namespace App.DTOs.PaymentDTOs
                 CreatedTime = entity.CreatedTime.DateTime,
                 CompletedAt = entity.CompletedAt,
                 RejectionReason = entity.RejectionReason,
-                BankAccount = entity.BankAccount != null ? new BankAccountResponse
-                {
-                    Id = entity.BankAccount.Id,
-                    BankName = entity.BankAccount.BankName,
-                    AccountNumber = entity.BankAccount.AccountNumber,
-                    AccountHolderName = entity.BankAccount.AccountHolderName
-                } : new BankAccountResponse()
             };
+            
+            if (!string.IsNullOrEmpty(entity.BankAccountInfo) && entity.BankAccountInfo != "{}")
+            {
+                try
+                {
+                    response.StoredBankAccountInfo = JsonSerializer.Deserialize<BankAccountInfo>(entity.BankAccountInfo) 
+                        ?? new BankAccountInfo();
+                }
+                catch (JsonException ex)
+                {
+                    response.StoredBankAccountInfo = new BankAccountInfo();
+                    throw new InvalidOperationException("Không thể đọc thông tin tài khoản ngân hàng đã lưu trữ", ex);
+                }
+            }
+            
+            return response;
         }
     }
 
