@@ -20,7 +20,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> AcceptAllDocuments()
         {
             await _legalDocumentAcceptanceService.AcceptAllDocumentsForCurrentUserAsync();
-            return Ok(new BaseResponseModel<object>(null, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(null, null, "SUCCESS"));
         }
 
 
@@ -29,7 +29,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetNotAcceptedDocuments()
         {
             var response = await _legalDocumentAcceptanceService.GetNotAcceptedLegalDocumentsOfCurrentUserAsync();
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpGet("active-legal-documents")]
@@ -37,7 +37,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetActiveLegalDocuments()
         {
             var response = await _legalDocumentAcceptanceService.GetLegalDocumentsWithActiveVersionAsync();
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
     }
 }

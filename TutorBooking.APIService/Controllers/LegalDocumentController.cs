@@ -25,7 +25,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetAllAsync(int page = 1, int size = 10)
         {
             var response = await _legalDocumentService.GetAllAsync(page, size);
-            return Ok(new BaseResponseModel<IEnumerable<LegalDocumentResponse>>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<IEnumerable<LegalDocumentResponse>>(response,null, "SUCCESS"));
         }
 
         [HttpGet("{id}")]
@@ -33,7 +33,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetByIdAsync(string id)
         {
             var response = await _legalDocumentService.GetByIdAsync(id);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpPost]
@@ -41,7 +41,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> CreateAsync([FromBody] LegalDocumentCreateRequest request)
         {
             var response = await _legalDocumentService.CreateAsync(request);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpPut]
@@ -49,7 +49,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> UpdateAsync([FromBody] LegalDocumentUpdateRequest request)
         {
             var response = await _legalDocumentService.UpdateAsync(request);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpDelete("{id}")]
@@ -57,7 +57,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> DeleteAsync(string id)
         {
             await _legalDocumentService.DeleteAsync(id);
-            return Ok(new BaseResponseModel<object>(null, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(null, null, "SUCCESS"));
         }
 
         [HttpGet("version/{id}")]
@@ -65,7 +65,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetVersionByIdAsync(string id)
         {
             var response = await _legalDocumentService.GetVersionByIdAsync(id);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpPost("version")]
@@ -73,7 +73,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> CreateVersionAsync(LegalDocumentVersionCreateRequest request)
         {
             var response = await _legalDocumentService.CreateVersionAsync(request);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpPut("version")]
@@ -81,7 +81,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> UpdateVersionAsync([FromBody] LegalDocumentVersionUpdateRequest request)
         {
             var response = await _legalDocumentService.UpdateVersionAsync(request);
-            return Ok(new BaseResponseModel<object>(response, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
         [HttpDelete("version/{id}")]
@@ -89,7 +89,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> DeleteVersionAsync(string id)
         {
             await _legalDocumentService.DeleteVersionAsync(id);
-            return Ok(new BaseResponseModel<object>(null, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(null, null, "SUCCESS"));
         }
     }
 }
