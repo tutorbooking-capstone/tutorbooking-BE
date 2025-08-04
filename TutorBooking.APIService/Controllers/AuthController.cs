@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
@@ -118,6 +119,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("login-firebase")]
+        [AllowAnonymous]
         public async Task<IActionResult> LoginFirebase()
         {
             return Ok(await _authService.LoginFirebaseAsync());
