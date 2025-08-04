@@ -627,7 +627,7 @@ namespace App.Services.Services.User
             } 
             catch (FirebaseAuthException ex) // Hide AuthException to prevent attacks
             {
-                throw new ErrorException(401, ErrorCode.Unauthorized, "UNAUTHORIZED");
+                //throw new ErrorException(401, ErrorCode.Unauthorized, "UNAUTHORIZED");
                 throw; // for debugging purposes, remove in production
             }
         }
