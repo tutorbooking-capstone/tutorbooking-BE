@@ -9,10 +9,13 @@ using System.Threading.Tasks;
 
 namespace App.DTOs.LegalDocumentDTOs
 {
-    public class LegalDocumentResponse : BaseEntity
+    public class LegalDocumentResponse 
     {
+        public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+        public DateTimeOffset CreatedTime { get; set; }
+        public DateTimeOffset LastUpdatedTime { get; set; }
         public ICollection<LegalDocumentVersionResponse>? Versions { get; set; } = new List<LegalDocumentVersionResponse>();
     }
 
@@ -34,7 +37,6 @@ namespace App.DTOs.LegalDocumentDTOs
                     .ToList(),
                 CreatedTime = entity.CreatedTime,
                 LastUpdatedTime = entity.LastUpdatedTime,
-                DeletedTime = entity.DeletedTime,
             };
         }
 
@@ -48,7 +50,6 @@ namespace App.DTOs.LegalDocumentDTOs
                 Versions = entity.Versions?.Select(v => v.ToResponseWithoutContent()).ToList(),
                 CreatedTime = entity.CreatedTime,
                 LastUpdatedTime = entity.LastUpdatedTime,
-                DeletedTime = entity.DeletedTime,
             };
         }
     }
