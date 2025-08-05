@@ -555,7 +555,14 @@ namespace App.Services.Services.User
             try
             {
                 if (token.IsNullOrWhiteSpace())
-                    token = _httpContextAccessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim(); ;
+                {
+                    var authHeader = _httpContextAccessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString();
+                    if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                    {
+                        token = authHeader.Substring("Bearer ".Length).Trim();
+                    }
+                }
+                
                 if (token.IsNullOrWhiteSpace())
                     throw new ErrorException(400, ErrorCode.BadRequest, "FIREBASE_TOKEN_NOT_FOUND");
 
