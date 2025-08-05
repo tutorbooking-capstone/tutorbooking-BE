@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using StackExchange.Profiling.Internal;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace App.Services.Services.User
@@ -543,11 +544,18 @@ namespace App.Services.Services.User
             };
         }
 
-        public async Task<LoginResponse> LoginFirebaseAsync()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        /// <exception cref="ErrorException"></exception>
+        public async Task<LoginResponse> LoginFirebaseAsync([Optional]string? token)
         {
             try
             {
-                var token = _httpContextAccessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim(); ;
+                if (token.IsNullOrWhiteSpace())
+                    token = _httpContextAccessor.HttpContext?.Request.Headers[HeaderNames.Authorization].ToString().Substring("Bearer ".Length).Trim(); ;
                 if (token.IsNullOrWhiteSpace())
                     throw new ErrorException(400, ErrorCode.BadRequest, "FIREBASE_TOKEN_NOT_FOUND");
 
