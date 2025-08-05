@@ -1,4 +1,5 @@
 ﻿using App.DTOs.AuthDTOs;
+using System.Runtime.InteropServices;
 
 namespace App.Services.Interfaces.User
 {
@@ -15,6 +16,6 @@ namespace App.Services.Interfaces.User
         Task LogoutAsync(RefreshTokenRequest model);
         Task SeedRegisterAsync(RegisterRequest model);
         Task<LoginResponse> LoginGoogleAsync(string credential);
-        Task<LoginResponse> LoginFirebaseAsync();
+        Task<LoginResponse> LoginFirebaseAsync([Optional] string? token);
     }
 }

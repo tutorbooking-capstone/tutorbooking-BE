@@ -50,6 +50,8 @@ namespace App.Services
             services.AddScoped<ITutorApplicationStaffService, TutorApplicationStaffService>();
             services.AddScoped<IBookingSlotRatingService, BookingSlotRatingService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ILegalDocumentService, LegalDocumentService>();
+            services.AddScoped<ILegalDocumentAcceptanceService, LegalDocumentAcceptanceService>();
             #endregion
 
             #region Provider Services

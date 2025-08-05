@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
@@ -114,13 +115,14 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPost("login-google")]
-        public async Task<IActionResult> LoginGoogle([Required][FromForm] string credential)
+        [HttpPost("login-firebase-v2")]
+        public async Task<IActionResult> LoginFirebaseV2([FromBody]string token)
         {
-            return Ok(await _authService.LoginGoogleAsync(credential));
+            return Ok(await _authService.LoginFirebaseAsync(token));
         }
 
         [HttpPost("login-firebase")]
+        [AllowAnonymous]
         public async Task<IActionResult> LoginFirebase()
         {
             _logger.LogInformation("Firebase login request received. Headers: {Headers}", Request.Headers);
