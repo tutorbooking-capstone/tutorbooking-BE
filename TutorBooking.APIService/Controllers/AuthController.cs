@@ -2,6 +2,7 @@
 using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 
 namespace TutorBooking.APIService.Controllers
@@ -12,10 +13,12 @@ namespace TutorBooking.APIService.Controllers
     {
         #region DI Constructor
         private readonly IAuthService _authService;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
+            _logger = logger;
         }
         #endregion  
 
@@ -120,7 +123,10 @@ namespace TutorBooking.APIService.Controllers
         [HttpPost("login-firebase")]
         public async Task<IActionResult> LoginFirebase()
         {
-            return Ok(await _authService.LoginFirebaseAsync());
+            _logger.LogInformation("Firebase login request received. Headers: {Headers}", Request.Headers);
+            var response = await _authService.LoginFirebaseAsync();
+            _logger.LogInformation("Firebase login response: {@Response}", response);
+            return Ok(response);
         }
 
     }
