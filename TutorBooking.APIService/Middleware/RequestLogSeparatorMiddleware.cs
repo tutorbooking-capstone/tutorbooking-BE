@@ -18,6 +18,14 @@ namespace TutorBooking.APIService.Middleware
         
         public async Task InvokeAsync(HttpContext context, DatabaseQueryTracker queryTracker)
         {
+            // Bỏ qua logging cho các request đến SignalR hub
+            if (context.Request.Path.StartsWithSegments("/notification-hub") || 
+                context.Request.Path.StartsWithSegments("/chathub"))
+            {
+                await _next(context);
+                return;
+            }
+
             var requestId = Activity.Current?.Id ?? context.TraceIdentifier;
 
             LogRequestStart(context, requestId);
@@ -38,19 +46,24 @@ namespace TutorBooking.APIService.Middleware
         private string HSpace => "\n\n\n\n\n\n\n";
         private void LogRequestStart(HttpContext context, string requestId)
         {
-            _logger.LogInformation("""
-                {HSpace}
-                [------- Request Start -------]
-                    Method: {Method}
-                    Path: {Path}
-                    RequestId: {RequestId}
-                [-----------------------------]
-                
-                """,
-                HSpace,
-                context.Request.Method,
-                context.Request.Path,
-                requestId);
+            // Chỉ log nếu không phải là request SignalR
+            if (!context.Request.Path.StartsWithSegments("/notification-hub") && 
+                !context.Request.Path.StartsWithSegments("/chathub"))
+            {
+                _logger.LogInformation("""
+                    {HSpace}
+                    [------- Request Start -------]
+                        Method: {Method}
+                        Path: {Path}
+                        RequestId: {RequestId}
+                    [-----------------------------]
+                    
+                    """,
+                    HSpace,
+                    context.Request.Method,
+                    context.Request.Path,
+                    requestId);
+            }
         }
 
         private void LogRequestEnd(HttpContext context, double totalMs, string requestId)
