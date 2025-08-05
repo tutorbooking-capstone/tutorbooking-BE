@@ -3,8 +3,6 @@ using App.DTOs.AuthDTOs;
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using System.ComponentModel.DataAnnotations;
 
 namespace TutorBooking.APIService.Controllers
 {
