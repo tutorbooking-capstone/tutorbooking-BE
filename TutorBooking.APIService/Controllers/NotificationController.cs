@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.AccessControl;
+using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 
 namespace TutorBooking.APIService.Controllers
@@ -17,11 +18,16 @@ namespace TutorBooking.APIService.Controllers
     {
         private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
         private readonly INotificationService _notificationService;
+        private readonly ConnectionService _connectionService;  
 
-        public NotificationController(IHubContext<NotificationHub, INotificationClient> hubContext, INotificationService notificationService)
+        public NotificationController(
+            IHubContext<NotificationHub, INotificationClient> hubContext, 
+            INotificationService notificationService,
+            ConnectionService connectionService)  
         {
             _hubContext = hubContext;
             _notificationService = notificationService;
+            _connectionService = connectionService; 
         }
 
         [HttpPost("send-to-roles")]
@@ -44,14 +50,9 @@ namespace TutorBooking.APIService.Controllers
         {
             var response = await _notificationService.CreateForUsersAsync(request);
 
-            var connectionIds = new List<string>();  
-            foreach(var user in request.ReceiverUserIds)
-            {
-                string cId = NotificationHub._userIdMapper.FirstOrDefault(x => x.Key.Equals(user)).Value;
-                if (cId != null)
-                    connectionIds.Add(cId);
-            }
-            await _hubContext.Clients.Clients(connectionIds).ReceiveNotification(200, response);
+            // Sử dụng extension method đã được cập nhật
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, _connectionService, request);
+            
             return Ok(new BaseResponseModel<string>(
                 message: "SUCCESS"
             ));

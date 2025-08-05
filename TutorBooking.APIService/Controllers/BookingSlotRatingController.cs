@@ -1,15 +1,12 @@
 ﻿using App.Core.Base;
 using App.DTOs.RatingDTOs;
-using App.Repositories.Models.Rating;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Org.BouncyCastle.Asn1.Ocsp;
 using System.Text.Json;
+using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
-using static Google.Apis.Requests.BatchRequest;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -20,12 +17,18 @@ namespace TutorBooking.APIService.Controllers
         private readonly IBookingSlotRatingService _bookingSlotRatingService;
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
+        private readonly ConnectionService _connectionService;
 
-        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext)
+        public BookingSlotRatingController(
+            IBookingSlotRatingService bookingSlotRatingService, 
+            INotificationService notificationService, 
+            IHubContext<NotificationHub, INotificationClient> hubContext,
+            ConnectionService connectionService)
         {
             _bookingSlotRatingService = bookingSlotRatingService;
             _notificationService = notificationService;
             _hubContext = hubContext;
+            _connectionService = connectionService;
         }
 
         [HttpPost]
@@ -34,7 +37,7 @@ namespace TutorBooking.APIService.Controllers
         {
             var response = await _bookingSlotRatingService.CreateAsync(request);
 
-            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, _connectionService, new()
             {
                 Content = new()
                 {

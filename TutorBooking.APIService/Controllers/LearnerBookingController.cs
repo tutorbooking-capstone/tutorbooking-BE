@@ -1,6 +1,5 @@
 ﻿using App.Core.Base;
 using App.DTOs.BookingDTOs;
-using App.DTOs.NotificationDTOs;
 using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
@@ -10,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Text.Json;
 using TutorBooking.APIService.Hubs.NotificationHubs;
-using static Google.Apis.Requests.BatchRequest;
+using TutorBooking.APIService.Hubs;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -23,13 +22,20 @@ namespace TutorBooking.APIService.Controllers
         private readonly INotificationService _notificationService;
         private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
         private readonly IUserService _userService;
+        private readonly ConnectionService _connectionService;
 
-        public LearnerBookingController(ILearnerBookingService service, INotificationService notificationService, IHubContext<NotificationHub, INotificationClient> hubContext, IUserService userService)
+        public LearnerBookingController(
+            ILearnerBookingService service, 
+            INotificationService notificationService, 
+            IHubContext<NotificationHub, INotificationClient> hubContext, 
+            IUserService userService,
+            ConnectionService connectionService)
         {
             _service = service;
             _notificationService = notificationService;
             _hubContext = hubContext;
             _userService = userService;
+            _connectionService = connectionService;
         }
 
         [HttpPut("time-slots")]
@@ -38,7 +44,7 @@ namespace TutorBooking.APIService.Controllers
         {
             await _service.UpdateTimeSlotRequestsAsync(request);
 
-            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, _connectionService, new()
             {
                 Content = new()
                 {
@@ -120,7 +126,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<ActionResult<BookingResponse>> AcceptOffer(AcceptOfferRequest request)
         {
             var result = await _service.AcceptTutorOfferAsync(request);
-            await _hubContext.SendNotificationToUsersAsync(_notificationService, new()
+            await _hubContext.SendNotificationToUsersAsync(_notificationService, _connectionService, new()
             {
                 Content = new()
                 {
@@ -134,7 +140,7 @@ namespace TutorBooking.APIService.Controllers
                         SenderId = result.LearnerId,
                     }, new JsonSerializerOptions { WriteIndented = false })
                 },
-                ReceiverUserIds =[result.TutorId]
+                ReceiverUserIds = [result.TutorId]
             });
 
             return Ok(result);
