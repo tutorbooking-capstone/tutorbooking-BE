@@ -116,6 +116,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("login-firebase-v2")]
+        [AllowAnonymous]
         public async Task<IActionResult> LoginFirebaseV2([FromBody]string token)
         {
             return Ok(await _authService.LoginFirebaseAsync(token));
