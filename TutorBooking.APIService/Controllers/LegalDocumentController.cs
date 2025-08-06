@@ -37,6 +37,14 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
         }
 
+        [HttpGet("all-categories")]
+        [Authorize]
+        public async Task<IActionResult> GetAllCategoriesAsync()
+        {
+            var response = await _legalDocumentService.GetAllCategoriesAsync();
+            return Ok(new BaseResponseModel<ICollection<string>>(response, null, "SUCCESS"));
+        }
+
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> CreateAsync([FromBody] LegalDocumentCreateRequest request)

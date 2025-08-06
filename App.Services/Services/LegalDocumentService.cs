@@ -65,6 +65,15 @@ namespace App.Services.Services
             return entity;
         }
 
+        public async Task<ICollection<string>> GetAllCategoriesAsync()
+        {
+            var categories = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
+                .Select(e => e.Category)
+                .Distinct()
+                .ToListAsync();
+            return categories;
+        }
+
         public async Task<LegalDocumentResponse> UpdateAsync(LegalDocumentUpdateRequest request)
         {
             var entity = await _unitOfWork.GetRepository<LegalDocument>().GetByIdAsync(request.Id);

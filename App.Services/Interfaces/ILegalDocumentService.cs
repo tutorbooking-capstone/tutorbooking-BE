@@ -11,6 +11,7 @@ namespace App.Services.Interfaces
         Task DeleteAsync(string id);
         Task DeleteVersionAsync(string id);
         Task<List<LegalDocumentResponse>> GetAllAsync([Optional] string? category, int page = 1, int size = 10);
+        Task<ICollection<string>> GetAllCategoriesAsync();
         Task<LegalDocumentResponse?> GetByIdAsync(string id);
         Task<LegalDocumentVersionResponse?> GetVersionByIdAsync(string id);
         Task<LegalDocumentResponse> UpdateAsync(LegalDocumentUpdateRequest request);
