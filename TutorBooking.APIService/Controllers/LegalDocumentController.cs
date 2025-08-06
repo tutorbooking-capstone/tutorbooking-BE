@@ -7,6 +7,7 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -22,9 +23,9 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetAllAsync(int page = 1, int size = 10)
+        public async Task<IActionResult> GetAllAsync(string? category, int page = 1, int size = 10)
         {
-            var response = await _legalDocumentService.GetAllAsync(page, size);
+            var response = await _legalDocumentService.GetAllAsync(category, page, size);
             return Ok(new BaseResponseModel<IEnumerable<LegalDocumentResponse>>(response,null, "SUCCESS"));
         }
 

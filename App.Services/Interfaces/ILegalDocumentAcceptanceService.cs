@@ -4,8 +4,8 @@ namespace App.Services.Interfaces
 {
     public interface ILegalDocumentAcceptanceService
     {
-        Task AcceptAllDocumentsForCurrentUserAsync();
-        Task<ICollection<LegalDocumentResponse>> GetLegalDocumentsWithActiveVersionAsync();
-        Task<ICollection<LegalDocumentResponse>> GetNotAcceptedLegalDocumentsOfCurrentUserAsync();
+        Task AcceptDocumentsForCurrentUserAsync(ICollection<string> documentIds);
+        Task<ICollection<LegalDocumentResponse>> GetLegalDocumentsWithActiveVersionAsync(string? category);
+        Task<ICollection<LegalDocumentResponse>> GetNotAcceptedLegalDocumentsOfCurrentUserAsync(string? category);
     }
 }

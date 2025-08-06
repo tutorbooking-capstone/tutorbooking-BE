@@ -1,5 +1,6 @@
 ﻿using App.DTOs.LegalDocumentDTOs;
 using App.DTOs.LegalDocumentDTOs.VersionDTOs;
+using System.Runtime.InteropServices;
 
 namespace App.Services.Interfaces
 {
@@ -9,7 +10,7 @@ namespace App.Services.Interfaces
         Task<LegalDocumentVersionResponse> CreateVersionAsync(LegalDocumentVersionCreateRequest request);
         Task DeleteAsync(string id);
         Task DeleteVersionAsync(string id);
-        Task<List<LegalDocumentResponse>> GetAllAsync(int page, int size);
+        Task<List<LegalDocumentResponse>> GetAllAsync([Optional] string? category, int page = 1, int size = 10);
         Task<LegalDocumentResponse?> GetByIdAsync(string id);
         Task<LegalDocumentVersionResponse?> GetVersionByIdAsync(string id);
         Task<LegalDocumentResponse> UpdateAsync(LegalDocumentUpdateRequest request);
