@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 using App.DTOs.LegalDocumentDTOs;
 using App.Services.Interfaces.User;
 using App.Services.Interfaces;
+using LinqKit;
+using System.Linq.Expressions;
+using StackExchange.Profiling.Internal;
 
 namespace App.Services.Services
 {
@@ -23,56 +26,61 @@ namespace App.Services.Services
             _userService = userService;
         }
 
-        public async Task AcceptAllDocumentsForCurrentUserAsync()
+        public async Task AcceptDocumentsForCurrentUserAsync(ICollection<string> documentIds)
         {
             string userId = _userService.GetCurrentUserId();
             await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
-                var documentIds = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
-                    .Where(e => e.Versions.Any(v => v.Status == LegalDocumentStatus.Active) && !e.LegalDocumentAcceptances.Any(a => a.UserId.Equals(userId)))
+                var legalDocuments = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
+                    .Where(e => documentIds.Contains(e.Id) && e.Versions.Any(v => v.Status == LegalDocumentStatus.Active) && !e.LegalDocumentAcceptances.Any(a => a.UserId.Equals(userId)))
                     .Select(e => new LegalDocumentLatestVersion()
                     {
                         Id = e.Id,
                         VersionId = e.Versions.FirstOrDefault(v => v.Status == LegalDocumentStatus.Active).Id
                     })
                     .ToListAsync();
-                if (!documentIds.Any())
+                if (!legalDocuments.Any())
                     return false;
-
-                var entities = documentIds.Select(e => new LegalDocumentAcceptance() {
+                var entities = legalDocuments.Select(e => new LegalDocumentAcceptance()
+                {
                     UserId = userId,
                     LegalDocumentId = e.Id,
                     LegalDocumentVersionId = e.VersionId
                 }).ToList();
-
                 _unitOfWork.GetRepository<LegalDocumentAcceptance>().InsertRange(entities);
                 await _unitOfWork.SaveAsync();
-
                 return true;
             });
         }
 
-        public async Task<ICollection<LegalDocumentResponse>> GetNotAcceptedLegalDocumentsOfCurrentUserAsync()
+        public async Task<ICollection<LegalDocumentResponse>> GetNotAcceptedLegalDocumentsOfCurrentUserAsync(string? category)
         {
             string userId = _userService.GetCurrentUserId();
+ 
+            var predicate = PredicateBuilder.New<LegalDocument>(true);
+            predicate.And(LegalDocument.ActiveVersionExpression);
+            predicate.And(LegalDocument.UserNotAcceptedExpression(userId));
+            if (!category.IsNullOrWhiteSpace()) predicate.And(LegalDocument.IsCategoryExpression(category));
+
             var documents = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
-                    .Where(e => e.Versions.Any(v => v.Status == LegalDocumentStatus.Active) && !e.LegalDocumentAcceptances.Any(a => a.UserId.Equals(userId)))
+                    .Where(predicate)
                     .Select(e => e.ToResponse())
                     .ToArrayAsync();
             return documents;
         }
+        public async Task<ICollection<LegalDocumentResponse>> GetLegalDocumentsWithActiveVersionAsync(string? category)
+        {   
+            var predicate = PredicateBuilder.New<LegalDocument>(true);
+            predicate.And(LegalDocument.ActiveVersionExpression);
+            if (!category.IsNullOrWhiteSpace()) predicate.And(LegalDocument.IsCategoryExpression(category));
 
-
-        public async Task<ICollection<LegalDocumentResponse>> GetLegalDocumentsWithActiveVersionAsync()
-        {
             var legalDocuments = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
                 .Include(e => e.Versions)
-                .Where(e => e.Versions.Any(v => v.Status == LegalDocumentStatus.Active))
+                .Where(predicate)
                 .Select(e => e.ToResponseWithLatestActiveVersionOnly())
                 .ToListAsync();
             return legalDocuments;
         }
-
     }
 
     public record LegalDocumentLatestVersion

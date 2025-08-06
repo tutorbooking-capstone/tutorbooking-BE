@@ -5,11 +5,15 @@ using App.DTOs.LegalDocumentDTOs.VersionDTOs;
 using App.Repositories.Models.Legal;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
+using LinqKit;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Profiling.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using static Dapper.SqlMapper;
@@ -33,10 +37,14 @@ namespace App.Services.Services
             return entity.ToResponse();
         }
 
-        public async Task<List<LegalDocumentResponse>> GetAllAsync(int page, int size)
+        public async Task<List<LegalDocumentResponse>> GetAllAsync([Optional] string? category, int page = 1, int size = 10)
         {
+            var predicate = PredicateBuilder.New<LegalDocument>(true);
+            if (!category.IsNullOrWhiteSpace()) predicate.And(LegalDocument.IsCategoryExpression(category));
+
             var entities = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
                 .Include(e => e.Versions).ThenInclude(v => v.LegalDocumentAcceptances)
+                .Where(predicate)
                 .OrderByDescending(e => e.LastUpdatedTime)      
                 .Skip((page - 1) * size)
                 .Take(size)
@@ -55,6 +63,15 @@ namespace App.Services.Services
             if (entity == null)
                 throw new ErrorException(404, ErrorCode.NotFound, "NOT_FOUND");
             return entity;
+        }
+
+        public async Task<ICollection<string>> GetAllCategoriesAsync()
+        {
+            var categories = await _unitOfWork.GetRepository<LegalDocument>().ExistEntities()
+                .Select(e => e.Category)
+                .Distinct()
+                .ToListAsync();
+            return categories;
         }
 
         public async Task<LegalDocumentResponse> UpdateAsync(LegalDocumentUpdateRequest request)

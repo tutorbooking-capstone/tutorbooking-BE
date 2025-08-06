@@ -15,29 +15,30 @@ namespace TutorBooking.APIService.Controllers
         {
             _legalDocumentAcceptanceService = legalDocumentAcceptanceService;
         }
-        [HttpPost("accept-all")]
+
+        [HttpPost("accept")]
         [Authorize]
-        public async Task<IActionResult> AcceptAllDocuments()
+        public async Task<IActionResult> AcceptDocuments([FromBody] string[] ids)
         {
-            await _legalDocumentAcceptanceService.AcceptAllDocumentsForCurrentUserAsync();
-            return Ok(new BaseResponseModel<object>(null, null, "SUCCESS"));
+            await _legalDocumentAcceptanceService.AcceptDocumentsForCurrentUserAsync(ids);
+            return Ok(new BaseResponseModel<object>(message: "SUCCESS"));
         }
 
 
         [HttpGet("not-accepted-documents")]
         [Authorize]
-        public async Task<IActionResult> GetNotAcceptedDocuments()
+        public async Task<IActionResult> GetNotAcceptedDocuments(string? category)
         {
-            var response = await _legalDocumentAcceptanceService.GetNotAcceptedLegalDocumentsOfCurrentUserAsync();
-            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
+            var response = await _legalDocumentAcceptanceService.GetNotAcceptedLegalDocumentsOfCurrentUserAsync(category);
+            return Ok(new BaseResponseModel<object>(message: "SUCCESS"));
         }
 
         [HttpGet("active-legal-documents")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetActiveLegalDocuments()
+        public async Task<IActionResult> GetActiveLegalDocuments(string? category)
         {
-            var response = await _legalDocumentAcceptanceService.GetLegalDocumentsWithActiveVersionAsync();
-            return Ok(new BaseResponseModel<object>(response, null, "SUCCESS"));
+            var response = await _legalDocumentAcceptanceService.GetLegalDocumentsWithActiveVersionAsync(category);
+            return Ok(new BaseResponseModel<object>(message: "SUCCESS"));
         }
     }
 }
