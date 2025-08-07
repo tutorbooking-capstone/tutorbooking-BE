@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Hangfire.PostgreSql;
 using Hangfire;
+using App.Services.Events;
 
 namespace App.Services
 {
@@ -72,6 +73,11 @@ namespace App.Services
 
             #region Hangfire Services
             services.AddHangfireServices(configuration);
+            #endregion
+
+            #region Notification Events
+            services.AddSingleton<NotificationEvents>();
+            
             #endregion
 
             services.AddHttpContextAccessor();

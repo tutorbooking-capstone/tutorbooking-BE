@@ -9,6 +9,7 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace App.Services.Services
@@ -21,6 +22,7 @@ namespace App.Services.Services
         private readonly IWalletService _walletService;
         private readonly ILogger<DepositService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly INotificationService _notificationService;
 
         public DepositService(
             IUnitOfWork unitOfWork,
@@ -28,7 +30,8 @@ namespace App.Services.Services
             IPayosService payosService,
             IWalletService walletService,
             ILogger<DepositService> logger,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
@@ -36,6 +39,7 @@ namespace App.Services.Services
             _walletService = walletService;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _notificationService = notificationService;
         }
 
         public async Task<DepositRequestResponse> CreateDepositRequestAsync(decimal amount)
@@ -303,6 +307,25 @@ namespace App.Services.Services
                     await _unitOfWork.SaveAsync();
                     _logger.LogInformation("Changes saved to database");
                     _logger.LogInformation("====== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY ======");
+
+                    // Send notification to user
+                    await _notificationService.SendToUsersAsync(new()
+                    {
+                        Content = new()
+                        {
+                            NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                            Title = "PUSH_ON_DEPOSIT_SUCCESS",
+                            Content = "PUSH_ON_DEPOSIT_SUCCESS_BODY",
+                            AdditionalData = JsonSerializer.Serialize(new
+                            {
+                                DepositRequestId = depositRequest.Id,
+                                Amount = depositRequest.Amount,
+                                Status = depositRequest.Status.ToString(),
+                            })
+                        },
+                        ReceiverUserIds = [depositRequest.UserId]
+                    });
+
                     return true;
                 }
                 else if (status != null && (status.Equals("CANCELLED", StringComparison.OrdinalIgnoreCase) || 
@@ -317,6 +340,25 @@ namespace App.Services.Services
                     
                     _logger.LogInformation("Deposit request marked as failed");
                     _logger.LogInformation("====== WEBHOOK PROCESSING COMPLETED (PAYMENT FAILED) ======");
+
+                    // Send notification to user
+                    await _notificationService.SendToUsersAsync(new()
+                    {
+                        Content = new()
+                        {
+                            NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                            Title = "PUSH_ON_DEPOSIT_FAILED",
+                            Content = "PUSH_ON_DEPOSIT_FAILED_BODY",
+                            AdditionalData = JsonSerializer.Serialize(new
+                            {
+                                DepositRequestId = depositRequest.Id,
+                                Amount = depositRequest.Amount,
+                                Status = depositRequest.Status.ToString(),
+                            })
+                        },
+                        ReceiverUserIds = [depositRequest.UserId]
+                    });
+
                     return true;
                 }
 

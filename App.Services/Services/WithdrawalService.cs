@@ -21,19 +21,22 @@ namespace App.Services.Services
         private readonly IFeeService _feeService;
         private readonly IWalletService _walletService;
         private readonly ILogger<WithdrawalService> _logger;
+        private readonly INotificationService _notificationService;
 
         public WithdrawalService(
             IUnitOfWork unitOfWork,
             ICurrentUserProvider currentUserProvider,
             IFeeService feeService,
             IWalletService walletService,
-            ILogger<WithdrawalService> logger)
+            ILogger<WithdrawalService> logger,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
             _feeService = feeService;
             _walletService = walletService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         #region Private Helpers
@@ -335,6 +338,23 @@ namespace App.Services.Services
                         "Đã xử lý thành công yêu cầu rút tiền {WithdrawalId} cho người dùng {UserId}. Số tiền: {Amount}",
                         withdrawal.Id, withdrawal.UserId, withdrawal.GrossAmount);
 
+                    // Send notification to user
+                    await _notificationService.SendToUsersAsync(new()
+                    {
+                        Content = new()
+                        {
+                            NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                            Title = "WITHDRAWAL_REQUEST_APPROVED",
+                            Content = "WITHDRAWAL_REQUEST_APPROVED_BODY",
+                            AdditionalData = JsonSerializer.Serialize(new
+                            {
+                                WithdrawalId = withdrawal.Id,
+                                Amount = withdrawal.GrossAmount
+                            }),
+                        }, 
+                        ReceiverUserIds = [withdrawal.UserId]
+                    });
+
                     return WithdrawalRequestResponse.FromEntity(withdrawal);
                 }
                 catch (Exception ex)
@@ -433,6 +453,23 @@ namespace App.Services.Services
                     _logger.LogInformation(
                         "Đã từ chối yêu cầu rút tiền {WithdrawalId} cho người dùng {UserId}. Lý do: {Reason}",
                         withdrawal.Id, withdrawal.UserId, request.RejectionReason);
+
+                    // Send notification to user
+                    await _notificationService.SendToUsersAsync(new()
+                    {
+                        Content = new()
+                        {
+                            NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                            Title = "WITHDRAWAL_REQUEST_REJECTED",
+                            Content = "WITHDRAWAL_REQUEST_REJECTED_BODY",
+                            AdditionalData = JsonSerializer.Serialize(new
+                            {
+                                WithdrawalId = withdrawal.Id,
+                                Amount = withdrawal.GrossAmount
+                            }),
+                        },
+                        ReceiverUserIds = [withdrawal.UserId]
+                    });
 
                     return WithdrawalRequestResponse.FromEntity(withdrawal);
                 }

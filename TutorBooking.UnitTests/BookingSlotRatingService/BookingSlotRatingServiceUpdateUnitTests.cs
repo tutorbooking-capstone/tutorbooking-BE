@@ -3,6 +3,7 @@ using App.Core.Constants;
 using App.DTOs.RatingDTOs;
 using App.Repositories.Models.Rating;
 using App.Repositories.UoW;
+using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using App.Services.Services;
 using Moq;
@@ -15,6 +16,7 @@ public class BookingSlotRatingServiceUpdateUnitTests
     private Mock<IUnitOfWork> _mockUnitOfWork;
     private Mock<IGenericRepository<BookingSlotRating>> _mockBookingSlotRatingRepo;
     private Mock<IUserService> _mockUserService;
+    private Mock<INotificationService> _mockNotificationService;
     private BookingSlotRatingService _service;
     private readonly DateTime _currentUtcTime = DateTime.UtcNow;
 
@@ -29,7 +31,7 @@ public class BookingSlotRatingServiceUpdateUnitTests
             .Setup(uow => uow.GetRepository<BookingSlotRating>())
             .Returns(_mockBookingSlotRatingRepo.Object);
 
-        _service = new BookingSlotRatingService(_mockUnitOfWork.Object, _mockUserService.Object);
+        _service = new BookingSlotRatingService(_mockUnitOfWork.Object, _mockUserService.Object, _mockNotificationService.Object);
     }
 
     [Test]

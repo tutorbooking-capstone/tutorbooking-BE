@@ -8,6 +8,7 @@ using App.Core;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using TutorBooking.APIService.Middleware;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService
 {
@@ -23,6 +24,7 @@ namespace TutorBooking.APIService
             services.ConfigureValidation();
 			services.ConfigureSignalR();
             services.ConfigureControllers();
+            services.ConfigureEventHandlers();
 
             return services;
         }
@@ -216,6 +218,15 @@ namespace TutorBooking.APIService
 			});
 			return services;
 		}
+
+        public static IServiceCollection ConfigureEventHandlers(
+            this IServiceCollection services)
+        {
+            // Register event handlers
+            services.AddScoped<NotificationEventHandler>();
+            return services;
+        }
+
         #endregion
     }
 }

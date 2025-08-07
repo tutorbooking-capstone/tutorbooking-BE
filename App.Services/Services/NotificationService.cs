@@ -5,6 +5,7 @@ using App.DTOs.UserDTOs;
 using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Events;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using LinqKit;
@@ -25,17 +26,17 @@ namespace App.Services.Services
     public class NotificationService : INotificationService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly UserManager<AppUser> _userManager;
         private readonly IUserService _userService;
+        private readonly NotificationEvents _notificationEvents;
 
-        public NotificationService(IUnitOfWork unitOfWork, IUserService userService)
+        public NotificationService(IUnitOfWork unitOfWork, IUserService userService, NotificationEvents notificationEvents)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _notificationEvents = notificationEvents;
         }
 
-
-        public async Task<NotificationResponse> CreateForRolesAsync(SendNotificationToRolesRequest request)
+        public async Task<NotificationResponse> SendToRolesAsync(SendNotificationToRolesRequest request)
         {
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
@@ -51,10 +52,17 @@ namespace App.Services.Services
                 var response = await CreateNotificationAsync(request.Content, userIds);
                 return response;
             });
+
+            _notificationEvents.RequestSendNotificationToRoles(this, new NotificationToRolesEventArgs()
+            {
+                NotificationResponse = response,
+                Roles = request.Roles
+            });
+
             return response;
         }
 
-        public async Task<NotificationResponse> CreateForUsersAsync(SendNotificationToUsersRequest request)
+        public async Task<NotificationResponse> SendToUsersAsync(SendNotificationToUsersRequest request)
         {
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
@@ -66,6 +74,12 @@ namespace App.Services.Services
 
                 var response = await CreateNotificationAsync(request.Content, request.ReceiverUserIds);
                 return response;
+            });
+
+            _notificationEvents.RequestSendNotificationToUsers(this, new NotificationToUsersEventArgs()
+            {
+                NotificationResponse = response,
+                ReceiverUserIds = request.ReceiverUserIds
             });
             return response;
         }
@@ -135,8 +149,6 @@ namespace App.Services.Services
                 throw new ErrorException(404, ErrorCode.NotFound, "NOT_FOUND");
             return tutor.ToNotificationSenderResponse();
         }
-
-
 
         private async Task<NotificationResponse> CreateNotificationAsync(NotificationRequest request, ICollection<string> receiverUserIds)
         {

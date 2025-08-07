@@ -4,6 +4,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -14,13 +15,16 @@ namespace TutorBooking.APIService.Controllers
     {
         private readonly IDepositService _depositService;
         private readonly ILogger<DepositController> _logger;
+        private readonly NotificationEventHandler _notificationEventHandler;
 
         public DepositController(
             IDepositService depositService,
-            ILogger<DepositController> logger)
+            ILogger<DepositController> logger,
+            NotificationEventHandler notificationEventHandler)
         {
             _depositService = depositService;
             _logger = logger;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpPost]
