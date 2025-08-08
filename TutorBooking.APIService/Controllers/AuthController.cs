@@ -52,9 +52,19 @@ namespace TutorBooking.APIService.Controllers
         [HttpPatch("confirm-email")]
         public async Task<IActionResult> ConfirmEmail(ConfirmOTPRequest model)
         {
-            await _authService.VerifyOtpAsync(model, false);
+            await _authService.VerifyEmailAsync(model);
             return Ok(new BaseResponseModel<string>(
                 message: "Xác nhận email thành công!"
+            ));
+        }
+
+        [HttpPost("resend-verification-email")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResendVerificationEmail(EmailModel model)
+        {
+            await _authService.ResendVerificationEmailAsync(model);
+            return Ok(new BaseResponseModel<string>(
+                message: "Đã gửi lại email xác nhận."
             ));
         }
 
@@ -80,18 +90,9 @@ namespace TutorBooking.APIService.Controllers
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword(EmailModel model)
         {
-            await _authService.ForgotPasswordAsync(model);
+            await _authService.RequestResetPasswordAsync(model);
             return Ok(new BaseResponseModel<string>(
                 message: "Đã gửi email xác nhận yêu cầu thay đổi mật khẩu."
-            ));
-        }
-
-        [HttpPatch("confirm-reset-password")]
-        public async Task<IActionResult> ConfirmResetPassword(ConfirmOTPRequest model)
-        {
-            await _authService.VerifyOtpAsync(model, true);
-            return Ok(new BaseResponseModel<string>(
-                message: "Xác nhận thay đổi mật khẩu thành công!"
             ));
         }
 

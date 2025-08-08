@@ -5,6 +5,7 @@ using App.DTOs.AuthDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Infras;
 using App.Services.Interfaces.User;
 using FirebaseAdmin.Auth;
 using Google.Apis.Auth;
@@ -32,6 +33,10 @@ namespace App.Services.Services.User
         private readonly ILogger<AuthService> _logger;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IOtpService _otpService;
+
+        private static readonly string RESET_PASSWORD_OTP_TYPE = "RESET_PASSWORD";
+        private static readonly string VERIFY_EMAIL_OTP_TYPE = "VERIFY_EMAIL";
 
         public AuthService(
             UserManager<AppUser> userManager,
@@ -41,7 +46,8 @@ namespace App.Services.Services.User
             ITokenService tokenService,
             ILogger<AuthService> logger,
             IUnitOfWork unitOfWork,
-            IHttpContextAccessor httpContextAccessor)
+            IHttpContextAccessor httpContextAccessor,
+            IOtpService otpService)
         {
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager)); ;
             _roleManager = roleManager;
@@ -51,6 +57,7 @@ namespace App.Services.Services.User
             _logger = logger;
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;
+            _otpService = otpService;
         }
         #endregion
 
@@ -86,8 +93,6 @@ namespace App.Services.Services.User
             }
 
             // Case 1: New user registration.
-            string otp = GenerateOtp();
-            int otpCode = int.Parse(otp);
 
             var newUser = new AppUser
             {
@@ -102,8 +107,6 @@ namespace App.Services.Services.User
                 PhoneNumberConfirmed = true,
                 EmailConfirmed = false,
                 CreatedTime = DateTime.UtcNow,
-                EmailCode = otpCode,
-                CodeGeneratedTime = DateTime.UtcNow
             };
 
             var result = await _userManager.CreateAsync(newUser);
@@ -143,11 +146,14 @@ namespace App.Services.Services.User
             _unitOfWork.GetRepository<Wallet>().Insert(wallet);
             await _unitOfWork.SaveAsync();
 
+            string otp = await _otpService.GenerateOtpAsync(newUser.Id, VERIFY_EMAIL_OTP_TYPE, TimeSpan.FromMinutes(60));
+
+
             string greeting = $"Chào {model.FullName},";
             string mainMessage = $@"
                 Cảm ơn bạn đã đăng ký tài khoản.
                 <br>Mã OTP của bạn để xác thực tài khoản là: <div class='otp-code'>{otp}</div>
-                <br>Vui lòng nhập mã này trong vòng 5 phút để hoàn tất đăng ký.";
+                <br>Vui lòng nhập mã này trong vòng 60 phút để hoàn tất đăng ký.";
 
             await _emailService.SendEmailAsync(
                 model.Email,
@@ -245,7 +251,33 @@ namespace App.Services.Services.User
             // No email sending
         }
 
-        public async Task VerifyOtpAsync(ConfirmOTPRequest model, bool isResetPassword)
+        public async Task ResendVerificationEmailAsync(EmailModel model)
+        {
+            AppUser? user = await _userManager.FindByEmailAsync(model.Email)
+                ?? throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Vui lòng kiểm tra email của bạn");
+            if (user.EmailConfirmed)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Tài khoản đã được xác thực.");
+            string otp = await _otpService.GenerateOtpAsync(user.Id, VERIFY_EMAIL_OTP_TYPE, TimeSpan.FromMinutes(60));
+
+            string greeting = $"Chào {user.FullName},";
+            string mainMessage = $@"
+                Bạn đã yêu cầu gửi lại mã xác thực tài khoản.
+                <br>Mã OTP của bạn là: <div class='otp-code'>{otp}</div>
+                <br>Vui lòng sử dụng mã này trong vòng 60 phút để xác thực tài khoản.";
+            await _emailService.SendEmailAsync(
+                model.Email,
+                "Yêu cầu gửi lại mã xác thực",
+                greeting,
+                mainMessage);
+        }
+
+        public async Task VerifyEmailAsync(ConfirmOTPRequest model)
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)
                 ?? throw new ErrorException(
@@ -253,26 +285,19 @@ namespace App.Services.Services.User
                     ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
-            if (user.EmailCode == null || user.EmailCode.ToString() != model.OTP)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest,
-                    ErrorCode.BadRequest,
-                    "OTP không hợp lệ");
-
-            if (!user.CodeGeneratedTime.HasValue || DateTime.UtcNow > user.CodeGeneratedTime.Value.AddMinutes(5))
+            if (!await _otpService.HasValidOtpAsync(user.Id, VERIFY_EMAIL_OTP_TYPE))
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
                     "OTP đã hết hạn");
 
-            if (!isResetPassword)
-            {
-                string? token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                await _userManager.ConfirmEmailAsync(user, token);
-            }
-
-            user.EmailCode = null;
-            user.CodeGeneratedTime = null;
+            if (!await _otpService.ValidateOtpAsync(user.Id, VERIFY_EMAIL_OTP_TYPE, model.OTP))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "OTP không hợp lệ");
+            
+            user.EmailConfirmed = true;
 
             var result = await _userManager.UpdateAsync(user);
             if (!result.Succeeded)
@@ -342,7 +367,7 @@ namespace App.Services.Services.User
             return loginResponse; 
         }
 
-        public async Task ForgotPasswordAsync(EmailModel model)
+        public async Task RequestResetPasswordAsync(EmailModel model)
         {
             AppUser? user = await _userManager.FindByEmailAsync(model.Email)
                 ?? throw new ErrorException(
@@ -356,16 +381,7 @@ namespace App.Services.Services.User
                     ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
 
-            string OTP = GenerateOtp();
-            user.EmailCode = int.Parse(OTP);
-            user.CodeGeneratedTime = DateTime.UtcNow;
-
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest,
-                    ErrorCode.BadRequest,
-                    "Không thể lưu OTP, vui lòng thử lại sau.");
+            string OTP = await _otpService.GenerateOtpAsync(user.Id, RESET_PASSWORD_OTP_TYPE, TimeSpan.FromMinutes(5));
 
             string greeting = $"Chào {model.Email},";
             string mainMessage = $@"
@@ -393,6 +409,18 @@ namespace App.Services.Services.User
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
                     "Vui lòng kiểm tra email của bạn");
+
+            if (!await _otpService.HasValidOtpAsync(user.Id, RESET_PASSWORD_OTP_TYPE))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "OTP đã hết hạn");
+
+            if (!await _otpService.ValidateOtpAsync(user.Id, RESET_PASSWORD_OTP_TYPE, model.OTP))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "OTP không hợp lệ");
 
             var passwordHasher = new FixedSaltPasswordHasher<AppUser>(Options.Create(new PasswordHasherOptions()));
             string hashedNewPassword = passwordHasher.HashPassword(user, model.Password);
