@@ -96,15 +96,6 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
-        [HttpPatch("confirm-reset-password")]
-        public async Task<IActionResult> ConfirmResetPassword(ResetPasswordRequest model)
-        {
-            await _authService.ResetPasswordAsync(model);
-            return Ok(new BaseResponseModel<string>(
-                message: "Xác nhận thay đổi mật khẩu thành công!"
-            ));
-        }
-
         [HttpPatch("reset-password")]
         public async Task<IActionResult> ResetPassword(ResetPasswordRequest model)
         {
