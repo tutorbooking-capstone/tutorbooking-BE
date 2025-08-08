@@ -48,6 +48,7 @@ namespace TutorBooking.APIService
                     builder
                         .WithOrigins(
                             "http://localhost:5173", // Local development
+                            "https://localhost:5173", // Local development with HTTPS
                             "https://ngoai-ngu-ngay.vercel.app" // Deployed frontend
                         )
                         .AllowAnyMethod()
