@@ -119,7 +119,7 @@ namespace App.Services.Services
             var offerRepo = _unitOfWork.GetRepository<TutorBookingOffer>();
 
             var newOffer = new TutorBookingOffer
-            {
+            {   
                 TutorId = tutorId,
                 LearnerId = request.LearnerId,
                 LessonId = request.LessonId,
@@ -188,7 +188,6 @@ namespace App.Services.Services
 
             return await GetBookingOfferByIdForTutorAsync(offerId);
         }
-
         public async Task DeleteBookingOfferAsync(string offerId)
         {
             var tutorId = GetAuthenticatedTutorId();
@@ -198,7 +197,7 @@ namespace App.Services.Services
             if (offer == null)
                 throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or you don't have permission to delete it.");
 
-            offerRepo.Delete(offer);
+            offerRepo.Delete(offer, isSoftDelete: false);
             await _unitOfWork.SaveAsync();
         }
 
