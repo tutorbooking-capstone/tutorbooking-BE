@@ -118,18 +118,13 @@ namespace App.Services.Services
 
             var offerRepo = _unitOfWork.GetRepository<TutorBookingOffer>();
 
-            var newOffer = new TutorBookingOffer
-            {   
-                TutorId = tutorId,
-                LearnerId = request.LearnerId,
-                LessonId = request.LessonId,
-                ExpirationPeriod = TimeSpan.FromMinutes(30), // Mặc định 30 phút
-                OfferedSlots = request.OfferedSlots.Select(s => new OfferedSlot
-                {
-                    SlotDateTime = s.SlotDateTime,
-                    SlotIndex = s.SlotIndex,
-                }).ToList()
-            };
+            var offeredSlots = request.OfferedSlots.Select(s => (s.SlotDateTime, s.SlotIndex)).ToList();
+            var newOffer = TutorBookingOffer.Create(
+                tutorId, 
+                request.LearnerId, 
+                request.LessonId, 
+                offeredSlots
+            );
 
             offerRepo.Insert(newOffer);
             await _unitOfWork.SaveAsync();

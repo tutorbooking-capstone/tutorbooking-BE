@@ -44,5 +44,30 @@ namespace App.Repositories.Models
                 x => x.UpdatedAt!
             ];
         }
+        
+        #region Behavior
+        public static TutorBookingOffer Create(
+            string tutorId, 
+            string learnerId, 
+            string lessonId, 
+            IEnumerable<(DateTime SlotDateTime, int SlotIndex)> offeredSlots)
+        {
+            var now = DateTime.UtcNow;
+            
+            return new TutorBookingOffer
+            {
+                TutorId = tutorId,
+                LearnerId = learnerId,
+                LessonId = lessonId,
+                CreatedAt = now,
+                ExpirationPeriod = TimeSpan.FromMinutes(30),
+                OfferedSlots = offeredSlots.Select(s => new OfferedSlot
+                {
+                    SlotDateTime = s.SlotDateTime,
+                    SlotIndex = s.SlotIndex,
+                }).ToList()
+            };
+        }
+        #endregion
     }
 }
