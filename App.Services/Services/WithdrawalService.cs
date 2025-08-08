@@ -344,8 +344,8 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "WITHDRAWAL_REQUEST_APPROVED",
-                            Content = "WITHDRAWAL_REQUEST_APPROVED_BODY",
+                            Title = "PUSH_ON_WITHDRAWAL_REQUEST_APPROVED",
+                            Content = "PUSH_ON_WITHDRAWAL_REQUEST_APPROVED_BODY",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
                                 WithdrawalId = withdrawal.Id,
@@ -460,8 +460,8 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "WITHDRAWAL_REQUEST_REJECTED",
-                            Content = "WITHDRAWAL_REQUEST_REJECTED_BODY",
+                            Title = "PUSH_ON_WITHDRAWAL_REQUEST_REJECTED",
+                            Content = "PUSH_ON_WITHDRAWAL_REQUEST_REJECTED_BODY",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
                                 WithdrawalId = withdrawal.Id,

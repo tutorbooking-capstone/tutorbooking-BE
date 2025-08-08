@@ -52,7 +52,7 @@ namespace App.Services.Services
                 {
                     NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
                     Title = "PUSH_ON_TUTOR_RATING_RECEIVED",
-                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED",
+                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED_BODY",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
                         Id = entity.Id,
