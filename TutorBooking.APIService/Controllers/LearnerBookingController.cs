@@ -1,15 +1,9 @@
 ﻿using App.Core.Base;
 using App.DTOs.BookingDTOs;
-using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
-using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Text.Json;
-using TutorBooking.APIService.Hubs.NotificationHubs;
-using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
@@ -20,14 +14,11 @@ namespace TutorBooking.APIService.Controllers
     public class LearnerBookingController : ControllerBase
     {
         private readonly ILearnerBookingService _service;
-        private readonly NotificationEventHandler _notificationEventHandler;
 
         public LearnerBookingController(
-            ILearnerBookingService service, 
-            NotificationEventHandler notificationEventHandler)
+            ILearnerBookingService service)
         {
             _service = service; ;
-            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpPut("time-slots")]
@@ -104,6 +95,17 @@ namespace TutorBooking.APIService.Controllers
         {
             var result = await _service.AcceptTutorOfferAsync(request);
             return Ok(result);
+        }
+
+        [HttpPost("offers/{offerId}/reject")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> RejectBookingOffer([FromRoute] string offerId)
+        {
+            var result = await _service.RejectBookingOfferAsync(offerId);
+            return Ok(new BaseResponseModel<TutorBookingOfferResponse>(
+                data: result,
+                message: "Từ chối gói học thành công."
+            ));
         }
     }
 }

@@ -48,6 +48,7 @@ namespace App.DTOs.BookingDTOs
         public DateTime? UpdatedAt { get; set; }
         public DateTime ExpirationTime { get; set; } // Thời gian hết hạn
         public bool IsExpired { get; set; } // Trạng thái hết hạn
+        public bool IsRejected { get; set; } 
         public BookingUserInfo? Tutor { get; set; }
         public BookingUserInfo? Learner { get; set; }
         public List<OfferedSlotDTO> OfferedSlots { get; set; } = new List<OfferedSlotDTO>();
@@ -61,6 +62,7 @@ namespace App.DTOs.BookingDTOs
                 UpdatedAt = o.UpdatedAt,
                 ExpirationTime = (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod),
                 IsExpired = DateTime.UtcNow > (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod),
+                IsRejected = o.IsRejected,   
                 LessonId = o.Lesson != null ? o.Lesson.Id : "",
                 LessonName = o.Lesson != null ? o.Lesson.Name : "N/A",
                 PricePerSlot = o.Lesson != null ? o.Lesson.Price : 0,

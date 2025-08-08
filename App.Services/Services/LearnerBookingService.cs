@@ -7,11 +7,9 @@ using App.Repositories.Models.Notifications;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
-using App.Services.Events;
 using App.Services.Interfaces;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -448,6 +446,68 @@ namespace App.Services.Services
                     }).ToList()
                 };
             });
+        }
+
+        public async Task<TutorBookingOfferResponse> RejectBookingOfferAsync(string offerId)
+        {
+            var learnerId = GetAuthenticatedLearnerId();
+            
+            // Tìm offer
+            var offerRepo = _unitOfWork.GetRepository<TutorBookingOffer>();
+            var offer = await offerRepo.ExistEntities()
+                .Include(o => o.Tutor).ThenInclude(t => t!.User)
+                .Include(o => o.Learner).ThenInclude(l => l!.User)
+                .Include(o => o.Lesson)
+                .Include(o => o.OfferedSlots)
+                .FirstOrDefaultAsync(o => o.Id == offerId && o.LearnerId == learnerId);
+
+            if (offer == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Offer not found or you don't have permission to reject it.");
+
+            // Kiểm tra nếu offer đã hết hạn
+            if (offer.IsExpired())
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Cannot reject an expired offer.");
+
+            // Đánh dấu offer là đã từ chối
+            var updateFields = offer.MarkAsRejected();
+            if (updateFields.Any())
+            {
+                offerRepo.UpdateFields(offer, updateFields);
+                await _unitOfWork.SaveAsync();
+                
+                // Gửi thông báo cho tutor
+                // await _notificationService.SendToUsersAsync(new()
+                // {
+                //     Content = new()
+                //     {
+                //         NotificationPriority = ENotificationPriority.Normal,
+                //         Title = "PUSH_ON_LEARNER_REJECT_OFFER",
+                //         Content = "PUSH_ON_LEARNER_REJECT_OFFER_BODY",
+                //         AdditionalData = JsonSerializer.Serialize(new
+                //         {
+                //             OfferId = offer.Id,
+                //             LessonId = offer.LessonId,
+                //             SenderId = learnerId,
+                //         }),
+                //     },
+                //     ReceiverUserIds = [offer.TutorId]
+                // });
+            }
+
+            return await offerRepo.ExistEntities()
+                .Where(o => o.Id == offerId)
+                .Include(o => o.Tutor).ThenInclude(t => t!.User)
+                .Include(o => o.Learner).ThenInclude(l => l!.User)
+                .Include(o => o.Lesson)
+                .Include(o => o.OfferedSlots)
+                .Select(TutorBookingOfferResponse.Projection)
+                .FirstAsync();
         }
 
         private async Task<Wallet> GetSystemWalletAsync()
