@@ -53,6 +53,8 @@ namespace App.Services
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ILegalDocumentService, LegalDocumentService>();
             services.AddScoped<ILegalDocumentAcceptanceService, LegalDocumentAcceptanceService>();
+            services.AddSingleton<IOtpService, OtpService>();
+            services.AddHostedService<OtpCleanupService>();
             #endregion
 
             #region Provider Services
@@ -77,7 +79,6 @@ namespace App.Services
 
             #region Notification Events
             services.AddSingleton<NotificationEvents>();
-            
             #endregion
 
             services.AddHttpContextAccessor();

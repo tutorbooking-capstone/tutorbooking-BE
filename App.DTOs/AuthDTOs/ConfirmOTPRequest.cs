@@ -19,8 +19,7 @@ namespace App.DTOs.AuthDTOs
 
             RuleFor(x => x.OTP)
                 .NotEmpty().WithMessage("OTP bắt buộc")
-                .Length(6).WithMessage("OTP không hợp lệ")
-                .Matches(@"^\d{6}$").WithMessage("OTP không hợp lệ");
+                .Length(6).WithMessage("OTP không hợp lệ");
         }
     }
     #endregion

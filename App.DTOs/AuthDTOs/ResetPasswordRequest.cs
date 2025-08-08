@@ -5,8 +5,8 @@ namespace App.DTOs.AuthDTOs
     public class ResetPasswordRequest
     {
         public string Email { get; set; } = string.Empty;
+        public string OTP { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string ConfirmPassword { get; set; } = string.Empty;
     }
 
     #region Validator
@@ -23,9 +23,8 @@ namespace App.DTOs.AuthDTOs
                 .Matches(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.])[A-Za-z\d@$!%*?&.]{8,16}$")
                 .WithMessage("Mật khẩu phải có ít nhất 8 ký tự, 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt");
 
-            RuleFor(x => x.ConfirmPassword)
-                .NotEmpty().WithMessage("Xác nhận mật khẩu là bắt buộc")
-                .Equal(x => x.Password).WithMessage("Mật khẩu xác nhận không khớp");
+            RuleFor(x => x.OTP)
+                .Length(6).WithMessage("OTP phải có 6 ký tự");
         }
     }
     #endregion
