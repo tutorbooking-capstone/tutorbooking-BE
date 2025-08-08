@@ -7,6 +7,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -17,13 +18,16 @@ namespace TutorBooking.APIService.Controllers
     {
         private readonly IWithdrawalService _withdrawalService;
         private readonly IBankAccountService _bankAccountService;
+        private readonly NotificationEventHandler _notificationEventHandler;
 
         public WithdrawalController(
             IWithdrawalService withdrawalService,
-            IBankAccountService bankAccountService)
+            IBankAccountService bankAccountService,
+            NotificationEventHandler notificationEventHandler)
         {
             _withdrawalService = withdrawalService;
             _bankAccountService = bankAccountService;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         #region Withdrawal Endpoints

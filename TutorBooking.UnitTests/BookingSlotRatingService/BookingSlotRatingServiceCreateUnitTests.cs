@@ -6,6 +6,7 @@ using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using App.Services.Services;
 using MockQueryable.Moq;
@@ -19,6 +20,7 @@ public class BookingSlotRatingServiceCreateUnitTests
     private Mock<IGenericRepository<Booking>> _mockBookingRepo;
     private Mock<IGenericRepository<BookingSlotRating>> _mockBookingSlotRatingRepo;
     private Mock<IUserService> _mockUserService;
+    private Mock<INotificationService> _mockNotificationService;
     private BookingSlotRatingService _service;
     private readonly string _currentUserId = "bacsiemon";
 
@@ -33,7 +35,6 @@ public class BookingSlotRatingServiceCreateUnitTests
         _mockUserService
             .Setup(u => u.GetCurrentUserId())
             .Returns(_currentUserId);
-
         _mockUnitOfWork
             .Setup(uow => uow.GetRepository<Booking>())
             .Returns(_mockBookingRepo.Object);
@@ -41,7 +42,7 @@ public class BookingSlotRatingServiceCreateUnitTests
             .Setup(uow => uow.GetRepository<BookingSlotRating>())
             .Returns(_mockBookingSlotRatingRepo.Object);
 
-        _service = new BookingSlotRatingService(_mockUnitOfWork.Object, _mockUserService.Object);
+        _service = new BookingSlotRatingService(_mockUnitOfWork.Object, _mockUserService.Object, _mockNotificationService.Object);
     }
 
     [Test]

@@ -11,11 +11,13 @@ using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace App.Services.Services
@@ -24,11 +26,13 @@ namespace App.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly INotificationService _notificationService;
 
-        public BookingSlotRatingService(IUnitOfWork unitOfWork, IUserService userService)
+        public BookingSlotRatingService(IUnitOfWork unitOfWork, IUserService userService, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _notificationService = notificationService;
         }
 
         public async Task<BookingSlotRating> CreateAsync(BookingSlotRatingRequest request)
@@ -41,6 +45,25 @@ namespace App.Services.Services
             var entity = request.ToEntity(booking.TutorId, booking.LearnerId);
             _unitOfWork.GetRepository<BookingSlotRating>().Insert(entity);
             await _unitOfWork.SaveAsync();
+
+            await _notificationService.SendToUsersAsync(new DTOs.NotificationDTOs.SendNotificationToUsersRequest()
+            {
+                Content = new()
+                {
+                    NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_RATING_RECEIVED",
+                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        Id = entity.Id,
+                        BookingId = entity.BookingId,
+                        AverageRating = (entity.Attitude + entity.TeachingQuality + entity.Commitment)/3,
+                        SenderId = entity.LearnerId,
+                    }),
+                },
+                ReceiverUserIds = [entity.TutorId]
+            });
+
             return entity;
         }
 

@@ -4,6 +4,7 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Npgsql;
 using System.Text.Json;
 using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
@@ -15,20 +16,12 @@ namespace TutorBooking.APIService.Controllers
     public class BookingSlotRatingController : ControllerBase
     {
         private readonly IBookingSlotRatingService _bookingSlotRatingService;
-        private readonly INotificationService _notificationService;
-        private readonly IHubContext<NotificationHub, INotificationClient> _hubContext;
-        private readonly ConnectionService _connectionService;
+        private readonly NotificationEventHandler _notificationEventHandler;
 
-        public BookingSlotRatingController(
-            IBookingSlotRatingService bookingSlotRatingService, 
-            INotificationService notificationService, 
-            IHubContext<NotificationHub, INotificationClient> hubContext,
-            ConnectionService connectionService)
+        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService, NotificationEventHandler notificationEventHandler)
         {
             _bookingSlotRatingService = bookingSlotRatingService;
-            _notificationService = notificationService;
-            _hubContext = hubContext;
-            _connectionService = connectionService;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpPost]
@@ -36,24 +29,6 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> CreateRating(BookingSlotRatingRequest request)
         {
             var response = await _bookingSlotRatingService.CreateAsync(request);
-
-            await _hubContext.SendNotificationToUsersAsync(_notificationService, _connectionService, new()
-            {
-                Content = new()
-                {
-                    NotificationPriority = App.Repositories.Models.Notifications.ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_RATING_RECEIVED",
-                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED",
-                    AdditionalData = JsonSerializer.Serialize(new
-                    {
-                        Id = response.Id,
-                        BookingId = response.BookingId,
-                        AverageRating = (response.TeachingQuality + response.Attitude + response.Commitment) / 3,
-                        SenderId = response.LearnerId,
-                    },new JsonSerializerOptions { WriteIndented = false })
-                },
-                ReceiverUserIds = [response.TutorId]
-            });
 
             return Ok(new BaseResponseModel<object>(
                 data: response,

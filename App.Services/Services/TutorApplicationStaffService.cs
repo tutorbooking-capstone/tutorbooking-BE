@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace App.Services.Services
@@ -24,11 +25,13 @@ namespace App.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
+        private readonly INotificationService _notificationService;
 
-        public TutorApplicationStaffService(IUnitOfWork unitOfWork, IUserService userService)
+        public TutorApplicationStaffService(IUnitOfWork unitOfWork, IUserService userService, INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _notificationService = notificationService;
         }
 
         /// <summary>
@@ -121,9 +124,9 @@ namespace App.Services.Services
         /// <exception cref="ErrorException">Thrown if the tutor application specified in <paramref name="request"/> does not exist.</exception>
         public async Task<RevisionResponse> CreateApplicationRevisionAsync(ApplicationRevisionCreateRequest request)
         {
-            var existsTutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
-                .AnyAsync(e => e.Id.Equals(request.ApplicationId));
-            if (!existsTutorApplication)
+            var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
+                .FirstOrDefaultAsync(e => e.Id.Equals(request.ApplicationId));
+            if (tutorApplication == null)
                 throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
 
             var entity = request.ToEntity(_userService.GetCurrentUserId());
@@ -132,7 +135,24 @@ namespace App.Services.Services
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
             else if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
-            await _unitOfWork.SaveAsync();       
+            await _unitOfWork.SaveAsync();
+
+            await _notificationService.SendToUsersAsync(new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_APPLICATION_REVIEWED",
+                    Content = "PUSH_ON_TUTOR_APPLICATION_REVIEWED_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        Id = entity.Id,
+                        RevisionAction = entity.Action.ToString(),
+                    })
+                },
+                ReceiverUserIds = [tutorApplication.TutorId]
+            });
+
             return entity.ToRevisionResponse();
         }
 

@@ -2,13 +2,17 @@ using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.BookingDTOs;
+using App.DTOs.NotificationDTOs;
 using App.Repositories.Models;
 using App.Repositories.UoW;
+using App.Services.Events;
+using App.Repositories.Models.Notifications;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.Repositories.Models.User;
 using App.Repositories.Models.Scheduling;
+using System.Text.Json;
 
 namespace App.Services.Services
 {
@@ -16,15 +20,18 @@ namespace App.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserProvider _currentUserProvider;
+        private readonly INotificationService _notificationService;
 
         public TutorBookingService(
             IUnitOfWork unitOfWork,
-            ICurrentUserProvider currentUserProvider)
+            ICurrentUserProvider currentUserProvider,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
+            _notificationService = notificationService;
         }
-        
+
         #region Private Helpers
         private string GetAuthenticatedTutorId()
         {
@@ -234,8 +241,10 @@ namespace App.Services.Services
             var bookedSlot = await bookedSlotRepo.ExistEntities()
                 .Include(bs => bs.Booking)
                 .ThenInclude(b => b!.LessonSnapshot)
+                .Include(bs => bs.Booking)
+                .ThenInclude(b => b!.Learner)
+                .ThenInclude(l => l!.User)
                 .FirstOrDefaultAsync(bs => bs.Id == bookedSlotId);
-
 
             // Rule 1: Check if the slot exists
             if (bookedSlot == null)
@@ -251,20 +260,6 @@ namespace App.Services.Services
                     ErrorCode.Forbidden, 
                     "You are not authorized to modify this booked slot.");
 
-            // Rule 3 (Optional Business Rule): Timing Check
-            // A tutor should only be able to mark a slot as complete *after* it has finished.
-            /*
-            if (bookedSlot.Booking?.LessonSnapshot != null)
-            {
-                var slotStartTime = CalculateSlotStartTime(bookedSlot.BookedDate, bookedSlot.SlotIndex);
-                var slotEndTime = slotStartTime.AddMinutes(bookedSlot.Booking.LessonSnapshot.DurationInMinutes);
-                if (DateTime.UtcNow < slotEndTime)
-                {
-                    throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Cannot mark a slot as complete before it has finished.");
-                }
-            }
-            */
-
             try
             {
                 // Call the entity's behavior method to handle state transition and get updated fields
@@ -275,6 +270,23 @@ namespace App.Services.Services
                 {
                     bookedSlotRepo.UpdateFields(bookedSlot, updateFields);
                     await _unitOfWork.SaveAsync();
+                    // Fire Notification event after successful update
+
+                    await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest()
+                    {
+                        Content = new()
+                        {
+                            NotificationPriority = ENotificationPriority.Normal,
+                            Title = "PUSH_ON_BOOKED SLOT COMPLETED",
+                            Content = "PUSH_ON_BOOKED_SLOT COMPLETED_BODY",
+                            AdditionalData = JsonSerializer.Serialize(new
+                            {
+                                SenderId = tutorId,
+                                BookedSlotId = bookedSlotId
+                            }),
+                        },
+                        ReceiverUserIds = [bookedSlot.Booking!.LearnerId]
+                    });
                 }
             }
             catch (InvalidOperationException ex)
@@ -286,17 +298,6 @@ namespace App.Services.Services
             }
 
             // Note: Fund release is handled by a scheduled job. No immediate action here.
-        }
-
-        private DateTime CalculateSlotStartTime(DateTime date, int slotIndex)
-        {
-            // Business Rule: This logic assumes a fixed schedule (e.g., starting at 8 AM, 30 min slots).
-            // It should be centralized or made configurable if schedules are flexible.
-            int hoursToAdd = slotIndex / 2; // Each hour has 2 slots
-            int minutesToAdd = (slotIndex % 2) * 30; // 0 or 30 minutes
-            
-            // Using Date property to avoid time component issues from database
-            return date.Date.AddHours(8 + hoursToAdd).AddMinutes(minutesToAdd);
         }
     }
 }

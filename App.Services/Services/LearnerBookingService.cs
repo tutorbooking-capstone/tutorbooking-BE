@@ -3,13 +3,17 @@ using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.BookingDTOs;
 using App.Repositories.Models;
+using App.Repositories.Models.Notifications;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Events;
 using App.Services.Interfaces;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace App.Services.Services
 {
@@ -18,6 +22,7 @@ namespace App.Services.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserProvider _currentUserProvider;
         private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly INotificationService _notificationService;
 
         // Định nghĩa hằng số thời gian tối thiểu (1 giờ)
         private const int MIN_HOURS_BEFORE_BOOKING = 1;
@@ -25,11 +30,13 @@ namespace App.Services.Services
         public LearnerBookingService(
             IUnitOfWork unitOfWork,
             ICurrentUserProvider currentUserProvider,
-            IBackgroundJobClient backgroundJobClient)
+            IBackgroundJobClient backgroundJobClient,
+            INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
             _backgroundJobClient = backgroundJobClient;
+            _notificationService = notificationService;
         }
 
         #region Private Helpers
@@ -102,6 +109,23 @@ namespace App.Services.Services
             }
             
             await _unitOfWork.SaveAsync();
+
+            await _notificationService.SendToUsersAsync(new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST",
+                    Content = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        ExpectedStartDate = request.ExpectedStartDate,
+                        LessonId = request.LessonId,
+                        SenderId = learnerId,
+                    }, new JsonSerializerOptions { WriteIndented = false })
+                },
+                ReceiverUserIds = [request.TutorId]
+            });
         }
 
         public async Task DeleteTimeSlotRequestsAsync(string tutorId)
@@ -388,7 +412,24 @@ namespace App.Services.Services
                             heldFund.ReleaseAt.Value - DateTime.UtcNow
                         );
                 }
-                
+
+                await _notificationService.SendToUsersAsync(new()
+                {
+                    Content = new()
+                    {
+                        NotificationPriority = ENotificationPriority.Normal,
+                        Title = "PUSH_ON_LEARNER_ACCEPT_OFFER",
+                        Content = "PUSH_ON_LEARNER_ACCEPT_OFFER_BODY",
+                        AdditionalData = JsonSerializer.Serialize(new
+                        {
+                            Id = booking.Id,
+                            LessonName = lessonSnapshot.Name,
+                            SenderId = learnerId,
+                        }),
+                    },
+                    ReceiverUserIds = [booking.TutorId]
+                });
+
                 // Map to response
                 return new BookingResponse
                 {

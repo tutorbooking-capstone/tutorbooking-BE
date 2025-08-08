@@ -108,27 +108,4 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             await Clients.Caller.MarkAsReadResult(statusCode, errorMessage);
         }
     }
-
-    public static class NotificationHubExtensions
-    {
-        public static async Task SendNotificationToUsersAsync(
-            this IHubContext<NotificationHub, INotificationClient> hubContext,
-            INotificationService notificationService,
-            ConnectionService connectionService,
-            SendNotificationToUsersRequest request)
-        {
-            var response = await notificationService.CreateForUsersAsync(request);
-
-            var connectionIds = request.ReceiverUserIds
-                .Select(userId => connectionService.GetConnectionId(userId))
-                .Where(connectionId => !string.IsNullOrEmpty(connectionId))
-                .ToList();
-
-            if (connectionIds.Any())
-                await hubContext.Clients.Clients(
-                    (IReadOnlyList<string>)connectionIds
-                    .Where(x => x != null).ToList())
-                    .ReceiveNotification(200, response);
-        }
-    }
 }

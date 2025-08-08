@@ -6,6 +6,7 @@ using App.Services.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Npgsql;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -14,10 +15,12 @@ namespace TutorBooking.APIService.Controllers
     public class TutorApplicationStaffController : ControllerBase
     {
         private ITutorApplicationStaffService _tutorApplicationStaffService;
+        private NotificationEventHandler _notificationEventHandler;
 
-        public TutorApplicationStaffController(ITutorApplicationStaffService tutorApplicationStaffService)
+        public TutorApplicationStaffController(ITutorApplicationStaffService tutorApplicationStaffService, NotificationEventHandler notificationEventHandler)
         {
             _tutorApplicationStaffService = tutorApplicationStaffService;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpGet("pending-applications")]
