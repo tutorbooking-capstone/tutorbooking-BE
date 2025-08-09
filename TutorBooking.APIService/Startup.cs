@@ -148,7 +148,7 @@ namespace TutorBooking.APIService
 					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
 					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
 					options.AllowStatefulReconnects = true;
-				});
+                });
 
 				endpoints.MapHub<NotificationHub>("/notification-hub", options =>
 				{
@@ -158,7 +158,8 @@ namespace TutorBooking.APIService
 
 					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
 					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
-				});
+                    options.AllowStatefulReconnects = true;
+                });
 			});
         }
     }

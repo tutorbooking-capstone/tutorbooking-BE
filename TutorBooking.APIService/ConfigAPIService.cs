@@ -217,10 +217,10 @@ namespace TutorBooking.APIService
 			{
 				options.EnableDetailedErrors = true;
 				options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
-				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+				options.ClientTimeoutInterval = TimeSpan.FromMinutes(60);
+				options.KeepAliveInterval = TimeSpan.FromMinutes(30);
                 options.StatefulReconnectBufferSize = 1000;
-                options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+                options.HandshakeTimeout = TimeSpan.FromMinutes(5);
 			});
 			return services;
 		}
