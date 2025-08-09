@@ -4,8 +4,8 @@ using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Npgsql;
 using System.Text.Json;
+using TutorBooking.APIService.EventHandlers;
 using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 

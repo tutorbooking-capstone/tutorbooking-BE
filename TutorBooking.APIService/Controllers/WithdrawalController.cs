@@ -7,7 +7,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
