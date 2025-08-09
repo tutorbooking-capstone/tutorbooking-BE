@@ -17,32 +17,23 @@ namespace App.DTOs.ChatDTOs
 
 	public static class ChatConversationDTOExtenstions
 	{
-		public static async Task<ChatConversationDTO> ToChatConversationDTO(this ChatConversation entity)
+		public static ChatConversationDTO ToChatConversationDTO(this ChatConversation entity)
 		{
-			var response = new ChatConversationDTO();
-			response.Id = entity.Id;
-			var task1 = Task.Run(() =>
+			var response = new ChatConversationDTO
 			{
-				for (var i = entity.ChatMessages.Count -1; i >= 0; i--)
-				{
-					response.Messages.Add(entity.ChatMessages.ElementAt(i).ToChatMessageDTO());
-				}
-			});
+				Id = entity.Id,
+				Messages = entity.ChatMessages
+					.OrderByDescending(m => m.CreatedTime)
+					.Select(m => m.ToChatMessageDTO())
+					.ToList(),
+				Participants = entity.AppUsers
+					.Select(u => u.ToChatParticipantDTO())
+					.ToList(),
+				ChatConversationReadStatus = entity.ChatConversationReadStatus?
+					.Select(r => r.ToDTO())
+					.ToList() ?? new List<ChatConversationReadStatusDTO>()
+			};
 
-			var task2 = Task.Run(() => {
-				foreach (var appUser in entity.AppUsers)
-				{
-					response.Participants.Add(appUser.ToChatParticipantDTO());
-				}
-			});
-
-			var task3 = Task.Run(() =>
-			{
-				if (entity.ChatConversationReadStatus != null)
-					foreach (var readStatus in entity.ChatConversationReadStatus)
-						response.ChatConversationReadStatus.Add(readStatus.ToDTO());
-			});
-			await Task.WhenAll(task1, task2, task3);
 			return response;
 		}
 	}

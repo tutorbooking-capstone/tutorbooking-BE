@@ -7,6 +7,7 @@ using App.Repositories.Models.Chat;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
@@ -22,35 +23,36 @@ namespace App.Services.Services
 	public class ChatService : IChatService
 	{
 		private IUnitOfWork _unitOfWork;
+		private IUserService _userService;
 
-		public ChatService(IUnitOfWork unitOfWork)
+		public ChatService(IUnitOfWork unitOfWork, IUserService userService)
 		{
 			_unitOfWork = unitOfWork;
-		}
+			_userService = userService;
+        }
 
 		/// <summary>
 		/// Gets all chat conversations that a specific UserId joined (not ChatParticipantId)
 		/// </summary>
 		/// <param name="userId"></param>
 		/// <returns></returns>
-		public async Task<ICollection<ChatConversationDTO>> GetConversationsByUserIdAsync(string userId, int page, int size)
+		public async Task<ICollection<ChatConversationDTO>> GetConversationsByUserIdAsync(int page, int size)
 		{
-			var response = new List<ChatConversationDTO>();
-			var chatConversations = await _unitOfWork.GetRepository<ChatConversation>()
-				.GetQueryable()
+			var userId = _userService.GetCurrentUserId();
+
+            var chatConversations = await _unitOfWork.GetRepository<ChatConversation>()
+				.ExistEntities()
 				.OrderByDescending(c => c.CreatedTime)
 				.Include(c => c.ChatMessages.OrderByDescending(c => c.CreatedTime).Take(10))
 				.Include(c => c.AppUsers)
-                .Include(c => c.ChatConversationReadStatus)
-                .Where(e => e.AppUsers.Any(x => x.Id.Equals(userId)))
-				.Skip((page-1) * size)
+				.Include(c => c.ChatConversationReadStatus)
+				.Where(e => e.AppUsers.Any(x => x.Id.Equals(userId)))
+				.Skip((page - 1) * size)
 				.Take(size)
+				.Select(c => c.ToChatConversationDTO())
 				.ToListAsync();
-			foreach (var conversation in chatConversations)
-			{
-				response.Add(await conversation.ToChatConversationDTO());
-			}
-			return response;
+			
+			return chatConversations;
 		}
 
 		/// <summary>
@@ -63,14 +65,17 @@ namespace App.Services.Services
 		/// <exception cref="ErrorException"></exception>
 		public async Task<ChatConversationDTO> GetConversationAsync(string id, int page, int size)
 		{
-			var conversation = await _unitOfWork.GetRepository<ChatConversation>().GetQueryable()
+			var conversation = await _unitOfWork.GetRepository<ChatConversation>()
+				.ExistEntities()
 				.Include(c => c.ChatMessages.OrderByDescending(c => c.CreatedTime).Skip((page - 1) * size).Take(20))
 				.Include(c => c.AppUsers)
 				.Include(c => c.ChatConversationReadStatus)
 				.FirstOrDefaultAsync(e => e.Id.Equals(id));
+			
 			if (conversation == null)
 				throw new ErrorException(404, ErrorCode.NotFound, "USER_NOT_FOUND");
-			return await conversation.ToChatConversationDTO();
+			
+			return conversation.ToChatConversationDTO();
 		}
 
 		/// <summary>
@@ -82,9 +87,9 @@ namespace App.Services.Services
 		public async Task<ChatMessageDTO> SendMessageAsync(SendMessageRequest request)
 		{
 			if (request.SenderUserId.Equals(request.ReceiverUserId))
-                throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "SENDER_ID_SAME_AS_RECEIVER_ID");
+				throw new ErrorException((int)StatusCode.BadRequest, ErrorCode.BadRequest, "SENDER_ID_SAME_AS_RECEIVER_ID");
 
-            var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
+			var conversation = await _unitOfWork.GetRepository<ChatConversation>().ExistEntities()
 				.FirstOrDefaultAsync(e => e.AppUsers.Any(x => x.Id.Equals(request.SenderUserId)
 						&& e.AppUsers.Any(x => x.Id.Equals(request.ReceiverUserId)
 						)));
@@ -98,10 +103,11 @@ namespace App.Services.Services
 			{
 				AppUserId = request.SenderUserId,
 				TextMessage = request.TextMessage,
-				ChatConversationId = conversation.Id,
+				ChatConversationId = conversation!.Id,
 			};
 			_unitOfWork.GetRepository<ChatMessage>().Insert(message);
 			await _unitOfWork.SaveAsync();
+
 			return message.ToChatMessageDTO();
 		}
 
@@ -112,6 +118,9 @@ namespace App.Services.Services
 				AppUsers = new List<AppUser>(),
 				ChatMessages = new List<ChatMessage>()
 			};
+
+			if (request.ParticipantUserIds == null)
+				throw new ErrorException(400, ErrorCode.BadRequest, "PARTICIPANT_USER_IDS_REQUIRED");
 
 			var users = await _unitOfWork.GetRepository<AppUser>().ExistEntities()
 				.Where(x => request.ParticipantUserIds.Contains(x.Id))

@@ -6,6 +6,7 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Hangfire;
 using Hangfire.Dashboard;
+using Microsoft.AspNetCore.SignalR;
 using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.ChatHubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
@@ -81,15 +82,8 @@ namespace TutorBooking.APIService
             });
             #endregion
 
-            services.Configure<ConnectionServiceOptions>(options =>
-            {
-                options.MaxConnectionsPerUser = 5;
-                options.MaxTotalConnections = 1000;
-            });
+            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
 
-            services.AddSingleton<ConnectionService>();
-            // Đăng ký ConnectionCleanupService để dọn dẹp kết nối không hoạt động
-            services.AddHostedService<ConnectionCleanupService>();
         }
         //testd sadf
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

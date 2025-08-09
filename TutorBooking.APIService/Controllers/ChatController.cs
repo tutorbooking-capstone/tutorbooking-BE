@@ -28,10 +28,10 @@ namespace TutorBooking.APIService.Controllers
 
 		[HttpGet("conversations")]
 		[Authorize]
-		public async Task<IActionResult> GetConversations([FromQuery]string userId, int page = 1, int size = 20)
+		public async Task<IActionResult> GetConversations(int page = 1, int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
-				data: await _chatService.GetConversationsByUserIdAsync(userId, page, size)
+				data: await _chatService.GetConversationsByUserIdAsync(page, size)
 				));
 		}
 

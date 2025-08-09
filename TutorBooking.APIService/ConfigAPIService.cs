@@ -92,7 +92,13 @@ namespace TutorBooking.APIService
 						var authHeader = context.Request.Headers.Authorization.ToString();
 
 						if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+						{
 							context.Token = authHeader.Substring("Bearer ".Length).Trim();
+						}
+						else if (context.Request.Query.TryGetValue("access_token", out var token))
+						{
+							context.Token = token;
+						}
                             
 						return Task.CompletedTask;
 					}
