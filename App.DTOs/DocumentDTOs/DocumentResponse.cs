@@ -1,6 +1,4 @@
 ﻿using App.Repositories.Models.Papers;
-using System;
-using System.Collections.Generic;
 
 namespace App.DTOs.DocumentDTOs
 {

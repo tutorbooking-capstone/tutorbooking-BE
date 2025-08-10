@@ -10,14 +10,7 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace App.Services.Services
 {

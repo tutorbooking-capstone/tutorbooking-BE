@@ -1,6 +1,5 @@
 ﻿using App.Repositories.Models;
 using App.Repositories.Models.Papers;
-using App.Repositories.Models.User;
 using App.Repositories.UoW;
 
 namespace App.Repositories.States

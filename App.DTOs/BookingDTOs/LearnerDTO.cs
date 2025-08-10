@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using App.Repositories.Models.Scheduling;
+using System.ComponentModel.DataAnnotations;
 
 namespace App.DTOs.BookingDTOs
 {

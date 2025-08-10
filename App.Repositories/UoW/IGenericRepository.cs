@@ -1,7 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Provider;
 using System.Linq.Expressions;
-using System.Threading;
 
 namespace App.Repositories.UoW
 {

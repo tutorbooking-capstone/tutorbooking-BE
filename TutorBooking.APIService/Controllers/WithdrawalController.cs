@@ -18,12 +18,12 @@ namespace TutorBooking.APIService.Controllers
     {
         private readonly IWithdrawalService _withdrawalService;
         private readonly IBankAccountService _bankAccountService;
-        private readonly NotificationEventHandler _notificationEventHandler;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
         public WithdrawalController(
             IWithdrawalService withdrawalService,
             IBankAccountService bankAccountService,
-            NotificationEventHandler notificationEventHandler)
+            PushNotificationEventHandler notificationEventHandler)
         {
             _withdrawalService = withdrawalService;
             _bankAccountService = bankAccountService;

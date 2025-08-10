@@ -1,7 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
 using App.DTOs.NotificationDTOs;
-using App.DTOs.UserDTOs;
 using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
@@ -9,17 +8,8 @@ using App.Services.Events;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using LinqKit;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace App.Services.Services
 {

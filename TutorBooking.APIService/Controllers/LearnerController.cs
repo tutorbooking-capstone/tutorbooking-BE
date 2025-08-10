@@ -1,6 +1,4 @@
-﻿using App.Core.Base;
-using App.DTOs.AppUserDTOs.LearnerDTOs;
-using App.Services.Interfaces;
+﻿using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

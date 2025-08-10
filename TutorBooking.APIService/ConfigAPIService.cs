@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using App.Core;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Text.Json.Serialization;
-using System.Text;
-using App.Core;
-using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using TutorBooking.APIService.Middleware;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json.Serialization;
 using TutorBooking.APIService.EventHandlers;
+using TutorBooking.APIService.Middleware;
 
 namespace TutorBooking.APIService
 {
@@ -229,7 +229,7 @@ namespace TutorBooking.APIService
             this IServiceCollection services)
         {
             // Register event handlers
-            services.AddScoped<NotificationEventHandler>();
+            services.AddScoped<PushNotificationEventHandler>();
             return services;
         }
 

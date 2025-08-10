@@ -1,6 +1,5 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
-using App.Core.Mapper;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.BlogDTOs;
 using App.DTOs.HashtagDTOs;
@@ -16,11 +15,9 @@ using App.Services.Interfaces.User;
 using LinqKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.FileSystemGlobbing.Internal;
 using Microsoft.Extensions.Logging;
 using StackExchange.Profiling.Internal;
 using System.Linq.Expressions;
-using System.Security.Cryptography;
 
 namespace App.Services.Services.User
 {

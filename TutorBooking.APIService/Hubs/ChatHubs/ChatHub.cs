@@ -1,7 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.ChatDTOs;
 using App.Services.Interfaces;
-using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;

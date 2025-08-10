@@ -1,5 +1,4 @@
 ﻿using App.Repositories.Models;
-using System;
 
 namespace App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs
 {

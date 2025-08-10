@@ -1,10 +1,10 @@
 ﻿using App.Core.Base;
-using System.Net;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using App.Core.Constants;
 using App.Repositories.Models.User;
+using Microsoft.AspNetCore.Authorization;
+using System.Net;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace TutorBooking.APIService.Middleware
 {

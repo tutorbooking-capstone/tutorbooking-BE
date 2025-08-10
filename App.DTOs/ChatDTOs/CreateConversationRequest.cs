@@ -1,12 +1,4 @@
-﻿using App.Core.Base;
-using App.Repositories.Models;
-using App.Repositories.Models.Chat;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace App.DTOs.ChatDTOs
 {

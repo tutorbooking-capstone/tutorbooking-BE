@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using App.Core.Utils;
+using System.Diagnostics;
 
 namespace TutorBooking.APIService.Middleware
 {

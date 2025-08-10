@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using FluentValidation.Results;
+using Microsoft.AspNetCore.Http;
 using System.Text.Json.Serialization;
-using FluentValidation.Results;
 
 namespace App.Core.Base
 {

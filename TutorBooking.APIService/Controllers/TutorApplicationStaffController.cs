@@ -1,12 +1,9 @@
 ﻿using App.Core.Base;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
-using App.Repositories.Models.User;
 using App.Services.Interfaces;
-using App.Services.Services;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -15,9 +12,9 @@ namespace TutorBooking.APIService.Controllers
     public class TutorApplicationStaffController : ControllerBase
     {
         private ITutorApplicationStaffService _tutorApplicationStaffService;
-        private NotificationEventHandler _notificationEventHandler;
+        private PushNotificationEventHandler _notificationEventHandler;
 
-        public TutorApplicationStaffController(ITutorApplicationStaffService tutorApplicationStaffService, NotificationEventHandler notificationEventHandler)
+        public TutorApplicationStaffController(ITutorApplicationStaffService tutorApplicationStaffService, PushNotificationEventHandler notificationEventHandler)
         {
             _tutorApplicationStaffService = tutorApplicationStaffService;
             _notificationEventHandler = notificationEventHandler;

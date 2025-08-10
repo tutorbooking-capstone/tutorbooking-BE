@@ -1,9 +1,7 @@
 using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Mvc.Filters;
-using App.Core.Base;
 using System.Collections;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace App.Core.Config
 {

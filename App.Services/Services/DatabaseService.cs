@@ -1,10 +1,8 @@
-using App.Core.Base;
 using App.Repositories.Context;
 using App.Repositories.Models;
 using App.Repositories.Models.Papers;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
-using App.Repositories.UoW;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

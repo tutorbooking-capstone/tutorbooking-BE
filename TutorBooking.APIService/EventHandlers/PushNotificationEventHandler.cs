@@ -1,22 +1,14 @@
-using App.Core.Constants;
-using App.DTOs.NotificationDTOs;
-using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Services.Events;
-using App.Services.Interfaces;
-using App.Services.Services;
 using Microsoft.AspNetCore.SignalR;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System.Text.Json;
-using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 
 namespace TutorBooking.APIService.EventHandlers
 {
-    public class NotificationEventHandler : IDisposable
+    public class PushNotificationEventHandler : IDisposable
     {
         private readonly IHubContext<NotificationHub, INotificationClient> _notificationHubContext;
-        private readonly ILogger<NotificationEventHandler> _logger;
+        private readonly ILogger<PushNotificationEventHandler> _logger;
         private readonly NotificationEvents _notificationEvents;
 
         // Event Handler Timeout
@@ -26,10 +18,10 @@ namespace TutorBooking.APIService.EventHandlers
 
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromSeconds(10);
 
-        public NotificationEventHandler(
+        public PushNotificationEventHandler(
             NotificationEvents notificationEvents,
             IHubContext<NotificationHub, INotificationClient> notificationHubContext,
-            ILogger<NotificationEventHandler> logger)
+            ILogger<PushNotificationEventHandler> logger)
         {
             _notificationHubContext = notificationHubContext;
             _logger = logger;
@@ -109,7 +101,7 @@ namespace TutorBooking.APIService.EventHandlers
         }
         private void OnInactivityTimeout(object? state)
         {
-            _logger.LogInformation("NotificationEventHandler disposing due to inactivity timeout");
+            _logger.LogInformation("PushNotificationEventHandler disposing due to inactivity timeout");
             Dispose();
         }
 

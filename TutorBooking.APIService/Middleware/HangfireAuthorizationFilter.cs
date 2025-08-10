@@ -1,5 +1,4 @@
 using Hangfire.Dashboard;
-using App.Repositories.Models.User;
 
 namespace TutorBooking.APIService.Middleware
 {

@@ -5,20 +5,11 @@ using App.DTOs.RatingDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
-using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
-using MailKit.Search;
 using Microsoft.EntityFrameworkCore;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace App.Services.Services
 {

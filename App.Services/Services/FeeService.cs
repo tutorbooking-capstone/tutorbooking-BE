@@ -1,9 +1,9 @@
+using App.Core.Provider;
 using App.Repositories.Models.Payment;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
-using App.Core.Provider;
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 
 namespace App.Services.Services
 {

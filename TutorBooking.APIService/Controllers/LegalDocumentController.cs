@@ -1,13 +1,9 @@
 ﻿using App.Core.Base;
 using App.DTOs.LegalDocumentDTOs;
 using App.DTOs.LegalDocumentDTOs.VersionDTOs;
-using App.DTOs.LessonDTOs;
-using App.Repositories.Models;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Runtime.InteropServices;
 
 namespace TutorBooking.APIService.Controllers
 {

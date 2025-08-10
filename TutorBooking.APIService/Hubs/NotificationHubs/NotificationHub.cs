@@ -1,6 +1,4 @@
 ﻿using App.Core.Base;
-using App.Core.Constants;
-using App.DTOs.NotificationDTOs;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

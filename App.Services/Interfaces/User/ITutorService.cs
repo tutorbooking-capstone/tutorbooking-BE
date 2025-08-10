@@ -1,7 +1,6 @@
 ﻿using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
 using App.Repositories.Models.Scheduling;
-using App.Repositories.Models.User;
 
 namespace App.Services.Interfaces.User
 {

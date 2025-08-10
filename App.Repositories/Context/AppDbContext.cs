@@ -1,15 +1,14 @@
 using App.Repositories.Models;
 using App.Repositories.Models.Chat;
 using App.Repositories.Models.Legal;
+using App.Repositories.Models.Notifications;
 using App.Repositories.Models.Papers;
+using App.Repositories.Models.Payment;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using App.Repositories.Models.Payment;
-using System.Reactive;
-using App.Repositories.Models.Notifications;
 
 namespace App.Repositories.Context
 {

@@ -1,7 +1,7 @@
 ﻿using App.Repositories.Models;
 using App.Repositories.Models.Scheduling;
-using System.Linq.Expressions;
 using FluentValidation;
+using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace App.DTOs.BookingDTOs

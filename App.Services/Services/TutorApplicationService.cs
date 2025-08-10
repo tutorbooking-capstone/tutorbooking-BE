@@ -1,7 +1,5 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
-using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
-using App.Repositories.Models;
 using App.Repositories.Models.Papers;
 using App.Repositories.UoW;
 using App.Services.Interfaces;

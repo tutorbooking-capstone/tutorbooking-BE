@@ -1,15 +1,9 @@
 ﻿using App.Core.Base;
 using App.DTOs.NotificationDTOs;
-using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using System.Security.AccessControl;
 using TutorBooking.APIService.EventHandlers;
-using TutorBooking.APIService.Hubs;
-using TutorBooking.APIService.Hubs.NotificationHubs;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -18,9 +12,9 @@ namespace TutorBooking.APIService.Controllers
     public class NotificationController : ControllerBase
     {
         private readonly INotificationService _notificationService;
-        private readonly NotificationEventHandler _notificationEventHandler;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public NotificationController(INotificationService notificationService, NotificationEventHandler notificationEventHandler)
+        public NotificationController(INotificationService notificationService, PushNotificationEventHandler notificationEventHandler)
         {
             _notificationService = notificationService;
             _notificationEventHandler = notificationEventHandler;

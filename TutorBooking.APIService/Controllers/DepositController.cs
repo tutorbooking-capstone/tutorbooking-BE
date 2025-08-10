@@ -15,12 +15,12 @@ namespace TutorBooking.APIService.Controllers
     {
         private readonly IDepositService _depositService;
         private readonly ILogger<DepositController> _logger;
-        private readonly NotificationEventHandler _notificationEventHandler;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
         public DepositController(
             IDepositService depositService,
             ILogger<DepositController> logger,
-            NotificationEventHandler notificationEventHandler)
+            PushNotificationEventHandler notificationEventHandler)
         {
             _depositService = depositService;
             _logger = logger;

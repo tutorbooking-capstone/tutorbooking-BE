@@ -1,5 +1,4 @@
 ﻿using App.DTOs.DocumentDTOs;
-using App.Repositories.Models.Papers;
 
 namespace App.Services.Interfaces
 {

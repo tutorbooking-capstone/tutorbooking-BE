@@ -1,5 +1,5 @@
-﻿using FluentValidation;
-using App.Repositories.Models;
+﻿using App.Repositories.Models;
+using FluentValidation;
 
 namespace App.DTOs.HashtagDTOs
 {

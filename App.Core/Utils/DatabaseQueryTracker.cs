@@ -1,8 +1,7 @@
-using System.Collections.Concurrent;
-using System.Data.Common;
-using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace App.Core.Utils
 {

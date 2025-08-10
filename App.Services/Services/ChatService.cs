@@ -2,21 +2,12 @@
 using App.Core.Constants;
 using App.Core.Utils;
 using App.DTOs.ChatDTOs;
-using App.Repositories.Models;
 using App.Repositories.Models.Chat;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
-using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace App.Services.Services
 {

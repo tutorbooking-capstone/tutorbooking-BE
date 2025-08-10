@@ -1,9 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Mvc;
 using App.Core.Config;
 using App.Core.Utils;
-using StackExchange.Profiling.SqlFormatters;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Profiling;
+using StackExchange.Profiling.SqlFormatters;
 
 namespace App.Core
 {

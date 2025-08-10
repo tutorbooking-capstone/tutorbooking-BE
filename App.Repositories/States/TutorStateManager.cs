@@ -1,5 +1,4 @@
-﻿using App.Repositories.Models.User;
-using App.Repositories.UoW;
+﻿using App.Repositories.UoW;
 
 namespace App.Repositories.States
 {
