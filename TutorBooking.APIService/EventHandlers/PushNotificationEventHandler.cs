@@ -1,23 +1,14 @@
-using App.Core.Constants;
-using App.DTOs.NotificationDTOs;
-using App.Repositories.Models.Notifications;
 using App.Repositories.Models.User;
 using App.Services.Events;
-using App.Services.Interfaces;
-using App.Services.Services;
 using Microsoft.AspNetCore.SignalR;
-using Org.BouncyCastle.Asn1.Ocsp;
-using System.Text.Json;
-using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 
 namespace TutorBooking.APIService.EventHandlers
 {
-    public class NotificationEventHandler : IDisposable
+    public class PushNotificationEventHandler : IDisposable
     {
         private readonly IHubContext<NotificationHub, INotificationClient> _notificationHubContext;
-        private readonly ConnectionService _connectionService;
-        private readonly ILogger<NotificationEventHandler> _logger;
+        private readonly ILogger<PushNotificationEventHandler> _logger;
         private readonly NotificationEvents _notificationEvents;
 
         // Event Handler Timeout
@@ -27,14 +18,12 @@ namespace TutorBooking.APIService.EventHandlers
 
         private static readonly TimeSpan InactivityTimeout = TimeSpan.FromSeconds(10);
 
-        public NotificationEventHandler(
+        public PushNotificationEventHandler(
             NotificationEvents notificationEvents,
             IHubContext<NotificationHub, INotificationClient> notificationHubContext,
-            ConnectionService connectionService,
-            ILogger<NotificationEventHandler> logger)
+            ILogger<PushNotificationEventHandler> logger)
         {
             _notificationHubContext = notificationHubContext;
-            _connectionService = connectionService;
             _logger = logger;
             _notificationEvents = notificationEvents;
 
@@ -56,21 +45,18 @@ namespace TutorBooking.APIService.EventHandlers
             {
                 _logger.LogInformation($"Sending '{e.NotificationResponse.Title}' to {e.ReceiverUserIds.Count} users");
 
-                var connectionIds = e.ReceiverUserIds
-                .Select(userId => _connectionService.GetConnectionId(userId))
-                .Where(connectionId => !string.IsNullOrEmpty(connectionId))
-                .ToList();
-
-                if (connectionIds.Any())
+                // Send notification to multiple users using Clients.Users
+                var userIds = e.ReceiverUserIds.ToList();
+                if (userIds.Any())
                 {
-                    await _notificationHubContext.Clients.Clients(connectionIds!)
+                    await _notificationHubContext.Clients.Users(userIds)
                         .ReceiveNotification(200, e.NotificationResponse);
 
-                    _logger.LogInformation($"Sent '{e.NotificationResponse.Title}' to {connectionIds.Count} connected users");
+                    _logger.LogInformation($"Sent '{e.NotificationResponse.Title}' to {userIds.Count} users");
                 }
                 else
                 {
-                    _logger.LogInformation("No users were connected to receive the notification.");
+                    _logger.LogInformation("No users specified to receive the notification.");
                 }
             }
             catch (Exception ex)
@@ -115,7 +101,7 @@ namespace TutorBooking.APIService.EventHandlers
         }
         private void OnInactivityTimeout(object? state)
         {
-            _logger.LogInformation("NotificationEventHandler disposing due to inactivity timeout");
+            _logger.LogInformation("PushNotificationEventHandler disposing due to inactivity timeout");
             Dispose();
         }
 

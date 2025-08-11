@@ -1,10 +1,5 @@
 using App.DTOs.NotificationDTOs;
-using App.Repositories.Models.Notifications;
-using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
-using System;
-using System.Text.Json;
-using static Google.Apis.Requests.BatchRequest;
 
 namespace App.Services.Events
 {

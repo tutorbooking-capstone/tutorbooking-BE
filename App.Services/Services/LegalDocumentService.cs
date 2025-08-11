@@ -6,17 +6,9 @@ using App.Repositories.Models.Legal;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using LinqKit;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Profiling.Internal;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
-using static Dapper.SqlMapper;
 
 namespace App.Services.Services
 {

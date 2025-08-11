@@ -4,14 +4,13 @@ using App.Core.Provider;
 using App.DTOs.BookingDTOs;
 using App.DTOs.NotificationDTOs;
 using App.Repositories.Models;
-using App.Repositories.UoW;
-using App.Services.Events;
 using App.Repositories.Models.Notifications;
+using App.Repositories.Models.Scheduling;
+using App.Repositories.Models.User;
+using App.Repositories.UoW;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using App.Repositories.Models.User;
-using App.Repositories.Models.Scheduling;
 using System.Text.Json;
 
 namespace App.Services.Services

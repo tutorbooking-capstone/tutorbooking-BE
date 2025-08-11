@@ -1,6 +1,5 @@
 ﻿using App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
-using App.Repositories.Models;
 
 namespace App.Services.Interfaces
 {

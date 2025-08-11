@@ -1,8 +1,8 @@
 using App.DTOs.HashtagDTOs;
 using App.Repositories.Models;
 using App.Repositories.UoW;
-using Microsoft.EntityFrameworkCore;
 using App.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Services.Services
 {

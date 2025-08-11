@@ -1,14 +1,7 @@
 ﻿using App.Core.Base;
-using App.Core.Utils;
 using App.Repositories.Models.User;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace App.Repositories.Models.Chat
 {

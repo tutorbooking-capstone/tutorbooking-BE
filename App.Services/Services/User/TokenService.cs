@@ -1,15 +1,15 @@
-﻿using App.Repositories.UoW;
-using App.Services.Interfaces.User;
+﻿using App.Core.Jsetting;
 using App.DTOs.AuthDTOs;
+using App.Repositories.Models.User;  
+using App.Repositories.UoW;
+using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 using System.Security.Cryptography;
-using App.Core.Jsetting;
-using App.Repositories.Models.User;  
+using System.Text;
 
 namespace App.Services.Services.User
 {

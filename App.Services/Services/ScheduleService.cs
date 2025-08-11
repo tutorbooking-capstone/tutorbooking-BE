@@ -1,13 +1,13 @@
-using App.Services.Interfaces;
-using App.Repositories.Models.Scheduling;
-using App.Repositories.UoW;
-using Microsoft.EntityFrameworkCore;
-using App.DTOs.ScheduleDTOs;
-using App.Core.Provider;
 using App.Core.Base;
-using Microsoft.AspNetCore.Http;
 using App.Core.Constants;
+using App.Core.Provider;
+using App.DTOs.ScheduleDTOs;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
+using App.Repositories.UoW;
+using App.Services.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace App.Services.Services
 {

@@ -14,9 +14,9 @@ namespace TutorBooking.APIService.Controllers
     public class TutorBookingController : ControllerBase
     {
         private readonly ITutorBookingService _service;
-        private readonly NotificationEventHandler _notificationEventHandler;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public TutorBookingController(ITutorBookingService service, NotificationEventHandler notificationEventHandler)
+        public TutorBookingController(ITutorBookingService service, PushNotificationEventHandler notificationEventHandler)
         {
             _service = service;
             _notificationEventHandler = notificationEventHandler;

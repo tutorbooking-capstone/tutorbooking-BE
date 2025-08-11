@@ -1,14 +1,8 @@
 ﻿using App.Core.Base;
-using App.Core.Utils;
-using App.DTOs.ChatDTOs;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Org.BouncyCastle.Security;
-using System.Security.Claims;
-using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.ChatHubs;
 
 namespace TutorBooking.APIService.Controllers
@@ -28,10 +22,10 @@ namespace TutorBooking.APIService.Controllers
 
 		[HttpGet("conversations")]
 		[Authorize]
-		public async Task<IActionResult> GetConversations([FromQuery]string userId, int page = 1, int size = 20)
+		public async Task<IActionResult> GetConversations(int page = 1, int size = 20)
 		{
 			return Ok(new BaseResponseModel<object>(
-				data: await _chatService.GetConversationsByUserIdAsync(userId, page, size)
+				data: await _chatService.GetConversationsByUserIdAsync(page, size)
 				));
 		}
 

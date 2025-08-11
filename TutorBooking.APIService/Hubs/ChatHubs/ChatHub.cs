@@ -1,7 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.ChatDTOs;
 using App.Services.Interfaces;
-using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
@@ -12,42 +11,28 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
     public class ChatHub : Hub<IChatClient>
     {
         private readonly IChatService _chatService;
-        private readonly IUserService _userService;
         private readonly ILogger<ChatHub> _logger;
-        private readonly ConnectionService _connectionService;
 
         public ChatHub(
             IChatService chatService, 
-            ILogger<ChatHub> logger, 
-            IUserService userService,
-            ConnectionService connectionService)
+            ILogger<ChatHub> logger)
         {
             _chatService = chatService;
             _logger = logger;
-            _userService = userService;
-            _connectionService = connectionService;
         }
 
         public override async Task OnConnectedAsync()
         {
             var userId = GetUserId();
-            if (!string.IsNullOrEmpty(userId))
-            {
-                _logger.LogInformation($"{userId} connected to ChatHub");
-                _connectionService.AddConnection(userId, Context.ConnectionId);
-                await Clients.Caller.OnConnected("CONNECTED_TO_CHATHUB");
-            }
+            _logger.LogInformation("User {UserId} connected to ChatHub", userId);
+            await Clients.Caller.OnConnected("CONNECTED_TO_CHATHUB");
             await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             var userId = GetUserId();
-            if (!string.IsNullOrEmpty(userId))
-            {
-                _connectionService.RemoveConnection(userId);
-                _logger.LogInformation($"{userId} disconnected from ChatHub");
-            }
+            _logger.LogInformation("User {UserId} disconnected from ChatHub", userId);
             await base.OnDisconnectedAsync(exception);
         }
 
@@ -55,20 +40,17 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
+                ArgumentNullException.ThrowIfNull(request);
+                
                 request.SenderUserId = GetUserId();
                 var response = await _chatService.SendMessageAsync(request);
 
-                // Gửi tin nhắn cho người nhận nếu họ đang online
-                var receiverConnectionId = _connectionService.GetConnectionId(request.ReceiverUserId);
-                if (!string.IsNullOrEmpty(receiverConnectionId))
-                    await Clients.Client(receiverConnectionId).ReceiveMessage(response);
-                
-                // Gửi kết quả về cho người gửi
+                await Clients.User(request.ReceiverUserId).ReceiveMessage(response);
                 await Clients.Caller.SendMessageResult(200, response);
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(ex, "SendMessageResult");
+                await HandleExceptionAsync(ex, SEND_MESSAGE_RESULT);
             }
         }
 
@@ -76,24 +58,16 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
+                ArgumentNullException.ThrowIfNull(request);
+                
                 var response = await _chatService.UpdateMessageAsync(request);
 
-                var receiverConnectionId = _connectionService.GetConnectionId(request.ReceiverUserId);
-                if (!string.IsNullOrEmpty(receiverConnectionId)) await Clients.Client(receiverConnectionId).OnMessageUpdated(response);
-                var senderConnectionId = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(senderConnectionId)) await Clients.Client(senderConnectionId).UpdateMessageResult(200, response);              
-            }
-            catch (ErrorException ex)
-            {
-                _logger.LogError(ex.ToString());
-                var user = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).SendMessageResult(ex.StatusCode, ex.ErrorDetail);
+                await Clients.User(request.ReceiverUserId).OnMessageUpdated(response);
+                await Clients.User(GetUserId()).UpdateMessageResult(200, response);              
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
-                var user = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).UpdateMessageResult(500, ex.Message);
+                await HandleExceptionAsync(ex, UPDATE_MESSAGE_RESULT);
             }
         }
 
@@ -106,25 +80,16 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
+                ArgumentNullException.ThrowIfNull(request);
+                
                 await _chatService.DeleteMessageAsync(request.Id);
 
-                var user = _connectionService.GetConnectionId(request.ReceiverUserId);
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).OnMessageDeleted(request.Id);
-                user = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).DeleteMessageResult(200, "SUCCESS");
-
-            }
-            catch (ErrorException ex)
-            {
-                _logger.LogError(ex.ToString());
-                var user = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).SendMessageResult(ex.StatusCode, ex.ErrorDetail);
+                await Clients.User(request.ReceiverUserId).OnMessageDeleted(request.Id);
+                await Clients.User(GetUserId()).DeleteMessageResult(200, "SUCCESS");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
-                var user = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(user)) await Clients.Client(user).DeleteMessageResult(500, ex.Message);
+                await HandleExceptionAsync(ex, DELETE_MESSAGE_RESULT);
             }
         }
 
@@ -137,12 +102,13 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
-                var receiver = _connectionService.GetConnectionId(receiverUserId);
-                if (!string.IsNullOrEmpty(receiver)) await Clients.Client(receiver).OnUserTyping(GetUserId());
+                ArgumentException.ThrowIfNullOrWhiteSpace(receiverUserId);
+                
+                await Clients.User(receiverUserId).OnUserTyping(GetUserId());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
+                _logger.LogError(ex, "Error in TypingMessage for receiver {ReceiverId}", receiverUserId);
             }
         }
 
@@ -150,19 +116,17 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         {
             try
             {
+                ArgumentException.ThrowIfNullOrWhiteSpace(messageId);
+                ArgumentException.ThrowIfNullOrWhiteSpace(receiverUserId);
+                
                 await _chatService.MarkAsReadAsync(GetUserId(), messageId);
                 
-                var senderConnectionId = _connectionService.GetConnectionId(GetUserId());
-                if (!string.IsNullOrEmpty(senderConnectionId)) 
-                    await Clients.Client(senderConnectionId).MarkAsReadResult(200, "SUCCESS");
-                    
-                var receiverConnectionId = _connectionService.GetConnectionId(receiverUserId);
-                if (!string.IsNullOrEmpty(receiverConnectionId)) 
-                    await Clients.Client(receiverConnectionId).OnMessageRead(messageId);
+                await Clients.User(GetUserId()).MarkAsReadResult(200, "SUCCESS");
+                await Clients.User(receiverUserId).OnMessageRead(messageId);
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(ex, "MarkAsReadResult");
+                await HandleExceptionAsync(ex, MARK_AS_READ_RESULT);
             }
         }
 
@@ -173,38 +137,34 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         private string GetUserId() => Context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value 
             ?? throw new UnauthorizedAccessException("User ID not found");
 
+
+        private const string SEND_MESSAGE_RESULT = nameof(IChatClient.SendMessageResult);
+        private const string UPDATE_MESSAGE_RESULT = nameof(IChatClient.UpdateMessageResult);
+        private const string DELETE_MESSAGE_RESULT = nameof(IChatClient.DeleteMessageResult);
+        private const string MARK_AS_READ_RESULT = nameof(IChatClient.MarkAsReadResult);
         private async Task HandleExceptionAsync(Exception ex, string resultMethod)
         {
-            int statusCode = 500;
-            object errorMessage = ex.Message;
-
-            if (ex is ErrorException errorEx)
+            var (statusCode, errorMessage) = ex switch
             {
-                statusCode = errorEx.StatusCode;
-                errorMessage = errorEx.ErrorDetail;
-                _logger.LogWarning($"Business error in ChatHub: {errorEx.Message}");
-            }
+                ErrorException errorEx => (errorEx.StatusCode, (object)errorEx.ErrorDetail),
+                _ => (500, (object)ex.Message)
+            };
+
+            if (ex is ErrorException)
+                _logger.LogWarning("Business error in ChatHub: {Message}", ex.Message);
             else
-            {
-                _logger.LogError(ex, $"Exception in ChatHub: {ex.Message}");
-            }
+                _logger.LogError(ex, "Exception in ChatHub: {Message}", ex.Message);
 
-            // Gọi phương thức kết quả tương ứng trên client
-            switch (resultMethod)
+            Func<Task> clientMethod = resultMethod switch
             {
-                case "SendMessageResult":
-                    await Clients.Caller.SendMessageResult(statusCode, errorMessage);
-                    break;
-                case "UpdateMessageResult":
-                    await Clients.Caller.UpdateMessageResult(statusCode, errorMessage);
-                    break;
-                case "DeleteMessageResult":
-                    await Clients.Caller.DeleteMessageResult(statusCode, errorMessage);
-                    break;
-                case "MarkAsReadResult":
-                    await Clients.Caller.MarkAsReadResult(statusCode, errorMessage);
-                    break;
-            }
+                SEND_MESSAGE_RESULT => () => Clients.Caller.SendMessageResult(statusCode, errorMessage),
+                UPDATE_MESSAGE_RESULT => () => Clients.Caller.UpdateMessageResult(statusCode, errorMessage),
+                DELETE_MESSAGE_RESULT => () => Clients.Caller.DeleteMessageResult(statusCode, errorMessage),
+                MARK_AS_READ_RESULT => () => Clients.Caller.MarkAsReadResult(statusCode, errorMessage),
+                _ => throw new ArgumentException($"Unknown result method: {resultMethod}")
+            };
+
+            await clientMethod();
         }
     }
 }

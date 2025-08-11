@@ -1,8 +1,8 @@
-﻿using App.Services.Interfaces.User;
+﻿using App.Core.Jsetting;
+using App.Services.Interfaces.User;
+using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
 using MimeKit;
-using MailKit.Net.Smtp;
-using App.Core.Jsetting;
 
 namespace App.Services.Services.User
 {

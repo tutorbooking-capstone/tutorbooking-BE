@@ -1,10 +1,4 @@
-﻿using App.Repositories.Models;
-using App.Repositories.Models.User;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using App.Repositories.Models.User;
 
 namespace App.DTOs.ChatDTOs
 {

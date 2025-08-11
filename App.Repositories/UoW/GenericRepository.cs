@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
-using App.Core.Base;
-using App.Repositories.Context;
-using System.Linq.Expressions;
-using Microsoft.AspNetCore.Http;
+﻿using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
+using App.Repositories.Context;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace App.Repositories.UoW
 {

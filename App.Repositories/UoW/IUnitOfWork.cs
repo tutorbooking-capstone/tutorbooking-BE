@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-
-namespace App.Repositories.UoW
+﻿namespace App.Repositories.UoW
 {
     public interface IUnitOfWork : IDisposable
     {

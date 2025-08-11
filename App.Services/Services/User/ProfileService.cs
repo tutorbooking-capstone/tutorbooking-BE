@@ -1,13 +1,13 @@
 using App.Core.Base;
 using App.Core.Provider;
+using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.UserDTOs;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;  
 using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
-using App.DTOs.AppUserDTOs.TutorDTOs;
+using Microsoft.Extensions.Logging;
 
 namespace App.Services.Services.User
 {

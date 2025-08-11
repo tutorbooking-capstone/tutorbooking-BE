@@ -1,11 +1,8 @@
 ﻿using App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.DocumentDTOs;
-using App.Repositories.Models;
 using App.Repositories.Models.Papers;
-using App.Repositories.Models.User;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
 {

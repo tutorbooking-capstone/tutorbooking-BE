@@ -3,11 +3,7 @@ using App.DTOs.RatingDTOs;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Npgsql;
-using System.Text.Json;
-using TutorBooking.APIService.Hubs;
-using TutorBooking.APIService.Hubs.NotificationHubs;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -16,9 +12,9 @@ namespace TutorBooking.APIService.Controllers
     public class BookingSlotRatingController : ControllerBase
     {
         private readonly IBookingSlotRatingService _bookingSlotRatingService;
-        private readonly NotificationEventHandler _notificationEventHandler;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService, NotificationEventHandler notificationEventHandler)
+        public BookingSlotRatingController(IBookingSlotRatingService bookingSlotRatingService, PushNotificationEventHandler notificationEventHandler)
         {
             _bookingSlotRatingService = bookingSlotRatingService;
             _notificationEventHandler = notificationEventHandler;

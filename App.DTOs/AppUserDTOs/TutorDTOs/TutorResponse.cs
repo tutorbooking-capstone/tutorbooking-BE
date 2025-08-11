@@ -1,6 +1,6 @@
 ﻿using App.Repositories.Models;
-using App.Repositories.Models.User;
 using App.Repositories.Models.Scheduling;
+using App.Repositories.Models.User;
 using System.Linq.Expressions;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs

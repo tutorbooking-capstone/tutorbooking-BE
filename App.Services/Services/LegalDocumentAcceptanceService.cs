@@ -1,16 +1,10 @@
-﻿using App.Repositories.Models.Legal;
+﻿using App.DTOs.LegalDocumentDTOs;
+using App.Repositories.Models.Legal;
 using App.Repositories.UoW;
-using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using App.DTOs.LegalDocumentDTOs;
-using App.Services.Interfaces.User;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using LinqKit;
-using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using StackExchange.Profiling.Internal;
 
 namespace App.Services.Services

@@ -1,14 +1,14 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using App.Core;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
-using System.Text.Json.Serialization;
-using System.Text;
-using App.Core;
-using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using TutorBooking.APIService.Middleware;
+using System.Reflection;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json.Serialization;
 using TutorBooking.APIService.EventHandlers;
+using TutorBooking.APIService.Middleware;
 
 namespace TutorBooking.APIService
 {
@@ -92,7 +92,13 @@ namespace TutorBooking.APIService
 						var authHeader = context.Request.Headers.Authorization.ToString();
 
 						if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+						{
 							context.Token = authHeader.Substring("Bearer ".Length).Trim();
+						}
+						else if (context.Request.Query.TryGetValue("access_token", out var token))
+						{
+							context.Token = token;
+						}
                             
 						return Task.CompletedTask;
 					}
@@ -211,10 +217,10 @@ namespace TutorBooking.APIService
 			{
 				options.EnableDetailedErrors = true;
 				options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
-				options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
-				options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+				options.ClientTimeoutInterval = TimeSpan.FromMinutes(60);
+				options.KeepAliveInterval = TimeSpan.FromMinutes(30);
                 options.StatefulReconnectBufferSize = 1000;
-                options.HandshakeTimeout = TimeSpan.FromSeconds(30);
+                options.HandshakeTimeout = TimeSpan.FromMinutes(5);
 			});
 			return services;
 		}
@@ -223,7 +229,7 @@ namespace TutorBooking.APIService
             this IServiceCollection services)
         {
             // Register event handlers
-            services.AddScoped<NotificationEventHandler>();
+            services.AddScoped<PushNotificationEventHandler>();
             return services;
         }
 

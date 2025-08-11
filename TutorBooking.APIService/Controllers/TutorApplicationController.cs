@@ -1,9 +1,6 @@
 ﻿using App.Core.Base;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
-using App.Services.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers

@@ -1,17 +1,17 @@
-﻿using System.Net.Http.Headers;
-using App.Core.Jsetting;
+﻿using App.Core.Jsetting;
 using App.Core.Provider;
 using App.Repositories.Models;
+using App.Services.Events;
 using App.Services.Infras;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using App.Services.Services;
 using App.Services.Services.User;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Hangfire.PostgreSql;
-using Hangfire;
-using App.Services.Events;
+using System.Net.Http.Headers;
 
 namespace App.Services
 {

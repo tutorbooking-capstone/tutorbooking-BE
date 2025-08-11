@@ -1,6 +1,6 @@
-﻿using System.Linq.Expressions;
-using App.Repositories.Models;
+﻿using App.Repositories.Models;
 using FluentValidation;
+using System.Linq.Expressions;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs
 {
