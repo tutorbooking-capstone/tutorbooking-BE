@@ -67,6 +67,8 @@ namespace App.Repositories.Context
 
         public DbSet<NotificationEntity> NotificationEntities { get; set; }
 
+        public DbSet<BookingDispute> BookingDisputes { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -624,6 +626,53 @@ namespace App.Repositories.Context
                 .HasOne(bs => bs.HeldFund)
                 .WithOne(hf => hf.BookedSlot)
                 .HasForeignKey<BookedSlot>(bs => bs.HeldFundId)
+                .OnDelete(DeleteBehavior.SetNull);
+            #endregion
+
+            #region BookingDispute Configuration
+            // BookingDispute -> Booking (M:1)
+            modelBuilder.Entity<BookingDispute>()
+                .HasOne(d => d.Booking)
+                .WithMany(b => b.DisputeHistory)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // BookingDispute -> Learner (M:1)
+            modelBuilder.Entity<BookingDispute>()
+                .HasOne(d => d.Learner)
+                .WithMany()
+                .HasForeignKey(d => d.LearnerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // BookingDispute -> Tutor (M:1)
+            modelBuilder.Entity<BookingDispute>()
+                .HasOne(d => d.Tutor)
+                .WithMany()
+                .HasForeignKey(d => d.TutorId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // BookingDispute -> Staff (M:1) optional
+            modelBuilder.Entity<BookingDispute>()
+                .HasOne(d => d.Staff)
+                .WithMany()
+                .HasForeignKey(d => d.StaffId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Booking -> CurrentDispute (1:1) optional
+            modelBuilder.Entity<Booking>()
+                .HasOne(b => b.CurrentDispute)
+                .WithOne()
+                .HasForeignKey<Booking>(b => b.CurrentDisputeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // BookedSlot -> Dispute (M:1) optional
+            modelBuilder.Entity<BookedSlot>()
+                .HasOne(bs => bs.Dispute)
+                .WithMany()
+                .HasForeignKey(bs => bs.DisputeId)
+                .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
 
