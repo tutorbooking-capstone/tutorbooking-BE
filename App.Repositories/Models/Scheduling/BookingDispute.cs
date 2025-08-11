@@ -81,7 +81,7 @@ namespace App.Repositories.Models
             string learnerReason,
             string? evidenceUrls = null)
         {
-            var now = DateTime.UtcNow;
+            var now = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             var caseNumber = $"DSPB-{now:yyyyMMdd}-{Guid.NewGuid().ToString().Substring(0, 3)}";
             
             return new BookingDispute
@@ -106,7 +106,7 @@ namespace App.Repositories.Models
             
             Status = DisputeStatus.ClosedWithdrawn;
             Resolution = DisputeResolution.LearnerWithdrew;
-            ResolvedAt = CoreHelper.SystemTimeNow.DateTime;
+            ResolvedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             
             return
             [
@@ -126,7 +126,7 @@ namespace App.Repositories.Models
                 throw new InvalidOperationException("Response period has ended.");
             
             TutorResponse = response;
-            TutorRespondedAt = CoreHelper.SystemTimeNow.DateTime;
+            TutorRespondedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             
             return
             [
@@ -143,7 +143,7 @@ namespace App.Repositories.Models
             
             Status = DisputeStatus.AwaitingStaffReview;
             StaffId = staffId;
-            var now = CoreHelper.SystemTimeNow.DateTime;
+            var now = TimeHelper.EnsureUtc(DateTime.UtcNow); 
             StaffReviewEndTime = now.AddHours(48);  
             
             return
@@ -168,7 +168,7 @@ namespace App.Repositories.Models
             
             Status = DisputeStatus.ClosedResolved;
             Resolution = DisputeResolution.TutorNoResponse;
-            ResolvedAt = CoreHelper.SystemTimeNow.DateTime;
+            ResolvedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             
             return
             [
@@ -194,7 +194,7 @@ namespace App.Repositories.Models
             var updated = new List<Expression<Func<BookingDispute, object>>>();
             
             Resolution = resolution;
-            ResolvedAt = CoreHelper.SystemTimeNow.DateTime;
+            ResolvedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             
             updated.Add(x => x.Resolution);
             updated.Add(x => x.ResolvedAt!);

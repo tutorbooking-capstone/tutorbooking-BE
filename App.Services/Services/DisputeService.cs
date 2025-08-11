@@ -913,7 +913,7 @@ namespace App.Services.Services
             var result = new Dictionary<string, object>();
             foreach (var kv in enumMetadata)
             {
-                result[kv.Key + "s"] = kv.Value;
+                result[kv.Key] = kv.Value;
             }
             
             return Task.FromResult(result);
