@@ -10,6 +10,7 @@ using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace App.Services.Services
 {
@@ -58,37 +59,32 @@ namespace App.Services.Services
             return entity;
         }
 
-        public async Task<TutorRatingResponse> GetTutorRatingAsync(string tutorId)
+        public async Task<TutorRatingResponse?> GetTutorRatingAsync(string tutorId, int page = 1, int size = 10)
         {
-            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
-            {
-                var teachingQuality = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
-                .Where(b => b.TutorId.Equals(tutorId))
-                .Select(e => e.TeachingQuality)
-                .DefaultIfEmpty()
-                .AverageAsync();
-
-                var attitude = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
-                .Where(b => b.TutorId.Equals(tutorId))
-                .Select(e => e.Attitude)
-                .DefaultIfEmpty()
-                .AverageAsync();
-
-                var commitment = await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
-                .Where(b => b.TutorId.Equals(tutorId))
-                .Select(e => e.Commitment)
-                .DefaultIfEmpty()
-                .AverageAsync();
-                return (teachingQuality, attitude, commitment);
-            });
-
-            return new TutorRatingResponse()
-            {
-                TutorId = tutorId,
-                AverageTeachingQuality = result.teachingQuality,
-                AverageAttitude = result.attitude,
-                AverageCommitment = result.commitment
-            };
+            return await _unitOfWork.GetRepository<BookingSlotRating>().ExistEntities()
+                    .Where(b => b.TutorId.Equals(tutorId))
+                    .GroupBy(b => b.TutorId)
+                    .Select(g => new TutorRatingResponse()
+                    {
+                        TutorId = g.Key,
+                        AverageTeachingQuality = g.Average(e => e.TeachingQuality),
+                        AverageAttitude = g.Average(e => e.Attitude),
+                        AverageCommitment = g.Average(e => e.Commitment),
+                        Reviews = g.Select(e => new
+                        {
+                            Id = e.Id,
+                            TeachingQuality = e.TeachingQuality,
+                            Attitude= e.Attitude,
+                            Commitment= e.Commitment,
+                            Comment = e.Comment,
+                            CreatedTime = e.CreatedTime,
+                            LearnerName= e.Learner.User.FullName,
+                            ProfilePictureUrl = e.Learner.User.ProfilePictureUrl,
+                        }).Skip((page-1) * size)
+                        .Take(size)
+                        .ToArray()
+                    })
+                    .FirstOrDefaultAsync();
         }
 
         public async Task<BookingSlotRating> GetByIdAsync(string id)
