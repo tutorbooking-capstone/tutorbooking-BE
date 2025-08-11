@@ -347,13 +347,10 @@ namespace App.Services.Services
                 
                 foreach (var offeredSlot in offer.OfferedSlots)
                 {
-                    // Chỉ lấy ngày tháng năm, bỏ giờ phút giây
                     var slotDate = offeredSlot.SlotDateTime.Date;
-                    
-                    // Calculate release time (24 hours after slot end time)
                     var slotStartTime = CalculateSlotStartTime(slotDate, offeredSlot.SlotIndex);
                     var slotEndTime = slotStartTime.AddMinutes(offer.Lesson.DurationInMinutes);
-                    var releaseTime = slotEndTime.AddHours(24); // This should be configurable
+                    var releaseTime = slotEndTime.AddHours(24); 
                     
                     // Create held fund
                     var heldFund = HeldFund.CreateForBooking(string.Empty, offer.Lesson.Price, releaseTime);
@@ -364,7 +361,7 @@ namespace App.Services.Services
                     var bookedSlot = new BookedSlot
                     {
                         BookingId = booking.Id,
-                        BookedDate = slotDate, // Chỉ lưu ngày tháng năm
+                        BookedDate = slotDate, 
                         SlotIndex = offeredSlot.SlotIndex,
                         Status = SlotStatus.AwaitingConfirmation,
                         HeldFundId = heldFund.Id
@@ -374,12 +371,10 @@ namespace App.Services.Services
                     _unitOfWork.GetRepository<BookedSlot>().Insert(bookedSlot);
                     bookedSlots.Add(bookedSlot);
                     
-                    // Update held fund with booked slot ID (circular reference)
                     heldFund.BookedSlotId = bookedSlot.Id;
-                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, h => h.BookedSlotId);
+                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, h => h.BookedSlotId!); 
                 }
                 
-                // Create transaction to move funds from learner wallet to escrow wallet (escrow)
                 var transaction = Transaction.CreatePaymentTransaction(
                     learnerWallet.Id,
                     escrowWallet.Id,
@@ -397,8 +392,19 @@ namespace App.Services.Services
                 var escrowUpdateFields = escrowWallet.AddBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
                 
-                // Xóa TutorBookingOffer - cascade delete Slot liên quan
                 _unitOfWork.GetRepository<TutorBookingOffer>().Delete(offer);
+                
+                // Xóa tất cả LearnerTimeSlotRequest liên quan đến tutor này
+                var timeSlotRequests = await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
+                    .ExistEntities()
+                    .Where(r => r.LearnerId == learnerId && r.TutorId == offer.TutorId)
+                    .ToListAsync();
+                
+                foreach (var request in timeSlotRequests)
+                {
+                    _unitOfWork.GetRepository<LearnerTimeSlotRequest>().Delete(request);
+                }
+                
                 await _unitOfWork.SaveAsync();
                 
                 // Schedule release of funds using Hangfire with injected client
