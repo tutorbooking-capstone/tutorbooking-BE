@@ -8,22 +8,35 @@ namespace App.Repositories.Models
     #region Enums
     public enum DisputeStatus
     {
+        [EnumDescription("Giai đoạn hòa giải 24h")]
         PendingReconciliation = 0,    // Giai đoạn hòa giải 24h
+        [EnumDescription("Học viên rút khiếu nại")]
         ClosedWithdrawn = 1,          // Học viên rút khiếu nại
+        [EnumDescription("Tự động giải quyết (gia sư không phản hồi)")]
         ClosedResolved = 2,           // Tự động giải quyết (gia sư không phản hồi)
+        [EnumDescription("Chuyển lên nhân viên xử lý")]
         AwaitingStaffReview = 3,      // Chuyển lên nhân viên xử lý
+        [EnumDescription("Nhân viên quyết định học viên thắng")]
         ResolvedLearnerWin = 4,       // Nhân viên quyết định học viên thắng
+        [EnumDescription("Nhân viên quyết định gia sư thắng")]
         ResolvedTutorWin = 5,         // Nhân viên quyết định gia sư thắng
+        [EnumDescription("Nhân viên quyết định hòa")]
         ResolvedDraw = 6              // Nhân viên quyết định hòa
     }
 
     public enum DisputeResolution
     {
+        [EnumDescription("Chưa giải quyết")]
         None = 0,                     // Chưa giải quyết
+        [EnumDescription("Học viên rút khiếu nại")]
         LearnerWithdrew = 1,          // Học viên rút khiếu nại
+        [EnumDescription("Gia sư không phản hồi trong 24h")]
         TutorNoResponse = 2,          // Gia sư không phản hồi trong 24h
+        [EnumDescription("Nhân viên quyết định học viên thắng")]
         StaffLearnerWin = 3,          // Nhân viên quyết định học viên thắng
+        [EnumDescription("Nhân viên quyết định gia sư thắng")]
         StaffTutorWin = 4,            // Nhân viên quyết định gia sư thắng
+        [EnumDescription("Nhân viên quyết định hòa")]
         StaffDraw = 5                 // Nhân viên quyết định hòa
         // StaffNoResponse = 6,       // Nhân viên không phản hồi trong 48h (xem xét như hòa)
     }
@@ -35,7 +48,7 @@ namespace App.Repositories.Models
         public string BookingId { get; set; } = string.Empty;
         public string LearnerId { get; set; } = string.Empty;
         public string TutorId { get; set; } = string.Empty;
-        public string StaffId { get; set; } = string.Empty;
+        public string? StaffId { get; set; }  
         
         // Thông tin vụ việc
         public string CaseNumber { get; set; } = string.Empty; // Định dạng: DSPB-[yyyyMMdd]-[xxx]
@@ -136,7 +149,7 @@ namespace App.Repositories.Models
             return
             [
                 x => x.Status,
-                x => x.StaffId,
+                x => x.StaffId!,
                 x => x.StaffReviewEndTime!
             ];
         }

@@ -9,9 +9,13 @@ namespace App.Repositories.Models
 {
     public enum BookingStatus
     {
+        [EnumDescription("Đã xác nhận")]
         Confirmed = 0,
+        [EnumDescription("Đã yêu cầu khiếu nại")]
         DisputeRequested = 1,
+        [EnumDescription("Đang tranh chấp")]
         Disputed = 2,
+        [EnumDescription("Đã hủy")]
         Cancelled = 3
     }
 

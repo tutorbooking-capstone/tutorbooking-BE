@@ -614,23 +614,25 @@ namespace App.Services.Services
         private async Task NotifyDisputeEscalatedAsync(BookingDispute dispute)
         {
             // To Staff
-            await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest
+            if (!string.IsNullOrEmpty(dispute.StaffId))
             {
-                ReceiverUserIds = new List<string> { dispute.StaffId },
-                Content = new NotificationRequest
+                await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest
                 {
-                    NotificationPriority = ENotificationPriority.Normal,
-                    Title = $"Khiếu nại mới cần xử lý: {dispute.CaseNumber}",
-                    Content = "Khiếu nại đã được leo thang và cần được xử lý trong vòng 48 giờ.",
-                    AdditionalData = JsonSerializer.Serialize(new
+                    ReceiverUserIds = new List<string> { dispute.StaffId },
+                    Content = new NotificationRequest
                     {
-                        Type = "DisputeEscalated",
-                        ReferenceId = dispute.Id,
-                        ReferenceType = "BookingDispute"
-                    })
-                }
-            });
-            
+                        NotificationPriority = ENotificationPriority.Normal,
+                        Title = $"Khiếu nại mới cần xử lý: {dispute.CaseNumber}",
+                        Content = "Khiếu nại đã được leo thang và cần được xử lý trong vòng 48 giờ.",
+                        AdditionalData = JsonSerializer.Serialize(new
+                        {
+                            Type = "DisputeEscalated",
+                            ReferenceId = dispute.Id,
+                            ReferenceType = "BookingDispute"
+                        })
+                    }
+                });
+            }
             // To Learner
             await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest
             {
@@ -901,108 +903,20 @@ namespace App.Services.Services
 
         public Task<Dictionary<string, object>> GetDisputeMetadataAsync()
         {
-            var metadata = new Dictionary<string, object>();
+            var enumMetadata = EnumHelper.GetEnumMetadata(
+                typeof(DisputeStatus),
+                typeof(DisputeResolution),
+                typeof(BookingStatus),
+                typeof(SlotStatus)
+            );
             
-            // Add DisputeStatus enum info
-            var disputeStatuses = Enum.GetNames(typeof(DisputeStatus))
-                .Select(name => new
-                {
-                    Name = name,
-                    Value = (int)Enum.Parse(typeof(DisputeStatus), name),
-                    Description = GetDisputeStatusDescription(name)
-                })
-                .ToList();
-            
-            // Add DisputeResolution enum info
-            var disputeResolutions = Enum.GetNames(typeof(DisputeResolution))
-                .Select(name => new
-                {
-                    Name = name,
-                    Value = (int)Enum.Parse(typeof(DisputeResolution), name),
-                    Description = GetDisputeResolutionDescription(name)
-                })
-                .ToList();
-            
-            // Add BookingStatus enum info
-            var bookingStatuses = Enum.GetNames(typeof(BookingStatus))
-                .Select(name => new
-                {
-                    Name = name,
-                    Value = (int)Enum.Parse(typeof(BookingStatus), name),
-                    Description = GetBookingStatusDescription(name)
-                })
-                .ToList();
-            
-            // Add SlotStatus enum info
-            var slotStatuses = Enum.GetNames(typeof(SlotStatus))
-                .Select(name => new
-                {
-                    Name = name,
-                    Value = (int)Enum.Parse(typeof(SlotStatus), name),
-                    Description = GetSlotStatusDescription(name)
-                })
-                .ToList();
-            
-            metadata.Add("DisputeStatuses", disputeStatuses);
-            metadata.Add("DisputeResolutions", disputeResolutions);
-            metadata.Add("BookingStatuses", bookingStatuses);
-            metadata.Add("SlotStatuses", slotStatuses);
-            
-            return Task.FromResult(metadata);
-        }
-
-        private string GetDisputeStatusDescription(string name)
-        {
-            return name switch
+            var result = new Dictionary<string, object>();
+            foreach (var kv in enumMetadata)
             {
-                nameof(DisputeStatus.PendingReconciliation) => "Giai đoạn hòa giải 24h",
-                nameof(DisputeStatus.ClosedWithdrawn) => "Học viên rút khiếu nại",
-                nameof(DisputeStatus.ClosedResolved) => "Tự động giải quyết (gia sư không phản hồi)",
-                nameof(DisputeStatus.AwaitingStaffReview) => "Chuyển lên nhân viên xử lý",
-                nameof(DisputeStatus.ResolvedLearnerWin) => "Nhân viên quyết định học viên thắng",
-                nameof(DisputeStatus.ResolvedTutorWin) => "Nhân viên quyết định gia sư thắng",
-                nameof(DisputeStatus.ResolvedDraw) => "Nhân viên quyết định hòa",
-                _ => $"Trạng thái khiếu nại: {name}"
-            };
-        }
-
-        private string GetDisputeResolutionDescription(string name)
-        {
-            return name switch
-            {
-                nameof(DisputeResolution.None) => "Chưa giải quyết",
-                nameof(DisputeResolution.LearnerWithdrew) => "Học viên rút khiếu nại",
-                nameof(DisputeResolution.TutorNoResponse) => "Gia sư không phản hồi trong 24h",
-                nameof(DisputeResolution.StaffLearnerWin) => "Nhân viên quyết định học viên thắng",
-                nameof(DisputeResolution.StaffTutorWin) => "Nhân viên quyết định gia sư thắng",
-                nameof(DisputeResolution.StaffDraw) => "Nhân viên quyết định hòa",
-                _ => $"Phương thức giải quyết: {name}"
-            };
-        }
-
-        private string GetBookingStatusDescription(string name)
-        {
-            return name switch
-            {
-                nameof(BookingStatus.Confirmed) => "Đã xác nhận",
-                nameof(BookingStatus.DisputeRequested) => "Đã yêu cầu khiếu nại",
-                nameof(BookingStatus.Disputed) => "Đang tranh chấp",
-                nameof(BookingStatus.Cancelled) => "Đã hủy",
-                _ => $"Trạng thái đặt chỗ: {name}"
-            };
-        }
-
-        private string GetSlotStatusDescription(string name)
-        {
-            return name switch
-            {
-                nameof(SlotStatus.Pending) => "Đang chờ",
-                nameof(SlotStatus.AwaitingConfirmation) => "Đang chờ xác nhận",
-                nameof(SlotStatus.Completed) => "Đã hoàn thành",
-                nameof(SlotStatus.Cancelled) => "Đã hủy",
-                nameof(SlotStatus.CancelledDisputed) => "Đã hủy do tranh chấp",
-                _ => $"Trạng thái slot: {name}"
-            };
+                result[kv.Key + "s"] = kv.Value;
+            }
+            
+            return Task.FromResult(result);
         }
     }
 }

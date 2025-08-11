@@ -7,11 +7,20 @@ namespace App.Repositories.Models.Scheduling
     #region Enums
     public enum SlotStatus
     {
-        Pending = 0,                // Pending
-        AwaitingConfirmation = 1,   // Awaiting Confirmation
-        Completed = 2,              // Completed
-        Cancelled = 3,              // Cancelled
-        CancelledDisputed = 4       // Cancelled due to dispute
+        [EnumDescription("Đang chờ")]
+        Pending = 0,
+        
+        [EnumDescription("Đang chờ xác nhận")]
+        AwaitingConfirmation = 1,
+        
+        [EnumDescription("Đã hoàn thành")]
+        Completed = 2,
+        
+        [EnumDescription("Đã hủy")]
+        Cancelled = 3,
+        
+        [EnumDescription("Đã hủy do tranh chấp")]
+        CancelledDisputed = 4
     }
     #endregion
 

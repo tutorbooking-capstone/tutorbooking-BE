@@ -88,7 +88,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorApplicationId");
 
-                    b.ToTable("application_revisions");
+                    b.ToTable("application_revisions", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.BankAccount", b =>
@@ -147,7 +147,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_bank_accounts_user_id");
 
-                    b.ToTable("bank_accounts");
+                    b.ToTable("bank_accounts", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Blog", b =>
@@ -209,7 +209,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("AppUserId")
                         .HasDatabaseName("ix_blogs_app_user_id");
 
-                    b.ToTable("blogs");
+                    b.ToTable("blogs", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Booking", b =>
@@ -288,7 +288,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("bookings");
+                    b.ToTable("bookings", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.BookingDispute", b =>
@@ -378,7 +378,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("booking_disputes");
+                    b.ToTable("booking_disputes", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>
@@ -414,7 +414,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_chat_conversations");
 
-                    b.ToTable("chat_conversations");
+                    b.ToTable("chat_conversations", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversationReadStatus", b =>
@@ -453,7 +453,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("chat_conversation_read_statuses");
+                    b.ToTable("chat_conversation_read_statuses", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Chat.ChatMessage", b =>
@@ -509,7 +509,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("ChatConversationId")
                         .HasDatabaseName("ix_chat_messages_chat_conversation_id");
 
-                    b.ToTable("chat_messages");
+                    b.ToTable("chat_messages", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.DepositRequest", b =>
@@ -594,7 +594,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_deposit_requests_user_id");
 
-                    b.ToTable("deposit_requests");
+                    b.ToTable("deposit_requests", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.DocumentFileUpload", b =>
@@ -612,7 +612,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("FileUploadId")
                         .HasDatabaseName("ix_document_file_uploads_file_upload_id");
 
-                    b.ToTable("document_file_uploads");
+                    b.ToTable("document_file_uploads", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.FileUpload", b =>
@@ -650,7 +650,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("ChatMessageId")
                         .HasDatabaseName("ix_file_upload_chat_message_id");
 
-                    b.ToTable("file_upload");
+                    b.ToTable("file_upload", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Hashtag", b =>
@@ -676,7 +676,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_hashtags");
 
-                    b.ToTable("hashtags");
+                    b.ToTable("hashtags", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.HeldFund", b =>
@@ -723,7 +723,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("WithdrawalRequestId")
                         .HasDatabaseName("ix_held_funds_withdrawal_request_id");
 
-                    b.ToTable("held_funds");
+                    b.ToTable("held_funds", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.LearnerTimeSlotRequest", b =>
@@ -774,7 +774,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("LearnerId", "TutorId")
                         .IsUnique();
 
-                    b.ToTable("learner_time_slot_requests");
+                    b.ToTable("learner_time_slot_requests", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Legal.LegalDocument", b =>
@@ -825,7 +825,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_legal_documents");
 
-                    b.ToTable("legal_documents");
+                    b.ToTable("legal_documents", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Legal.LegalDocumentAcceptance", b =>
@@ -884,7 +884,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("legal_document_acceptances");
+                    b.ToTable("legal_document_acceptances", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Legal.LegalDocumentVersion", b =>
@@ -947,7 +947,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("LegalDocumentId")
                         .HasDatabaseName("ix_legal_document_versions_legal_document_id");
 
-                    b.ToTable("legal_document_versions");
+                    b.ToTable("legal_document_versions", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Lesson", b =>
@@ -1013,7 +1013,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("lessons");
+                    b.ToTable("lessons", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.LessonSnapshot", b =>
@@ -1077,7 +1077,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_lesson_snapshots");
 
-                    b.ToTable("lesson_snapshots");
+                    b.ToTable("lesson_snapshots", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Notifications.AppUserNotification", b =>
@@ -1099,7 +1099,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("NotificationEntityId")
                         .HasDatabaseName("ix_app_user_notification_notification_entity_id");
 
-                    b.ToTable("app_user_notification");
+                    b.ToTable("app_user_notification", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Notifications.NotificationEntity", b =>
@@ -1137,7 +1137,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_notification_entities");
 
-                    b.ToTable("notification_entities");
+                    b.ToTable("notification_entities", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.OfferedSlot", b =>
@@ -1165,7 +1165,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("TutorBookingOfferId")
                         .HasDatabaseName("ix_offered_slots_tutor_booking_offer_id");
 
-                    b.ToTable("offered_slots");
+                    b.ToTable("offered_slots", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Papers.Document", b =>
@@ -1240,7 +1240,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorApplicationId");
 
-                    b.ToTable("documents");
+                    b.ToTable("documents", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Papers.HardcopySubmit", b =>
@@ -1297,7 +1297,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("ApplicationId")
                         .HasDatabaseName("ix_hardcopy_submits_application_id");
 
-                    b.ToTable("hardcopy_submits");
+                    b.ToTable("hardcopy_submits", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Papers.TutorApplication", b =>
@@ -1364,7 +1364,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorUserId");
 
-                    b.ToTable("tutor_applications");
+                    b.ToTable("tutor_applications", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Payment.FeeConfig", b =>
@@ -1430,7 +1430,7 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_fee_configs");
 
-                    b.ToTable("fee_configs");
+                    b.ToTable("fee_configs", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Rating.BookingSlotRating", b =>
@@ -1505,7 +1505,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("booking_slot_ratings");
+                    b.ToTable("booking_slot_ratings", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
@@ -1536,7 +1536,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("WeeklyPatternId")
                         .HasDatabaseName("ix_availability_slots_weekly_pattern_id");
 
-                    b.ToTable("availability_slots");
+                    b.ToTable("availability_slots", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.BookedSlot", b =>
@@ -1610,7 +1610,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("HeldFundId")
                         .IsUnique();
 
-                    b.ToTable("booked_slots");
+                    b.ToTable("booked_slots", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
@@ -1633,7 +1633,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("weekly_availability_patterns");
+                    b.ToTable("weekly_availability_patterns", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Transaction", b =>
@@ -1682,7 +1682,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TargetWalletId");
 
-                    b.ToTable("transactions");
+                    b.ToTable("transactions", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.TutorBookingOffer", b =>
@@ -1731,7 +1731,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("tutor_booking_offers");
+                    b.ToTable("tutor_booking_offers", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.TutorHashtag", b =>
@@ -1749,7 +1749,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("HashtagId")
                         .HasDatabaseName("ix_tutor_hashtags_hashtag_id");
 
-                    b.ToTable("tutor_hashtags");
+                    b.ToTable("tutor_hashtags", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.TutorLanguage", b =>
@@ -1781,7 +1781,7 @@ namespace App.Repositories.Migrations
 
                     b.HasIndex("TutorId");
 
-                    b.ToTable("tutor_languages");
+                    b.ToTable("tutor_languages", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.User.AppUser", b =>
@@ -1945,7 +1945,7 @@ namespace App.Repositories.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("learners");
+                    b.ToTable("learners", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.User.Staff", b =>
@@ -1956,7 +1956,7 @@ namespace App.Repositories.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("staffs");
+                    b.ToTable("staffs", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.User.Tutor", b =>
@@ -1995,7 +1995,7 @@ namespace App.Repositories.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("tutors");
+                    b.ToTable("tutors", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Wallet", b =>
@@ -2056,7 +2056,7 @@ namespace App.Repositories.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_wallets_user_id");
 
-                    b.ToTable("wallets");
+                    b.ToTable("wallets", (string)null);
                 });
 
             modelBuilder.Entity("App.Repositories.Models.WithdrawalRequest", b =>
@@ -2138,7 +2138,7 @@ namespace App.Repositories.Migrations
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_withdrawal_requests_user_id");
 
-                    b.ToTable("withdrawal_requests");
+                    b.ToTable("withdrawal_requests", (string)null);
                 });
 
             modelBuilder.Entity("AppUserChatConversation", b =>
