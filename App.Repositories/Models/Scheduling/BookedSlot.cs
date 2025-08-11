@@ -7,10 +7,11 @@ namespace App.Repositories.Models.Scheduling
     #region Enums
     public enum SlotStatus
     {
-        Pending = 0,        // Pending
-        AwaitingConfirmation = 1, // Awaiting Confirmation
-        Completed = 2,      // Completed
-        Cancelled = 3       // Cancelled
+        Pending = 0,                // Pending
+        AwaitingConfirmation = 1,   // Awaiting Confirmation
+        Completed = 2,              // Completed
+        Cancelled = 3,              // Cancelled
+        CancelledDisputed = 4       // Cancelled due to dispute
     }
     #endregion
 
@@ -22,15 +23,17 @@ namespace App.Repositories.Models.Scheduling
         public string? SlotNote { get; set; } // Specific note for this particular booked slot (e.g. "Session will start 30 mins late")
         public SlotStatus Status { get; set; }
         public string? HeldFundId { get; set; }  // Reference to held fund
+        public string? DisputeId { get; set; }   // Reference to dispute causing cancellation
 
         public virtual Booking? Booking { get; set; }
         public virtual HeldFund? HeldFund { get; set; }
+        public virtual BookingDispute? Dispute { get; set; }
 
         #region Behaviors
         public Expression<Func<BookedSlot, object>>[] MarkAsCompleted(string updatedBy)
         {
             if (Status == SlotStatus.Completed) return Array.Empty<Expression<Func<BookedSlot, object>>>();
-            if (Status == SlotStatus.Cancelled)
+            if (Status == SlotStatus.Cancelled || Status == SlotStatus.CancelledDisputed)
                 throw new InvalidOperationException("Cannot complete a slot that has been cancelled.");
 
             Status = SlotStatus.Completed;
@@ -61,6 +64,48 @@ namespace App.Repositories.Models.Scheduling
                 x => x.LastUpdatedBy!,
                 x => x.LastUpdatedTime
             ];
+        }
+
+        public Expression<Func<BookedSlot, object>>[] MarkAsCancelledDisputed(string disputeId, string updatedBy)
+        {
+            if (Status == SlotStatus.CancelledDisputed) return Array.Empty<Expression<Func<BookedSlot, object>>>();
+            if (Status == SlotStatus.Completed)
+                throw new InvalidOperationException("Cannot cancel a slot that has been completed.");
+            
+            Status = SlotStatus.CancelledDisputed;
+            DisputeId = disputeId;
+            LastUpdatedBy = updatedBy;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
+
+            return
+            [
+                x => x.Status,
+                x => x.DisputeId!,
+                x => x.LastUpdatedBy!,
+                x => x.LastUpdatedTime
+            ];
+        }
+
+        public Expression<Func<BookedSlot, object>>[] UpdateStatus(SlotStatus newStatus, string updatedBy)
+        {
+            Status = newStatus;
+            LastUpdatedBy = updatedBy;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
+
+            return
+            [
+                x => x.Status,
+                x => x.LastUpdatedBy!,
+                x => x.LastUpdatedTime
+            ];
+        }
+
+        public bool IsUpcoming()
+        {
+            // A slot is upcoming if it's in the future and not cancelled
+            return BookedDate > DateTime.UtcNow && 
+                    Status != SlotStatus.Cancelled && 
+                    Status != SlotStatus.CancelledDisputed;
         }
         #endregion
     }

@@ -289,5 +289,187 @@ namespace App.Services.Services
         }
 
 
+        public async Task RefundHeldFundToLearnerAsync(string heldFundId)
+        {
+            // Get the held fund
+            var heldFund = await _unitOfWork.GetRepository<HeldFund>()
+                .ExistEntities()
+                .Include(h => h.BookedSlot)
+                .ThenInclude(bs => bs!.Booking)
+                .ThenInclude(b => b!.Learner)
+                .ThenInclude(l => l!.User)
+                .FirstOrDefaultAsync(h => h.Id == heldFundId);
+
+            if (heldFund == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy khoản tiền tạm giữ");
+
+            // Verify fund is in held or disputed status
+            if (heldFund.Status != HeldFundStatus.Held && heldFund.Status != HeldFundStatus.Disputed)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Khoản tiền tạm giữ không ở trạng thái có thể hoàn tiền");
+
+            // Get learner wallet
+            var learnerId = heldFund.BookedSlot?.Booking?.LearnerId;
+            if (string.IsNullOrEmpty(learnerId))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Không tìm thấy thông tin học viên để hoàn tiền");
+
+            var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == learnerId);
+
+            if (learnerWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy ví của học viên");
+
+            // Get escrow wallet
+            var escrowWallet = await GetEscrowWalletAsync();
+            
+            // Create transaction for refund
+            var transaction = Transaction.CreatePaymentTransaction(
+                escrowWallet.Id,                         // Source wallet (escrow)
+                learnerWallet.Id,                        // Target wallet (learner)
+                heldFund.Amount,                         // Full amount
+                heldFund.Id,                             // Reference to held fund
+                $"Hoàn tiền từ tranh chấp BookedSlot ID: {heldFund.BookedSlotId}"
+            );
+            
+            _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+            
+            // Update wallet balances
+            var escrowUpdate = escrowWallet.SubtractBalance(heldFund.Amount);
+            _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdate.ToArray());
+            
+            var learnerUpdate = learnerWallet.AddBalance(heldFund.Amount);
+            _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdate.ToArray());
+            
+            // Update held fund status
+            var heldFundUpdate = heldFund.UpdateStatus(HeldFundStatus.RefundedToLearner);
+            _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdate.ToArray());
+            
+            await _unitOfWork.SaveAsync();
+        }
+
+        public async Task PartialRefundForDisputeAsync(string heldFundId, decimal tutorPercentage, string bookingId)
+        {
+            // Get the held fund
+            var heldFund = await _unitOfWork.GetRepository<HeldFund>()
+                .ExistEntities()
+                .Include(h => h.BookedSlot)
+                .ThenInclude(bs => bs!.Booking)
+                .ThenInclude(b => b!.Learner)
+                .ThenInclude(l => l!.User)
+                .FirstOrDefaultAsync(h => h.Id == heldFundId);
+
+            if (heldFund == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy khoản tiền tạm giữ");
+
+            // Verify fund is in held or disputed status
+            if (heldFund.Status != HeldFundStatus.Held && heldFund.Status != HeldFundStatus.Disputed)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Khoản tiền tạm giữ không ở trạng thái có thể phân chia");
+
+            // Get booking for tutor and learner info
+            var booking = await _unitOfWork.GetRepository<Booking>()
+                .ExistEntities()
+                .Include(b => b.Tutor)
+                .Include(b => b.Learner)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+            if (booking == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy thông tin đặt chỗ");
+
+            // Get learner wallet
+            var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == booking.LearnerId);
+
+            if (learnerWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy ví của học viên");
+
+            // Get tutor wallet
+            var tutorWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == booking.TutorId);
+
+            if (tutorWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy ví của gia sư");
+
+            // Get escrow wallet
+            var escrowWallet = await GetEscrowWalletAsync();
+            
+            // Calculate amounts
+            decimal totalAmount = heldFund.Amount;
+            decimal tutorAmount = Math.Round(totalAmount * tutorPercentage, 2);
+            decimal learnerAmount = totalAmount - tutorAmount;
+            
+            // Create transactions
+            if (tutorAmount > 0)
+            {
+                var tutorTransaction = Transaction.CreatePaymentTransaction(
+                    escrowWallet.Id,                         // Source wallet (escrow)
+                    tutorWallet.Id,                          // Target wallet (tutor)
+                    tutorAmount,                             // Tutor's percentage
+                    heldFund.Id,                             // Reference to held fund
+                    $"Thanh toán 5% cho gia sư từ tranh chấp BookedSlot ID: {heldFund.BookedSlotId}"
+                );
+                
+                _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
+                
+                // Update tutor wallet balance
+                var tutorUpdate = tutorWallet.AddBalance(tutorAmount);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(tutorWallet, tutorUpdate.ToArray());
+            }
+            
+            if (learnerAmount > 0)
+            {
+                var learnerTransaction = Transaction.CreatePaymentTransaction(
+                    escrowWallet.Id,                         // Source wallet (escrow)
+                    learnerWallet.Id,                        // Target wallet (learner)
+                    learnerAmount,                           // Learner's percentage
+                    heldFund.Id,                             // Reference to held fund
+                    $"Hoàn 95% tiền cho học viên từ tranh chấp BookedSlot ID: {heldFund.BookedSlotId}"
+                );
+                
+                _unitOfWork.GetRepository<Transaction>().Insert(learnerTransaction);
+                
+                // Update learner wallet balance
+                var learnerUpdate = learnerWallet.AddBalance(learnerAmount);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdate.ToArray());
+            }
+            
+            // Update escrow wallet balance
+            var escrowUpdate = escrowWallet.SubtractBalance(totalAmount);
+            _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdate.ToArray());
+            
+            // Update held fund status
+            var heldFundUpdate = heldFund.UpdateStatus(HeldFundStatus.ReleasedToTutor);
+            _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdate.ToArray());
+            
+            await _unitOfWork.SaveAsync();
+        }
     }
 }

@@ -18,5 +18,8 @@ namespace App.Services.Interfaces
         
         // Balance calculation
         Task<decimal> CalculateAvailableBalanceAsync(string walletId);
+
+        Task RefundHeldFundToLearnerAsync(string heldFundId);
+        Task PartialRefundForDisputeAsync(string heldFundId, decimal tutorPercentage, string bookingId);
     }
 }
