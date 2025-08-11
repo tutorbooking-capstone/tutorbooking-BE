@@ -9,7 +9,7 @@ namespace App.Services.Interfaces
         Task DeleteAsync(string id);
         Task<BookingSlotRating?> GetByBookingIdAsync(string bookingSlotId);
         Task<BookingSlotRating> GetByIdAsync(string id);
-        Task<TutorRatingResponse> GetTutorRatingAsync(string tutorId);
+        Task<TutorRatingResponse?> GetTutorRatingAsync(string tutorId, int page = 1, int size = 10);
         Task UpdateAsync(BookingSlotRatingUpdateRequest request);
     }
 }

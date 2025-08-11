@@ -34,9 +34,9 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpGet("tutor/{tutorId}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTutorRating(string tutorId)
+        public async Task<IActionResult> GetTutorRating(string tutorId, int page =1, int size = 10)
         {
-            var response = await _bookingSlotRatingService.GetTutorRatingAsync(tutorId);
+            var response = await _bookingSlotRatingService.GetTutorRatingAsync(tutorId, page, size);
             return Ok(new BaseResponseModel<object>(
                 data: response,
                 message: "SUCCESS"
