@@ -137,6 +137,23 @@ namespace App.Services.Services
                 .Select(TutorBookingOfferResponse.Projection)
                 .FirstAsync();
 
+            await _notificationService.SendToUsersAsync(new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_CREATED_OFFER",
+                    Content = "PUSH_ON_TUTOR_CREATED_OFFER_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        SenderId = tutorId,
+                        OfferId = createdOffer.Id,
+                        LessonId = createdOffer.LessonId
+                    })
+                },
+                ReceiverUserIds = [request.LearnerId]
+            });
+
             return createdOffer;
         }
 
@@ -179,6 +196,23 @@ namespace App.Services.Services
             slotRepo.InsertRange(offer.OfferedSlots);
             
             await _unitOfWork.SaveAsync();
+
+            await _notificationService.SendToUsersAsync(new()
+            {
+                Content = new()
+                {
+                    NotificationPriority = ENotificationPriority.Normal,
+                    Title = "PUSH_ON_TUTOR_UPDATED_OFFER",
+                    Content = "PUSH_ON_TUTOR_UPDATED_OFFER_BODY",
+                    AdditionalData = JsonSerializer.Serialize(new
+                    {
+                        SenderId = tutorId,
+                        OfferId = offer.Id,
+                        LessonId = offer.LessonId,
+                    })
+                },
+                ReceiverUserIds = [offer.LearnerId]
+            });
 
             return await GetBookingOfferByIdForTutorAsync(offerId);
         }
