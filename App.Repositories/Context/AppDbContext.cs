@@ -66,6 +66,7 @@ namespace App.Repositories.Context
         public DbSet<LessonSnapshot> LessonSnapshots { get; set; }
 
         public DbSet<NotificationEntity> NotificationEntities { get; set; }
+        public DbSet<TutorIntroductionVideo> TutorIntroductionVideos { get; set; }
 
         public DbSet<BookingDispute> BookingDisputes { get; set; }
 
@@ -677,6 +678,14 @@ namespace App.Repositories.Context
             #endregion
 
 
+            #region TutorIntroductionVideo Configuration
+            // TutorIntroductionVideo -> Tutor (M:1)
+            modelBuilder.Entity<TutorIntroductionVideo>()
+                .HasOne(tiv => tiv.Tutor)
+                .WithMany(t => t.IntroductionVideos)
+                .HasForeignKey(tiv => tiv.TutorUserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            #endregion
         }
     }
 }

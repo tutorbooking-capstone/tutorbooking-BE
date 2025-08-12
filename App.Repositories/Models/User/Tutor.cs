@@ -31,6 +31,7 @@ namespace App.Repositories.Models.User
         public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
         public virtual ICollection<LearnerTimeSlotRequest>? TimeSlotRequests { get; set; } = new List<LearnerTimeSlotRequest>();
         public virtual ICollection<BookingSlotRating> BookingSlotRatings { get; set; } = new List<BookingSlotRating>();
+        public virtual ICollection<TutorIntroductionVideo>? IntroductionVideos { get; set; } = new List<TutorIntroductionVideo>();
 
         #region Behavior
         //public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
@@ -40,7 +41,7 @@ namespace App.Repositories.Models.User
 
         //    VerificationStatus = newStatus;
         //    LastStatusUpdateAt = DateTime.UtcNow;
-            
+
         //    return
         //    [
         //        x => x.VerificationStatus,

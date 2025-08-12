@@ -280,7 +280,8 @@ namespace App.Services.Services.User
                         tutorLanguagesMap.TryGetValue(x.Tutor.UserId, out var languages)
                             ? languages
                             : new List<TutorLanguage>(),
-                        x.Rating
+                        x.Rating,
+                        x.Tutor.IntroductionVideos?.Select(iv => iv.Url).FirstOrDefault()
                     ))
                     .ToList();
 
@@ -695,16 +696,15 @@ namespace App.Services.Services.User
                                                                     TimeSlotIndex = group.Select(slot => slot.SlotIndex).OrderBy(x => x).ToList()
                                                                 }))
                                                 .ToList(),
+                        IntroductionVideoUrl = t.IntroductionVideos
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Select(iv => iv.Url)
+                                                .FirstOrDefault() ?? string.Empty
                     })
                     .ToListAsync();
                 return tutors;
             });
 			return response;
 		}
-
-        public void UselessMethod(DayInWeek[] daysInWeek, int[] slotIndexes)
-        {
-            Expression<Func<Tutor, bool>> testPredicate = t => t.AvailabilityPatterns.Any(a => a.Slots.Any(s => daysInWeek.Contains(s.DayInWeek) && slotIndexes.Contains(s.SlotIndex)));
-        }
     }
 }

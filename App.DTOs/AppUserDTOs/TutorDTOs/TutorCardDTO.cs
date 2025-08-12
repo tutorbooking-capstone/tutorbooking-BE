@@ -12,6 +12,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
 		public string Description {  get; set; } = string.Empty;
         public bool IsProfessional { get; set; }
         public double Rating { get; set; }
+        public string IntroductionVideoUrl { get; set; } = string.Empty;
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
         public List<DailyAvailabilityPatternDTO> AvailabilityPatterns { get; set; } = new();
     }
@@ -29,7 +30,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public static TutorCardDTO ToTutorCardDTO(
             this Tutor tutor,
             List<TutorLanguage> languages,
-            double rating = 0.0)
+            double rating = 0.0,
+            string introductionVideoUrl = "")
         {
             return new TutorCardDTO
             {
@@ -50,7 +52,8 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                         IsPrimary = l.IsPrimary,
                         Proficiency = l.Proficiency
                     })
-                    .ToList()
+                    .ToList(),
+                IntroductionVideoUrl = introductionVideoUrl
             };
         }
     }

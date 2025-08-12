@@ -55,6 +55,7 @@ namespace App.Services
             services.AddScoped<ILegalDocumentAcceptanceService, LegalDocumentAcceptanceService>();
             services.AddSingleton<IOtpService, OtpService>();
             services.AddHostedService<OtpCleanupService>();
+            services.AddScoped<ITutorIntroductionVideoService, TutorIntroductionVideoService>();
             #endregion
 
             #region Provider Services
