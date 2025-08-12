@@ -201,7 +201,8 @@ namespace App.Services.Services.User
             var relevantTutors = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
                 //.Where(t => t.VerificationStatus != VerificationStatus.Basic)
-                .Where(t => t.Languages.Select(t => t.LanguageCode).Any(t => popularLanguages.Contains(t)))
+                .Where(t => t.Languages.Select(t => t.LanguageCode).Any(t => popularLanguages.Contains(t)) 
+                && t.VerificationStatus == VerificationStatus.Verified)
                 .Include(t => t.User)
                 .Where(t => _unitOfWork.GetRepository<TutorLanguage>()
                     .ExistEntities()
@@ -624,7 +625,7 @@ namespace App.Services.Services.User
             )
 		{
 
-            var predicate = PredicateBuilder.New<Tutor>(true);
+            var predicate = PredicateBuilder.New<Tutor>(t => t.VerificationStatus == VerificationStatus.Verified);
 
             // language filter
             if (languageCodes.Length >0)
