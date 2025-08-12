@@ -5,7 +5,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
 {
     public class TutorIntroductionVideoRequest
     {
-        public string TutorUserId { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
     }
 
@@ -15,7 +14,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         {
             return new TutorIntroductionVideo
             {
-                TutorUserId = request.TutorUserId,
                 Url = request.Url
             };
         }
@@ -25,8 +23,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
     {
         public TutorIntroductionVideoRequestValidator()
         {
-            RuleFor(x => x.TutorUserId)
-                .NotEmpty().WithMessage("Tutor User ID is required.");
             RuleFor(x => x.Url)
                 .NotEmpty().WithMessage("Video URL is required.")
                 .Must(url => Uri.IsWellFormedUriString(url, UriKind.Absolute))

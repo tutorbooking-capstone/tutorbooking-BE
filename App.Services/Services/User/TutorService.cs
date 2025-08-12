@@ -518,9 +518,13 @@ namespace App.Services.Services.User
             response.Languages = result.tutorLanguages;
             response.AvailabilityPatterns = result.patterns;
             response.Bookings = result.bookings;
-            response.AverageTeachingQuality = tutorRatings.AverageTeachingQuality;
-            response.AverageAttitude = tutorRatings.AverageAttitude;
-            response.AverageCommitment = tutorRatings.AverageCommitment;
+
+            if (tutorRatings != null)
+            {
+                response.AverageTeachingQuality = tutorRatings.AverageTeachingQuality;
+                response.AverageAttitude = tutorRatings.AverageAttitude;
+                response.AverageCommitment = tutorRatings.AverageCommitment;
+            }
 
             return response;
         }

@@ -26,6 +26,8 @@ namespace App.Services.Services
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var entity = request.ToEntity();
+                entity.TutorUserId = _userService.GetCurrentUserId();
+
                 _unitOfWork.GetRepository<TutorIntroductionVideo>().Insert(entity);
                 await _unitOfWork.SaveAsync();
 
