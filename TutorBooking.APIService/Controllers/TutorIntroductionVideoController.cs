@@ -1,0 +1,69 @@
+﻿using App.Core.Base;
+using App.DTOs.AppUserDTOs.TutorDTOs;
+using App.Repositories.Models.User;
+using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace TutorBooking.APIService.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class TutorIntroductionVideoController : ControllerBase
+    {
+        private readonly ITutorIntroductionVideoService _tutorIntroductionVideoService;
+
+        public TutorIntroductionVideoController(ITutorIntroductionVideoService tutorIntroductionVideoService)
+        {
+            _tutorIntroductionVideoService = tutorIntroductionVideoService;
+        }
+
+        [HttpPost]
+        [Authorize] //TODO: add role-based authorization
+        public async Task<IActionResult> CreateTutorIntroductionVideo([FromBody] TutorIntroductionVideoRequest request)
+        {
+            var video = await _tutorIntroductionVideoService.CreateAsync(request);
+            return Ok(new BaseResponseModel<TutorIntroductionVideoResponse>(video, "SUCCESS"));
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteTutorIntroductionVideo(string id)
+        {
+            await _tutorIntroductionVideoService.DeleteAsync(id);
+            return Ok(new BaseResponseModel<object>(null, "SUCCESS"));
+        }
+
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTutorIntroductionVideoById(string id)
+        {
+            var video = await _tutorIntroductionVideoService.GetByIdAsync(id);
+            return Ok(new BaseResponseModel<TutorIntroductionVideoResponse?>(video, "SUCCESS"));
+        }
+
+        [HttpGet("pending")]
+        [Authorize]
+        public async Task<IActionResult> GetPendingTutorIntroductionVideos(int page = 1, int size = 20)
+        {
+            var videos = await _tutorIntroductionVideoService.GetPendingAsync(page, size);
+            return Ok(new BaseResponseModel<ICollection<TutorIntroductionVideoResponse>>(videos, "SUCCESS"));
+        }
+
+        [HttpGet("current-user")]
+        [Authorize]
+        public async Task<IActionResult> GetCurrentUserTutorIntroductionVideos(int page = 1, int size = 10)
+        {
+            var videos = await _tutorIntroductionVideoService.GetByCurrentUserIdAsync(page, size);
+            return Ok(new BaseResponseModel<ICollection<TutorIntroductionVideoResponse>>(videos, "SUCCESS"));
+        }
+
+        [HttpPost("review")]
+        [Authorize]
+        public async Task<IActionResult> ReviewTutorIntroductionVideo([FromBody] TutorIntroductionVideoReviewRequest request)
+        {
+            var video = await _tutorIntroductionVideoService.ReviewAsync(request);
+            return Ok(new BaseResponseModel<TutorIntroductionVideoResponse>(video, "SUCCESS"));
+        }
+    }
+}
