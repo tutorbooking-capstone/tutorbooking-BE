@@ -65,7 +65,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("all")]
-        [AuthorizeRoles(Role.Admin, Role.Staff)]
+        [AuthorizeRoles(Role.Admin, Role.Manager)]
         public async Task<IActionResult> GetAllDepositHistory(
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
