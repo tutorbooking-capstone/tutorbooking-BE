@@ -141,6 +141,7 @@ namespace App.Services.Services
             {
                 Content = new()
                 {
+                    NotificationPriority = ENotificationPriority.Normal,
                     Title = "PUSH_ON_TUTOR_CREATED_OFFER",
                     Content = "PUSH_ON_TUTOR_CREATED_OFFER_BODY",
                     AdditionalData = JsonSerializer.Serialize(new
@@ -200,6 +201,7 @@ namespace App.Services.Services
             {
                 Content = new()
                 {
+                    NotificationPriority = ENotificationPriority.Normal,
                     Title = "PUSH_ON_TUTOR_UPDATED_OFFER",
                     Content = "PUSH_ON_TUTOR_UPDATED_OFFER_BODY",
                     AdditionalData = JsonSerializer.Serialize(new
