@@ -1,4 +1,5 @@
-﻿using App.Repositories.Models.Papers;
+﻿using App.Core.Base;
+using App.Repositories.Models.Papers;
 using App.Repositories.Models.Rating;
 using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
@@ -16,7 +17,7 @@ namespace App.Repositories.Models.User
         public string TeachingMethod { get; set; } = string.Empty;
 
         // Verification Info
-        //public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Basic;
+        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.PendingVerification;
         public DateTime LastStatusUpdateAt { get; set; }
         public DateTime? BecameTutorAt { get; set; }
 
@@ -34,20 +35,20 @@ namespace App.Repositories.Models.User
         public virtual ICollection<TutorIntroductionVideo>? IntroductionVideos { get; set; } = new List<TutorIntroductionVideo>();
 
         #region Behavior
-        //public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
-        //{
-        //    if (VerificationStatus == newStatus)
-        //        return Array.Empty<Expression<Func<Tutor, object>>>();
+        public Expression<Func<Tutor, object>>[] UpdateVerificationStatus(VerificationStatus newStatus)
+        {
+            if (VerificationStatus == newStatus)
+                return Array.Empty<Expression<Func<Tutor, object>>>();
 
-        //    VerificationStatus = newStatus;
-        //    LastStatusUpdateAt = DateTime.UtcNow;
+            VerificationStatus = newStatus;
+            LastStatusUpdateAt = DateTime.UtcNow;
 
-        //    return
-        //    [
-        //        x => x.VerificationStatus,
-        //        x => x.LastStatusUpdateAt
-        //    ];
-        //}
+            return
+            [
+                x => x.VerificationStatus,
+                x => x.LastStatusUpdateAt
+            ];
+        }
 
         public Expression<Func<Tutor, object>>[] UpdateTutorProfile(
             string? nickName,
@@ -89,10 +90,12 @@ namespace App.Repositories.Models.User
     public enum VerificationStatus
     {
         Basic = 0,           // Not Started (Gray Check)
-        VerifiedUpload = 1,       // Verified via Documents (White Check)
-        VerifiedHardcopy = 2,     // Verified via Hardcopy (Blue Check)
-        //PendingDocuments,     // Awaiting Documents
+        PendingVerification = 1,  // Pending Verification (Gray Check)
+        Verified = 2,       // Verified (White Check)
+        //VerifiedUpload = 2,       // Verified via Documents (White Check)
+        //VerifiedHardcopy = 3,     // Verified via Hardcopy (Blue Check)
         //PendingVerification,  // Pending Verification (Gray Check)
+        //PendingDocuments = 1,     // Awaiting Documents
         //PendingReverification, // Pending Re-verification After Update
         //RevisionRequested     // Revision Requested (Red Check)
     }

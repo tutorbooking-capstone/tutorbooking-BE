@@ -124,10 +124,24 @@ namespace App.Services.Services
 
             var entity = request.ToEntity(_userService.GetCurrentUserId());
             _unitOfWork.GetRepository<ApplicationRevision>().Insert(entity);
-            if (request.Action == RevisionAction.Approve) 
+            if (request.Action == RevisionAction.Approve)
+            {
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
-            else if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject) 
+
+                // Update the tutor's status to verified if the application is approved
+                var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                    .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
+                if (tutor != null && tutor.VerificationStatus != VerificationStatus.Verified)
+                {
+                    tutor.VerificationStatus = VerificationStatus.Verified;
+                    _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
+                }
+            }    
+            else if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject)
+            {
                 await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
+            }
+                
             await _unitOfWork.SaveAsync();
 
             await _notificationService.SendToUsersAsync(new()
