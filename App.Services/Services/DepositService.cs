@@ -387,7 +387,7 @@ namespace App.Services.Services
 
         public async Task<BasePaginatedList<DepositRequestResponse>> GetAllDepositHistoryAsync(int page = 1, int pageSize = 10)
         {
-            if (!_currentUserProvider.IsInRole(Role.Admin.ToStringRole()) && !_currentUserProvider.IsInRole(Role.Staff.ToStringRole()))
+            if (!_currentUserProvider.IsInRole(Role.Manager.ToStringRole()))
                 throw new ErrorException(
                     StatusCodes.Status403Forbidden,
                     ErrorCode.Forbidden,
