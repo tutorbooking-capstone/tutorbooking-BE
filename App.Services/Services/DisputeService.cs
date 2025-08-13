@@ -712,16 +712,23 @@ namespace App.Services.Services
         #endregion
 
         #region Staff Operations
+        private void EnsureHasManagerialAccess(string message = "Bạn không có quyền thực hiện thao tác này")
+        {
+            var isAdmin = _currentUserProvider.IsInRole(Role.Admin.ToStringRole());
+            var isStaff = _currentUserProvider.IsInRole(Role.Staff.ToStringRole());
+            
+            if (!isAdmin && !isStaff)
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden,
+                    ErrorCode.Forbidden,
+                    message);
+        }
+
         public async Task<BookingDisputeResponse> ResolveDisputeAsync(ResolveDisputeRequest request)
         {
-            var userId = GetAuthenticatedUserId();
             var dispute = await GetAndValidateDisputeAsync(request.DisputeId, checkEscalated: true);
+            EnsureHasManagerialAccess("Bạn không có quyền xử lý khiếu nại này");
             
-            // Verify staff is assigned to this dispute or is admin
-            // var isAdmin = await _currentUserProvider.IsInRoleAsync(Role.Admin);
-            // if (dispute.StaffId != userId && !isAdmin)
-            //     throw new ErrorException(StatusCodes.Status403Forbidden, ErrorCode.Forbidden, "Bạn không có quyền xử lý khiếu nại này");
-                
             // Resolve dispute
             var updateProperties = dispute.ResolveByStaff(request.Resolution, request.Notes);
             _unitOfWork.GetRepository<BookingDispute>().UpdateFields(dispute, updateProperties.ToArray());
@@ -737,16 +744,11 @@ namespace App.Services.Services
         public async Task<List<BookingDisputeResponse>> GetDisputesForReviewAsync()
         {
             var userId = GetAuthenticatedUserId();
-            // var isAdmin = await _currentUserProvider.IsInRoleAsync(Role.Admin);
-            var isAdmin = false;  
+            EnsureHasManagerialAccess("Bạn không có quyền xem danh sách khiếu nại");
             
             var query = _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
                 .Where(d => d.Status == DisputeStatus.AwaitingStaffReview);
-                
-            // If not admin, only show disputes assigned to this staff
-            if (!isAdmin)
-                query = query.Where(d => d.StaffId == userId);
             
             var disputes = await query.ToListAsync();
             var responses = new List<BookingDisputeResponse>();
@@ -764,15 +766,8 @@ namespace App.Services.Services
             var userId = GetAuthenticatedUserId();
             var dispute = await GetAndValidateDisputeAsync(disputeId);
             
-            // Verify staff is assigned to this dispute or is admin
-            // var isAdmin = await _currentUserProvider.IsInRoleAsync(Role.Admin);
-            var isAdmin = false; 
-            if (dispute.StaffId != userId && !isAdmin)
-                throw new ErrorException(
-                    StatusCodes.Status403Forbidden, 
-                    ErrorCode.Forbidden, 
-                    "Bạn không có quyền xem chi tiết khiếu nại này");
-                
+            EnsureHasManagerialAccess("Bạn không có quyền xem chi tiết khiếu nại này");
+            
             return await GetDisputeDetailResponseAsync(dispute);
         }
         #endregion
