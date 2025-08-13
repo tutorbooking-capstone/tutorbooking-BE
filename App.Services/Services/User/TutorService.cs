@@ -651,12 +651,12 @@ namespace App.Services.Services.User
             };
 
             // price filter
-            if (minPrice.HasValue || maxPrice.HasValue)
+            if ((minPrice > 0) || (maxPrice > 0))
             {
                 var pricePredicate = PredicateBuilder.New<Lesson>(true);
-                if (minPrice.HasValue)
+                if (minPrice > 0)
                     pricePredicate.And(l => l.Price >= minPrice);
-                if (maxPrice.HasValue)
+                if (maxPrice > 0)
                     pricePredicate.And(l => l.Price <= maxPrice);
                 predicate.And(t => t.Lessons.AsQueryable().Any(pricePredicate));
             }
