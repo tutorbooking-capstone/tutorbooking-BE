@@ -1,4 +1,5 @@
 ﻿using App.Core.Base;
+using App.Core.Utils;
 using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
 
@@ -7,16 +8,23 @@ namespace App.Repositories.Models
     #region Enums
     public enum HeldFundStatus
     {
+        [EnumDescription("Tiền đang được giữ")]
         Held = 0,
+        [EnumDescription("Tiền đã được chuyển cho gia sư")]
         ReleasedToTutor = 1,
+        [EnumDescription("Tiền đã được hoàn trả cho học viên")]
         RefundedToLearner = 2,
+        [EnumDescription("Tiền đang trong trạng thái tranh chấp")]
         Disputed = 3,
+        [EnumDescription("Tiền đã được chuyển về tài khoản ngân hàng của gia sư")]
         ReleasedToTutorBank = 4
     }
 
         public enum HeldFundType
     {
+        [EnumDescription("Tiền giữ cho việc thanh toán buổi học")]
         BookingPayment = 0,
+        [EnumDescription("Tiền giữ cho yêu cầu rút tiền")]
         Withdrawal = 1
     }
     #endregion

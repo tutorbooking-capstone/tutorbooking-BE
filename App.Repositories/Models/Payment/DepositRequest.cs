@@ -7,8 +7,11 @@ namespace App.Repositories.Models
     #region Enums
     public enum DepositRequestStatus
     {
+        [EnumDescription("Yêu cầu nạp tiền đang chờ xử lý")]
         Pending = 0,
+        [EnumDescription("Yêu cầu nạp tiền đã thành công")]
         Success = 1,
+        [EnumDescription("Yêu cầu nạp tiền đã thất bại")]
         Failed = 2
     }
     #endregion

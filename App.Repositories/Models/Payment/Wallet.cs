@@ -8,14 +8,19 @@ namespace App.Repositories.Models
     #region Enums
     public enum WalletType
     {
+        [EnumDescription("Ví cá nhân của người dùng")]
         Personal = 0,
+        [EnumDescription("Ví hệ thống dùng để lưu trữ phí và doanh thu")]
         System = 1,
+        [EnumDescription("Ví ký quỹ dùng để giữ tiền tạm thời")]
         Escrow = 2
     }
 
     public enum WalletStatus
     {
+        [EnumDescription("Ví đang hoạt động bình thường")]
         Active = 0,
+        [EnumDescription("Ví đã bị khóa, không thể thực hiện giao dịch")]
         Locked = 1
     }
     #endregion

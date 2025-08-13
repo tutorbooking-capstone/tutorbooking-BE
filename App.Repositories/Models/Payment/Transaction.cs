@@ -5,18 +5,27 @@ namespace App.Repositories.Models
     #region Enums
     public enum TransactionType
     {
+        [EnumDescription("Giao dịch nạp tiền vào hệ thống")]
         Deposit = 0,
+        [EnumDescription("Giao dịch rút tiền ra khỏi hệ thống")]
         Withdrawal = 1,
+        [EnumDescription("Giao dịch thanh toán cho dịch vụ")]
         Payment = 2,
+        [EnumDescription("Giao dịch hoàn tiền cho người dùng")]
         Refund = 3,
+        [EnumDescription("Giao dịch hoa hồng")]
         Commission = 4,
+        [EnumDescription("Giao dịch phí dịch vụ")]
         Fee = 5
     }
 
     public enum TransactionStatus
     {
+        [EnumDescription("Giao dịch đang chờ xử lý")]
         Pending = 0,
+        [EnumDescription("Giao dịch đã thành công")]
         Success = 1,
+        [EnumDescription("Giao dịch đã thất bại")]
         Failed = 2
     }
     #endregion

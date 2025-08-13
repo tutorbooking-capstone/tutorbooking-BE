@@ -29,6 +29,7 @@ namespace App.Services
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IProfileService, ProfileService>();
+            services.AddScoped<IManagerService, ManagerService>();  
             
             services.AddScoped<ITutorService, TutorService>();
             services.AddScoped<ILearnerService, LearnerService>();
