@@ -127,10 +127,12 @@ namespace TutorBooking.APIService.Controllers
             [FromQuery] int[]? slotIndexes,
             [FromQuery] decimal? minPrice,
             [FromQuery] decimal? maxPrice,
+            [FromQuery] string[]? hashtags,
+            [FromQuery] string? fullName,
             int page = 1,
             int size = 20)
 		{
-			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, primaryLanguageCode, daysInWeek, slotIndexes,minPrice, maxPrice, page, size);
+			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, primaryLanguageCode, daysInWeek, slotIndexes,minPrice, maxPrice, hashtags, fullName, page, size);
 			return Ok(new BaseResponseModel<List<TutorCardDTO>>(
 				data: tutorCards,
 				message: "Danh sách gia sư."

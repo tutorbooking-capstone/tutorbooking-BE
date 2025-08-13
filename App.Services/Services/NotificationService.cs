@@ -78,30 +78,30 @@ namespace App.Services.Services
         {
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
-            var userId = _userService.GetCurrentUserId();
-                Expression<Func<NotificationEntity, bool>> loggedInUserOnlyPredicate = e => e.AppUserNotifications.Any(an => an.AppUserId.Equals(userId));
-                Expression<Func<NotificationEntity, bool>> unreadOnlyPredicate = e => e.AppUserNotifications.Any(an => an.ReadAt == null);
+                var userId = _userService.GetCurrentUserId();
 
-                var predicate = PredicateBuilder.New(loggedInUserOnlyPredicate);
+                var predicate = PredicateBuilder.New<NotificationEntity>(true);
                 if (isUnreadOnly)
-                    predicate.And(unreadOnlyPredicate);
+                    predicate.And(e => e.AppUserNotifications.Any(an => an.ReadAt == null && an.AppUserId.Equals(userId)));
+                else
+                    predicate.And(e => e.AppUserNotifications.Any(an => an.AppUserId.Equals(userId)));
 
-                var entities = await _unitOfWork.GetRepository<NotificationEntity>().ExistEntities()
-                .OrderByDescending(x => x.CreatedAt)
-                .Where(predicate)
-                .Skip((page -1) * size)
-                .Take(size)
-                .Select(x => new NotificationResponse()
-                {
-                    Id = x.Id,
-                    NotificationPriority = x.NotificationPriority,
-                    Title = x.Title,
-                    Content = x.Content,
-                    AdditionalData = x.AdditionalData,
-                    CreatedAt = x.CreatedAt,
-                    isRead = x.AppUserNotifications.Any(x => x.ReadAt != null & x.AppUserId.Equals(userId))
-                })
-                .ToListAsync();
+                    var entities = await _unitOfWork.GetRepository<NotificationEntity>().ExistEntities()
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Where(predicate)
+                    .Skip((page - 1) * size)
+                    .Take(size)
+                    .Select(x => new NotificationResponse()
+                    {
+                        Id = x.Id,
+                        NotificationPriority = x.NotificationPriority,
+                        Title = x.Title,
+                        Content = x.Content,
+                        AdditionalData = x.AdditionalData,
+                        CreatedAt = x.CreatedAt,
+                        isRead = x.AppUserNotifications.Any(x => x.ReadAt != null && x.AppUserId.Equals(userId))
+                    })
+                    .ToListAsync();
                 return entities;
             });
             return response;
@@ -117,6 +117,25 @@ namespace App.Services.Services
                     throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "NOT_FOUND");
                 entity.ReadAt = DateTime.UtcNow;
                 _unitOfWork.GetRepository<AppUserNotification>().Update(entity);
+                await _unitOfWork.SaveAsync();
+                return true;
+            });
+        }
+
+        public async Task MarkAllAsReadAsync(string userId)
+        {
+            await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var entities = await _unitOfWork.GetRepository<AppUserNotification>().ExistEntities()
+                    .Where(x => x.AppUserId.Equals(userId) && x.ReadAt == null)
+                    .ToListAsync();
+                if (entities.Count == 0)
+                    throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "NOT_FOUND");
+                foreach (var entity in entities)
+                {
+                    entity.ReadAt = DateTime.UtcNow;
+                    _unitOfWork.GetRepository<AppUserNotification>().Update(entity);
+                }
                 await _unitOfWork.SaveAsync();
                 return true;
             });

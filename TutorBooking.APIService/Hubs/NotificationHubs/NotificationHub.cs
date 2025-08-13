@@ -57,6 +57,20 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             }
         }
 
+        public async Task MarkAllAsRead()
+        {
+            try
+            {
+                var userId = GetUserId();
+                await _notificationService.MarkAllAsReadAsync(userId);
+                await Clients.Caller.MarkAllAsReadResult(200, "SUCCESS");
+            }
+            catch (Exception ex)
+            {
+                await HandleExceptionAsync(ex, MARK_ALL_AS_READ_RESULT);
+            }
+        }
+
         /// <summary>
         /// Gets the UserId of the connected user
         /// </summary>
@@ -71,6 +85,7 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         }
 
         private const string MARK_AS_READ_RESULT = nameof(INotificationClient.MarkAsReadResult);
+        private const string MARK_ALL_AS_READ_RESULT = nameof(INotificationClient.MarkAllAsReadResult);
 
         private async Task HandleExceptionAsync(Exception ex, string resultMethod)
         {
@@ -88,6 +103,7 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             Func<Task> clientMethod = resultMethod switch
             {
                 MARK_AS_READ_RESULT => () => Clients.Caller.MarkAsReadResult(statusCode, errorMessage),
+                MARK_ALL_AS_READ_RESULT => () => Clients.Caller.MarkAllAsReadResult(statusCode, errorMessage),
                 _ => throw new ArgumentException($"Unknown result method: {resultMethod}")
             };
 

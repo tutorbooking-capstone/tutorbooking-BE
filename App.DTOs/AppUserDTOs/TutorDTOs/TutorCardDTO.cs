@@ -15,6 +15,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string IntroductionVideoUrl { get; set; } = string.Empty;
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
         public List<DailyAvailabilityPatternDTO> AvailabilityPatterns { get; set; } = new();
+        public List<TutorHashtagDTO> Hashtags { get; set; } = new List<TutorHashtagDTO>();
     }
 
     public class TutorCardLanguageDTO

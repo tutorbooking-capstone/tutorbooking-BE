@@ -26,6 +26,8 @@ namespace App.Services.Interfaces.User
             int[]? slotIndexes,
             decimal? minPrice,
             decimal? maxPrice,
+            string[]? hashtags,
+            string? tutorName,
             int page = 1,
             int size = 20);
 

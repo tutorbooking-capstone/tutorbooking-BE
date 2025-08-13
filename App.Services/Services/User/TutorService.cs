@@ -620,12 +620,16 @@ namespace App.Services.Services.User
             int[]? slotIndexes,
             decimal? minPrice,
             decimal? maxPrice,
-            int page =1,
-            int size =20
+            string[]? hashtags,
+            string? fullName,
+            int page = 1,
+            int size = 20
             )
 		{
 
             var predicate = PredicateBuilder.New<Tutor>(t => t.VerificationStatus == VerificationStatus.Verified);
+
+            // linq search go brrrrrr
 
             // language filter
             if (languageCodes.Length >0)
@@ -647,16 +651,24 @@ namespace App.Services.Services.User
             };
 
             // price filter
-            if (minPrice.HasValue || maxPrice.HasValue)
+            if ((minPrice > 0) || (maxPrice > 0))
             {
                 var pricePredicate = PredicateBuilder.New<Lesson>(true);
-                if (minPrice.HasValue)
+                if (minPrice > 0)
                     pricePredicate.And(l => l.Price >= minPrice);
-                if (maxPrice.HasValue)
+                if (maxPrice > 0)
                     pricePredicate.And(l => l.Price <= maxPrice);
                 predicate.And(t => t.Lessons.AsQueryable().Any(pricePredicate));
             }
-                
+
+            // hashtags filter (CAUTION: Not normalized, case-sensitive, whitespace dependent)
+            if (hashtags != null && hashtags.Length > 0)
+                predicate.And(t => t.Hashtags.Any(th => hashtags.Contains(th.Hashtag.Name)));
+
+            // tutor name filter (CAUTION: Not normalized, whitespace dependent)
+            if (!fullName.IsNullOrWhiteSpace())
+                predicate.And(t => t.User.FullName.ToLower().Contains(fullName.ToLower()));
+
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
@@ -704,7 +716,13 @@ namespace App.Services.Services.User
                         IntroductionVideoUrl = t.IntroductionVideos
                                                 .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
                                                 .Select(iv => iv.Url)
-                                                .FirstOrDefault() ?? string.Empty
+                                                .FirstOrDefault() ?? string.Empty,
+                        Hashtags = t.Hashtags
+                                    .Select(th => new TutorHashtagDTO
+                                    {
+                                        HashtagId = th.HashtagId,
+                                        Name = th.Hashtag.Name
+                                    }).ToList()
                     })
                     .ToListAsync();
                 return tutors;
