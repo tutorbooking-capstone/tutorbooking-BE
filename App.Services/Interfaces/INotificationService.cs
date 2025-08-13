@@ -10,5 +10,6 @@ namespace App.Services.Interfaces
         Task<NotificationSenderResponse> GetSenderByIdAsync(string id);
         Task<NotificationSenderResponse> GetTutorSenderByIdAsync(string id);
         Task MarkAsReadAsync(string notificationId, string userId);
+        Task MarkAllAsReadAsync(string userId);
     }
 }
