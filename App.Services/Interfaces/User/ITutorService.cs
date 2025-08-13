@@ -27,6 +27,7 @@ namespace App.Services.Interfaces.User
             decimal? minPrice,
             decimal? maxPrice,
             string[]? hashtags,
+            string? tutorName,
             int page = 1,
             int size = 20);
 

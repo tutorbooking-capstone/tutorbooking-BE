@@ -621,6 +621,7 @@ namespace App.Services.Services.User
             decimal? minPrice,
             decimal? maxPrice,
             string[]? hashtags,
+            string? fullName,
             int page = 1,
             int size = 20
             )
@@ -660,9 +661,13 @@ namespace App.Services.Services.User
                 predicate.And(t => t.Lessons.AsQueryable().Any(pricePredicate));
             }
 
-            // hashtags filter (CAUTION: case-sensitive, whitespace dependent)
+            // hashtags filter (CAUTION: Not normalized, case-sensitive, whitespace dependent)
             if (hashtags != null && hashtags.Length > 0)
                 predicate.And(t => t.Hashtags.Any(th => hashtags.Contains(th.Hashtag.Name)));
+
+            // tutor name filter (CAUTION: Not normalized, whitespace dependent)
+            if (!fullName.IsNullOrWhiteSpace())
+                predicate.And(t => t.User.FullName.ToLower().Contains(fullName.ToLower()));
 
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
