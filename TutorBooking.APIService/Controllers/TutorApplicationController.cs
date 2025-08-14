@@ -35,5 +35,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "SUCCESS"
                 ));
         }
+
+        [HttpGet("metadata")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> GetMetadata()
+        {
+            var metadata = await _service.GetApplicationMetadataAsync();
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Metadata cho quy trình xác minh gia sư"
+            ));
+        }
     }
 }

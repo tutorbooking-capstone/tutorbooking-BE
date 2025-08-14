@@ -4,5 +4,6 @@
     {
         Task CreateTutorApplicationAsync(string tutorId);
         Task RequestVerificationAsync(string tutorApplicationId);
+        Task<Dictionary<string, object>> GetApplicationMetadataAsync();
     }
 }

@@ -36,5 +36,29 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
             await _unitOfWork.SaveAsync();
         }
+
+        public Task<Dictionary<string, object>> GetApplicationMetadataAsync()
+        {
+            var metadata = new Dictionary<string, object>();
+            
+            var enumMetadata = EnumHelper.GetEnumMetadata(typeof(ApplicationStatus));
+            
+            foreach (var kv in enumMetadata)
+            {
+                metadata.Add(kv.Key, kv.Value);
+            }
+            
+            var applicationProcess = new
+            {
+                UnSubmitted = "Hồ sơ đã được tạo nhưng chưa gửi cho hệ thống xác minh",
+                PendingVerification = "Hồ sơ đã gửi và đang chờ nhân viên xác minh",
+                RevisionRequested = "Nhân viên yêu cầu chỉnh sửa hồ sơ",
+                PendingReverification = "Hồ sơ đã chỉnh sửa và đang chờ xác minh lại",
+                Verified = "Hồ sơ đã được xác minh thành công"
+            };
+            metadata.Add("ApplicationProcess", applicationProcess);
+            
+            return Task.FromResult(metadata);
+        }
     }
 } 
