@@ -17,7 +17,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost]
-        [AuthorizeRoles(Role.Tutor)]
+        [AuthorizeRoles(Role.Learner)]
         public async Task<IActionResult> CreateApplication(string tutorId)
         {
             await _service.CreateTutorApplicationAsync(tutorId);
@@ -27,7 +27,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("request-verification")]
-        //[AuthorizeRoles(Role.Tutor)]
+        [AuthorizeRoles(Role.Learner)]
         public async Task<IActionResult> RequestVerification(string tutorApplicationId)
         {
             await _service.RequestVerificationAsync(tutorApplicationId);
