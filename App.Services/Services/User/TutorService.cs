@@ -660,6 +660,8 @@ namespace App.Services.Services.User
                     pricePredicate.And(l => l.Price <= maxPrice);
                 predicate.And(t => t.Lessons.AsQueryable().Any(pricePredicate));
             }
+            else
+                predicate.And(t => t.Lessons.Any()); // Ensure tutor has at least one lesson
 
             // hashtags filter (CAUTION: Not normalized, case-sensitive, whitespace dependent)
             if (hashtags != null && hashtags.Length > 0)
