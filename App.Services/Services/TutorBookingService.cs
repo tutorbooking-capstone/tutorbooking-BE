@@ -290,15 +290,12 @@ namespace App.Services.Services
 
             try
             {
-                // Call the entity's behavior method to handle state transition and get updated fields
                 var updateFields = bookedSlot.MarkAsCompleted(tutorId);
 
-                // Only save if there are actual changes
                 if (updateFields.Any())
                 {
                     bookedSlotRepo.UpdateFields(bookedSlot, updateFields);
                     await _unitOfWork.SaveAsync();
-                    // Fire Notification event after successful update
 
                     await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest()
                     {

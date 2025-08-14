@@ -286,7 +286,8 @@ namespace App.Services.Services
             var existingBookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
                 .ExistEntities()
                 .Include(bs => bs.Booking)
-                .Where(bs => bs.Booking!.LearnerId == learnerId && bs.Status != SlotStatus.Cancelled)
+                .Where(bs => bs.Booking!.LearnerId == learnerId && 
+                        (bs.Status == SlotStatus.Pending || bs.Status == SlotStatus.AwaitingConfirmation))
                 .Select(bs => new { bs.BookedDate.Date, bs.SlotIndex })
                 .ToListAsync();
 
