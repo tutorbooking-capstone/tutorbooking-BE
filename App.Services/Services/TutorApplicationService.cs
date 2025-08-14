@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
+using App.Repositories.Models;
 using App.Repositories.Models.Papers;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
@@ -37,11 +38,15 @@ namespace App.Services.Services
             await _unitOfWork.SaveAsync();
         }
 
-        public Task<Dictionary<string, object>> GetApplicationMetadataAsync()
+        public async Task<Dictionary<string, object>> GetApplicationMetadataAsync()
         {
             var metadata = new Dictionary<string, object>();
             
-            var enumMetadata = EnumHelper.GetEnumMetadata(typeof(ApplicationStatus));
+            var enumMetadata = EnumHelper.GetEnumMetadata(
+                typeof(ApplicationStatus),
+                typeof(RevisionAction),
+                typeof(HardcopySubmitStatus)
+            );
             
             foreach (var kv in enumMetadata)
             {
@@ -58,7 +63,7 @@ namespace App.Services.Services
             };
             metadata.Add("ApplicationProcess", applicationProcess);
             
-            return Task.FromResult(metadata);
+            return metadata;
         }
     }
 } 

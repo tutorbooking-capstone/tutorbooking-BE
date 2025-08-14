@@ -31,13 +31,13 @@ namespace App.Repositories.Models
 
     public enum RevisionAction
     {
-        // Staff requests the tutor to revise their application or documents
+        [EnumDescription("Yêu cầu chỉnh sửa")]
         RequestRevision = 0,
 
-        // Staff approves the application or a specific document Upload or Hardcopy
+        [EnumDescription("Phê duyệt")]
         Approve = 1,
 
-        // Staff rejects the application or a specific document
+        [EnumDescription("Từ chối")]
         Reject = 2
     }
 }

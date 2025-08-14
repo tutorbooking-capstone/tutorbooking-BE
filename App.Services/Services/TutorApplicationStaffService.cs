@@ -168,7 +168,8 @@ namespace App.Services.Services
             
             var enumMetadata = EnumHelper.GetEnumMetadata(
                 typeof(ApplicationStatus),
-                typeof(RevisionAction)
+                typeof(RevisionAction),
+                typeof(HardcopySubmitStatus)
             );
             
             foreach (var kv in enumMetadata)
@@ -193,6 +194,15 @@ namespace App.Services.Services
                 Reject = "Từ chối hồ sơ"
             };
             metadata.Add("RevisionActions", revisionActions);
+            
+            var hardcopyStatuses = new
+            {
+                Pending = "Hồ sơ giấy đang chờ xử lý",
+                Processing = "Hồ sơ giấy đang được xem xét",
+                Verified = "Hồ sơ giấy đã được xác minh",
+                Rejected = "Hồ sơ giấy đã bị từ chối"
+            };
+            metadata.Add("HardcopyStatuses", hardcopyStatuses);
             
             return metadata;
         }
