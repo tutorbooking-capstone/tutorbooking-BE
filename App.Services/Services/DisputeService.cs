@@ -542,6 +542,57 @@ namespace App.Services.Services
         #endregion
 
         #region Tutor Operations
+
+        public async Task<BasePaginatedList<BookingDisputeResponse>> GetFilteredDisputesAsync(StaffDisputeFilterRequest filter)
+        {
+            var userId = GetAuthenticatedUserId();
+            EnsureHasManagerialAccess("Bạn không có quyền xem danh sách khiếu nại");
+            
+            var query = _unitOfWork.GetRepository<BookingDispute>()
+                .GetQueryable()
+                .Include(d => d.Learner).ThenInclude(l => l!.User)
+                .Include(d => d.Tutor).ThenInclude(t => t!.User)
+                .AsQueryable();
+            
+            // Lọc theo status nếu có
+            if (filter.StatusFilter != null && filter.StatusFilter.Count > 0)
+                query = query.Where(d => filter.StatusFilter.Contains(d.Status));
+            
+            // Lọc theo resolution nếu có
+            if (filter.ResolutionFilter != null && filter.ResolutionFilter.Count > 0)
+                query = query.Where(d => filter.ResolutionFilter.Contains(d.Resolution));
+            
+            // Tìm theo case number nếu có
+            if (!string.IsNullOrWhiteSpace(filter.CaseNumber))
+                query = query.Where(d => d.CaseNumber.Contains(filter.CaseNumber));
+            
+            // Sắp xếp theo ngày gần nhất
+            query = query.OrderByDescending(d => d.CreatedAt)
+                        .ThenByDescending(d => d.StaffReviewEndTime);
+            
+            // Đếm tổng số kết quả
+            var totalCount = await query.CountAsync();
+            
+            // Lấy phân trang
+            var pageSize = Math.Max(1, filter.PageSize);
+            var pageIndex = Math.Max(0, filter.PageIndex);
+            
+            var disputes = await query
+                .Skip(pageIndex * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            
+            // Chuyển thành response
+            var responses = disputes.Select(d => BookingDisputeResponse.Projection.Compile().Invoke(d)).ToList();
+            
+            return new BasePaginatedList<BookingDisputeResponse>(
+                responses, 
+                totalCount, 
+                pageIndex, 
+                pageSize
+            );
+        }
+
         public async Task<BookingDisputeResponse> RespondToDisputeAsync(RespondToDisputeRequest request)
         {
             var tutorId = await GetAuthenticatedTutorIdAsync();

@@ -1,3 +1,4 @@
+using App.Core.Base;
 using App.DTOs.BookingDTOs;
 
 namespace App.Services.Interfaces
@@ -19,6 +20,7 @@ namespace App.Services.Interfaces
         Task<BookingDisputeResponse> ResolveDisputeAsync(ResolveDisputeRequest request);
         Task<List<BookingDisputeResponse>> GetDisputesForReviewAsync();
         Task<DisputeDetailResponse> GetDisputeDetailForStaffAsync(string disputeId);
+        Task<BasePaginatedList<BookingDisputeResponse>> GetFilteredDisputesAsync(StaffDisputeFilterRequest filter);
         
         // System operations
         Task ProcessExpiredReconciliationsAsync();
