@@ -24,12 +24,14 @@ namespace App.Repositories.Models.User
         public DateTime? DateOfBirth { get; set; }
         public Gender Gender { get; set; } = Gender.NotGiven;
         public string Timezone { get; set; } = "UTC+7";
+        public float MeritScore { get; set; } = 50;
 
         //Navigation Properties
         public virtual ICollection<ChatConversationReadStatus>? ChatConversationReadStatuses { get; set; }
         public virtual ICollection<LegalDocumentAcceptance>? LegalDocumentAcceptances { get; set; }
         public virtual ICollection<NotificationEntity>? NotificationEntities { get; set; }
         public virtual ICollection<AppUserNotification>? AppUserNotifications { get; set; }
+        public virtual ICollection<MeritAdjustment>? MeritAdjustments { get; set; }
 
         #region Behavior
         public void UpdateBasicInformation(

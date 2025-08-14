@@ -686,6 +686,26 @@ namespace App.Repositories.Context
                 .HasForeignKey(tiv => tiv.TutorUserId)
                 .OnDelete(DeleteBehavior.Cascade);
             #endregion
+
+            #region Merit Configuration
+
+            modelBuilder.Entity<MeritAdjustment>(builder =>
+            {
+                builder.HasKey(ma => ma.Id);
+                // MeritAdjustment -> AppUser (M:1)
+                builder.HasOne(ma => ma.User)
+                    .WithMany(u => u.MeritAdjustments)
+                    .HasForeignKey(ma => ma.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                // Cấu hình các thuộc tính số thập phân
+                builder.Property(ma => ma.Value)
+                    .HasColumnType("decimal(18, 2)");
+                builder.Property(ma => ma.PreviousMeritScore)
+                    .HasColumnType("decimal(18, 2)");
+                builder.Property(ma => ma.NewMeritScore)
+                    .HasColumnType("decimal(18, 2)");
+            });
+            #endregion
         }
     }
 }
