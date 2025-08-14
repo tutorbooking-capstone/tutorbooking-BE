@@ -554,10 +554,6 @@ namespace App.Services.Services
                 .Include(d => d.Tutor).ThenInclude(t => t!.User)
                 .AsQueryable();
             
-            // Lọc theo status nếu có
-            if (filter.StatusFilter != null && filter.StatusFilter.Count > 0)
-                query = query.Where(d => filter.StatusFilter.Contains(d.Status));
-            
             // Lọc theo resolution nếu có
             if (filter.ResolutionFilter != null && filter.ResolutionFilter.Count > 0)
                 query = query.Where(d => filter.ResolutionFilter.Contains(d.Resolution));

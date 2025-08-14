@@ -9,8 +9,7 @@ namespace App.DTOs.BookingDTOs
     #region Request DTOs
     public class StaffDisputeFilterRequest
     {
-        public List<DisputeStatus>? StatusFilter { get; set; }
-        public List<DisputeResolution>? ResolutionFilter { get; set; }
+        public List<DisputeResolution>? ResolutionFilter { get; set; } = null;  
         public string? CaseNumber { get; set; }
         public int PageIndex { get; set; } = 0;
         public int PageSize { get; set; } = 10;
