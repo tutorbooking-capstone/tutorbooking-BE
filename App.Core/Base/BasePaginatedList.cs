@@ -30,5 +30,13 @@
         public bool HasNextPage => PageIndex < TotalPages - 1;
 
         public int CurrentPageNumber => PageIndex + 1;
+
+        public object AdditionalData => new
+        {
+            TotalItems,
+            CurrentPageNumber,
+            PageSize,
+            TotalPages,
+        };
     }
 }

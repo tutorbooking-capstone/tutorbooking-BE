@@ -1,4 +1,5 @@
-﻿using App.DTOs.AppUserDTOs.TutorDTOs;
+﻿using App.Core.Base;
+using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
 using App.Repositories.Models.Scheduling;
 
@@ -20,7 +21,7 @@ namespace App.Services.Interfaces.User
         Task<List<TutorHashtagDTO>> GetTutorHashtagsAsync();
         Task<List<TutorLanguageDTO>> GetTutorLanguagesAsync();
         Task<List<TutorCardDTO>> GetTutorCardListAsync();
-		Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes,
+		Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(string[]? languageCodes,
             string? primaryLanguageCode,
             DayInWeek[]? daysInWeek,
             int[]? slotIndexes,

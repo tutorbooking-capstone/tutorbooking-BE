@@ -133,9 +133,10 @@ namespace TutorBooking.APIService.Controllers
             int size = 20)
 		{
 			var tutorCards = await _tutorService.GetTutorCardsPagingAsync(languageCodes, primaryLanguageCode, daysInWeek, slotIndexes,minPrice, maxPrice, hashtags, fullName, page, size);
-			return Ok(new BaseResponseModel<List<TutorCardDTO>>(
-				data: tutorCards,
-				message: "Danh sách gia sư."
+			return Ok(new BaseResponseModel<object>(
+				data: tutorCards.Items,
+                additionalData: tutorCards.AdditionalData,
+                message: "Danh sách gia sư."
 			));
 		}
     }

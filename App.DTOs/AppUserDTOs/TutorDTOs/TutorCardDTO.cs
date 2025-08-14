@@ -12,6 +12,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
 		public string Description {  get; set; } = string.Empty;
         public bool IsProfessional { get; set; }
         public double Rating { get; set; }
+        public int TotalReviews { get; set; } = 0;
         public string IntroductionVideoUrl { get; set; } = string.Empty;
         public List<TutorCardLanguageDTO> Languages { get; set; } = new List<TutorCardLanguageDTO>();
         public List<DailyAvailabilityPatternDTO> AvailabilityPatterns { get; set; } = new();

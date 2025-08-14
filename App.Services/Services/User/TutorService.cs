@@ -613,7 +613,7 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-		public async Task<List<TutorCardDTO>> GetTutorCardsPagingAsync(
+		public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
             string[]? languageCodes,
             string? primaryLanguageCode,
             DayInWeek[]? daysInWeek,
@@ -626,13 +626,10 @@ namespace App.Services.Services.User
             int size = 20
             )
 		{
-
             var predicate = PredicateBuilder.New<Tutor>(t => t.VerificationStatus == VerificationStatus.Verified);
 
-            // linq search go brrrrrr
-
             // language filter
-            if (languageCodes.Length >0)
+            if (languageCodes != null && languageCodes.Length > 0)
                 predicate.And(t => t.Languages.Any(x => languageCodes.Contains(x.LanguageCode)));
 
             // primary Language filter
@@ -640,15 +637,15 @@ namespace App.Services.Services.User
                 predicate.And(t => t.Languages.Any(x => x.LanguageCode.ToLower().Contains(primaryLanguageCode.ToLower()) && x.IsPrimary == true));
 
             // timeslot filter
-            if (daysInWeek.Length > 0 || slotIndexes.Length > 0)
+            if (daysInWeek != null && daysInWeek.Length > 0 || slotIndexes != null && slotIndexes.Length > 0)
             {
                 var dayPredicate = PredicateBuilder.New<AvailabilitySlot>(true);
-                if (daysInWeek.Length > 0)
+                if (daysInWeek != null && daysInWeek.Length > 0)
                     dayPredicate.And(t => daysInWeek.Contains(t.DayInWeek));
-                if (slotIndexes.Length > 0)
+                if (slotIndexes != null && slotIndexes.Length > 0)
                     dayPredicate.And(t => slotIndexes.Contains(t.SlotIndex));
                 predicate.And(t => t.AvailabilityPatterns.Any(a => a.Slots.AsQueryable().Any(dayPredicate)));
-            };
+            }
 
             // price filter
             if ((minPrice > 0) || (maxPrice > 0))
@@ -671,11 +668,23 @@ namespace App.Services.Services.User
             if (!fullName.IsNullOrWhiteSpace())
                 predicate.And(t => t.User.FullName.ToLower().Contains(fullName.ToLower()));
 
+            // Rating sort expression
+            Expression<Func<Tutor, double>> ratingSort = e => e.BookingSlotRatings.Any() ?
+                (e.BookingSlotRatings.Select(r => (r.TeachingQuality + r.Attitude + r.Commitment) / 3.0).Average() *
+                Math.Min(e.BookingSlotRatings.Count / 10.0, 1.0)) + // Confidence factor
+                (e.BookingSlotRatings.Select(r => (r.TeachingQuality + r.Attitude + r.Commitment) / 3.0).Average() * 0.3) // Base quality weight
+                : 0;// Default score for tutors with no ratings
+
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
-                var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                var query = _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Where(predicate)
-                    .OrderByDescending(t => t.BecameTutorAt)
+                    .OrderByDescending(ratingSort);
+
+                // Get total count before pagination
+                var totalCount = await query.CountAsync();
+
+                var tutors = await query
                     .Skip((page - 1) * size).Take(size)
                     .Select(t => new TutorCardDTO()
                     {
@@ -694,6 +703,7 @@ namespace App.Services.Services.User
                                 .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
                                 .DefaultIfEmpty()
                                 .Average(),
+                        TotalReviews = t.BookingSlotRatings.Count,
                         Languages = t.Languages.OrderByDescending(l => l.IsPrimary)
                                     .ThenByDescending(l => l.Proficiency)
                                     .Select(l => new TutorCardLanguageDTO
@@ -727,9 +737,16 @@ namespace App.Services.Services.User
                                     }).ToList()
                     })
                     .ToListAsync();
-                return tutors;
+
+                return new BasePaginatedList<TutorCardDTO>(
+                    tutors,
+                    totalCount,
+                    page -1,
+                    size
+                );
             });
-			return response;
+    
+            return response;
 		}
     }
 }
