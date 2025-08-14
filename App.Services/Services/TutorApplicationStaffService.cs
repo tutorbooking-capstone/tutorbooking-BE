@@ -81,23 +81,23 @@ namespace App.Services.Services
             var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => //bandaid fix for multiple Include() bug
             {
                 var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
-                //.Include(e => e.Tutor) // currently not working
-                //.Include(e => e.ApplicationRevisions)
-                //.Include(e => e.Documents)
-                .FirstOrDefaultAsync(e => e.Id.Equals(id));
+                    .FirstOrDefaultAsync(e => e.Id.Equals(id));
                 if (tutorApplication == null)
                     throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
 
                 tutorApplication.Tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                .Include(e => e.User)
-                .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
+                    .Include(e => e.User)
+                    .Include(e => e.Languages) // Thêm include cho Languages
+                    .Include(e => e.Hashtags) // Thêm include cho Hashtags
+                        .ThenInclude(h => h.Hashtag) // Include thêm Hashtag entity
+                    .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
 
                 tutorApplication.ApplicationRevisions = await _unitOfWork.GetRepository<ApplicationRevision>().ExistEntities()
-                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+                    .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 tutorApplication.Documents = await _unitOfWork.GetRepository<Document>().ExistEntities()
-                .Include(e => e.DocumentFileUploads).ThenInclude(e => e.FileUpload)
-                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+                    .Include(e => e.DocumentFileUploads).ThenInclude(e => e.FileUpload)
+                    .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 return tutorApplication;
             });
