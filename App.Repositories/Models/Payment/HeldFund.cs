@@ -20,7 +20,7 @@ namespace App.Repositories.Models
         ReleasedToTutorBank = 4
     }
 
-        public enum HeldFundType
+    public enum HeldFundType
     {
         [EnumDescription("Tiền giữ cho việc thanh toán buổi học")]
         BookingPayment = 0,

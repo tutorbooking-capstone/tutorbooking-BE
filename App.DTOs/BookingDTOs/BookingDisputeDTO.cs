@@ -7,6 +7,14 @@ using System.Text.Json;
 namespace App.DTOs.BookingDTOs
 {
     #region Request DTOs
+    public class StaffDisputeFilterRequest
+    {
+        public List<DisputeResolution>? ResolutionFilter { get; set; } = null;  
+        public string? CaseNumber { get; set; }
+        public int PageIndex { get; set; } = 0;
+        public int PageSize { get; set; } = 10;
+    }
+
     public class CreateDisputeRequest
     {
         [Required]

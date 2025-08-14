@@ -125,6 +125,21 @@ namespace TutorBooking.APIService.Controllers
         #endregion
 
         #region Staff Endpoints
+
+        [HttpGet("staff/filter")]
+        [AuthorizeRoles(Role.Admin, Role.Staff)]
+        public async Task<IActionResult> FilterDisputes([FromQuery] StaffDisputeFilterRequest filter)
+        {
+            var result = await _disputeService.GetFilteredDisputesAsync(filter);
+            var metadata = await GetMetadataAsync();
+            
+            return Ok(new BaseResponseModel<BasePaginatedList<BookingDisputeResponse>>(
+                data: result,
+                additionalData: metadata,
+                message: "Danh sách khiếu nại theo bộ lọc"
+            ));
+        }
+
         [HttpGet("staff")]
         [AuthorizeRoles(Role.Admin, Role.Staff)]
         public async Task<IActionResult> GetStaffDisputes()
