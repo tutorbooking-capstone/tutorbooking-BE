@@ -55,6 +55,8 @@ namespace App.Repositories.Models.Papers
         PendingReverification = 3,
         
         // Status when all required documents have been verified
-        Verified =4
+        Verified =4,
+
+        Rejected = 5
     }
 }

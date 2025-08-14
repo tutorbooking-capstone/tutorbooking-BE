@@ -27,15 +27,6 @@ namespace App.Services.Services
             _notificationService = notificationService;
         }
 
-        /// <summary>
-        /// Retrieves a paginated list of tutor applications that are pending verification or re-verification.
-        /// </summary>
-        /// <remarks>This method retrieves tutor applications with <see
-        /// cref="ApplicationStatus.PendingVerification"/> or <see cref="ApplicationStatus.PendingReverification"/> status, sorted by CreatedTime in ascending order.</remarks>
-        /// <param name="page">The page number to retrieve. Must be greater than or equal to 1.</param>
-        /// <param name="size">The number of items to include in each page. Must be greater than or equal to 1.</param>
-        /// <returns>A task that represents the asynchronous operation. The task result contains a list of  <see
-        /// cref="TutorApplicationResponse"/> objects representing the pending tutor applications.</returns>
         public async Task<List<TutorApplicationResponse>> GetAllPendingTutorApplicationsAsync(int page, int size)
         {
             var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
@@ -58,15 +49,6 @@ namespace App.Services.Services
             return result;
         }
 
-        /// <summary>
-        /// Retrieves a tutor application by its unique identifier.
-        /// </summary>
-        /// <remarks>This method queries the data source for a tutor application and includes related
-        /// entities such as the tutor, application revisions, and associated documents. Ensure the <paramref
-        /// name="id"/> provided is valid and corresponds to an existing tutor application.</remarks>
-        /// <param name="id">The unique identifier of the tutor application to retrieve. Cannot be null or empty.</param>
-        /// <returns>A <see cref="TutorApplicationResponse"/> object containing the details of the tutor application.</returns>
-        /// <exception cref="ErrorException">Thrown if the tutor application with the specified <paramref name="id"/> is not found.</exception>
         public async Task<TutorApplicationResponse> GetTutorApplicationByIdAsync(string id)
         {
             //var result = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
@@ -104,17 +86,6 @@ namespace App.Services.Services
             return await result.ToDetailedResponse();
         }
 
-        /// <summary>
-        /// Creates a new application revision based on the provided request.
-        /// </summary>
-        /// <remarks>This method validates the existence of the associated tutor application before
-        /// creating the revision. If the specified application does not exist, an <see cref="ErrorException"/> is
-        /// thrown. Additionally, if the revision action is set to <see cref="RevisionAction.Approve"/>, the associated
-        /// application is automatically approved.</remarks>
-        /// <param name="request">The request containing the details for creating the application revision, including the associated
-        /// application ID and the desired revision action.</param>
-        /// <returns>The newly created <see cref="ApplicationRevision"/> entity.</returns>
-        /// <exception cref="ErrorException">Thrown if the tutor application specified in <paramref name="request"/> does not exist.</exception>
         public async Task<RevisionResponse> CreateApplicationRevisionAsync(ApplicationRevisionCreateRequest request)
         {
             var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
@@ -124,22 +95,22 @@ namespace App.Services.Services
 
             var entity = request.ToEntity(_userService.GetCurrentUserId());
             _unitOfWork.GetRepository<ApplicationRevision>().Insert(entity);
-            if (request.Action == RevisionAction.Approve)
-            {
-                await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
 
-                // Update the tutor's status to verified if the application is approved
-                var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                    .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
-                if (tutor != null && tutor.VerificationStatus != VerificationStatus.Verified)
-                {
-                    tutor.VerificationStatus = VerificationStatus.Verified;
-                    _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
-                }
-            }    
-            else if (request.Action == RevisionAction.RequestRevision || request.Action == RevisionAction.Reject)
+            switch (request.Action)
             {
-                await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
+                case RevisionAction.Approve:
+
+                    await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
+                    await UpdateTutorVerificationStatusAsync(tutorApplication.TutorId, VerificationStatus.Verified);
+
+                    break;
+                case RevisionAction.RequestRevision:
+                    await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.RevisionRequested);
+                    break;
+                case RevisionAction.Reject:
+                    await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Rejected);
+                    await UpdateTutorVerificationStatusAsync(tutorApplication.TutorId, VerificationStatus.Basic);
+                    break;
             }
                 
             await _unitOfWork.SaveAsync();
@@ -172,6 +143,19 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
             await _unitOfWork.SaveAsync();
         }
+
+        private async Task UpdateTutorVerificationStatusAsync(string tutorId, VerificationStatus status)
+        {
+            var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .FirstOrDefaultAsync(e => e.UserId.Equals(tutorId));
+            if (tutor == null)
+                throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_NOT_FOUND");
+            tutor.VerificationStatus = status;
+            _unitOfWork.GetRepository<Tutor>().Update(tutor);
+            await _unitOfWork.SaveAsync();
+        }
+
+
         #endregion
     }
 }
