@@ -16,5 +16,6 @@
         Task ExecuteInTransactionAsync(Func<Task> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default);
         Task<T> ExecuteInTransactionAsync<T>(Func<Task<T>> action, Action<Exception>? onError = null, CancellationToken cancellationToken = default);
         Task<T> ExecuteWithConnectionReuseAsync<T>(Func<Task<T>> operation);
+        Task<Dictionary<string, List<string>>> GetUserRolesAsync(IEnumerable<string> userIds);
     }
 }
