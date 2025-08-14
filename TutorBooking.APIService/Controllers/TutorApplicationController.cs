@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers
@@ -37,7 +38,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("metadata")]
-        [AuthorizeRoles(Role.Learner)]
+        [AllowAnonymous]
         public async Task<IActionResult> GetMetadata()
         {
             var metadata = await _service.GetApplicationMetadataAsync();
