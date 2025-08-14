@@ -8,5 +8,6 @@ namespace App.Services.Interfaces
         Task<RevisionResponse> CreateApplicationRevisionAsync(ApplicationRevisionCreateRequest request);
         Task<List<TutorApplicationResponse>> GetAllPendingTutorApplicationsAsync(int page, int size);
         Task<TutorApplicationResponse> GetTutorApplicationByIdAsync(string id);
+        Task<Dictionary<string, object>> GetApplicationMetadataAsync();
     }
 }

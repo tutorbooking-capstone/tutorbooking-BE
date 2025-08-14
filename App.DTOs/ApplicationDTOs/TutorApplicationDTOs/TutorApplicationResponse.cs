@@ -6,6 +6,13 @@ using System.Text.Json.Serialization;
 
 namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
 {
+    public class TutorLanguageResponse
+    {
+        public string LanguageCode { get; set; } = string.Empty;
+        public bool IsPrimary { get; set; }
+        public int Proficiency { get; set; }
+    }
+
     public class TutorApplicationResponse
     {
         public string Id { get; set; } = string.Empty;
@@ -13,8 +20,11 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
         public DateTime SubmittedAt { get; set; }
         public ApplicationStatus Status { get; set; }
         public string RevisionNotes { get; set; } = string.Empty;
-        public string InternalNotes { get; set; } = string.Empty; // Internal notes for administrative use (not shown to tutors)
+        public string InternalNotes { get; set; } = string.Empty;
         public string TutorName { get; set; } = string.Empty;
+        
+        public List<TutorLanguageResponse> Languages { get; set; } = new List<TutorLanguageResponse>();
+        public List<string> Hashtags { get; set; } = new List<string>();
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public virtual TutorResponse? Tutor { get; set; }
@@ -36,8 +46,10 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
                 SubmittedAt = entity.SubmittedAt,
                 Status = entity.Status,
                 RevisionNotes = entity.RevisionNotes,
-                TutorName = entity.Tutor?.User?.FullName ?? "N/A" ,
-                Tutor = entity.Tutor == null? null : entity.Tutor.ToTutorResponse(),
+                TutorName = entity.Tutor?.User?.FullName ?? "N/A",
+                Tutor = entity.Tutor == null ? null : entity.Tutor.ToTutorResponse(),
+                Languages = new List<TutorLanguageResponse>(),
+                Hashtags = new List<string>()
             };
         }
 
@@ -59,7 +71,6 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
                     foreach (var note in entity.ApplicationRevisions)
                         response.ApplicationRevisions.Add(note.ToRevisionResponse());
                 }
-                    
             });
 
             var task2 = Task.Run(() =>
@@ -69,9 +80,36 @@ namespace App.DTOs.ApplicationDTOs.TutorApplicationDTOs
                     response.Documents = new List<DocumentResponse>();
                     foreach (var document in entity.Documents)
                         response.Documents.Add(document.ToDocumentResponse());
-                }      
+                }
             });
-            await Task.WhenAll(task1, task2);
+
+            var task3 = Task.Run(() =>
+            {
+                if (entity.Tutor != null && entity.Tutor.Languages != null)
+                {
+                    response.Languages = entity.Tutor.Languages
+                        .Select(l => new TutorLanguageResponse
+                        {
+                            LanguageCode = l.LanguageCode,
+                            IsPrimary = l.IsPrimary,
+                            Proficiency = l.Proficiency
+                        })
+                        .ToList();
+                }
+            });
+
+            var task4 = Task.Run(() =>
+            {
+                if (entity.Tutor != null && entity.Tutor.Hashtags != null)
+                {
+                    response.Hashtags = entity.Tutor.Hashtags
+                        .Select(h => h.Hashtag?.Name ?? string.Empty)
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .ToList();
+                }
+            });
+
+            await Task.WhenAll(task1, task2, task3, task4);
             return response;
         }
     }

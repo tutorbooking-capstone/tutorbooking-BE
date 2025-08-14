@@ -20,6 +20,7 @@ namespace App.Repositories.Context
         public DbSet<Tutor> Tutors { get; set; }
         public DbSet<Learner> Learners { get; set; }
         public DbSet<Staff> Staffs { get; set; }
+        public DbSet<Manager> Managers { get; set; }
 
         // Main entity DbSets
         public DbSet<TutorApplication> TutorApplications { get; set; }
@@ -115,6 +116,15 @@ namespace App.Repositories.Context
                 .HasOne(l => l.User)
                 .WithOne()
                 .HasForeignKey<Learner>(l => l.UserId);
+
+            // AppUser -> Manager (1:1)
+            modelBuilder.Entity<Manager>()
+                .HasKey(m => m.UserId);
+
+            modelBuilder.Entity<Manager>()
+                .HasOne(m => m.User)
+                .WithOne()
+                .HasForeignKey<Manager>(m => m.UserId);
             #endregion
 
             #region TutorApplication Configuration
@@ -686,6 +696,16 @@ namespace App.Repositories.Context
                 .HasForeignKey(tiv => tiv.TutorUserId)
                 .OnDelete(DeleteBehavior.Cascade);
             #endregion
+
+            // Manager configuration
+            modelBuilder.Entity<Manager>()
+                .Property(m => m.EncryptedCitizenId)
+                .IsRequired();
+
+            // Staff configuration
+            modelBuilder.Entity<Staff>()
+                .Property(s => s.EncryptedCitizenId)
+                .IsRequired();
         }
     }
 }

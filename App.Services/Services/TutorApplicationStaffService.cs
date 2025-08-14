@@ -63,23 +63,23 @@ namespace App.Services.Services
             var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => //bandaid fix for multiple Include() bug
             {
                 var tutorApplication = await _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
-                //.Include(e => e.Tutor) // currently not working
-                //.Include(e => e.ApplicationRevisions)
-                //.Include(e => e.Documents)
-                .FirstOrDefaultAsync(e => e.Id.Equals(id));
+                    .FirstOrDefaultAsync(e => e.Id.Equals(id));
                 if (tutorApplication == null)
                     throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
 
                 tutorApplication.Tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                .Include(e => e.User)
-                .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
+                    .Include(e => e.User)
+                    .Include(e => e.Languages) // Thêm include cho Languages
+                    .Include(e => e.Hashtags) // Thêm include cho Hashtags
+                        .ThenInclude(h => h.Hashtag) // Include thêm Hashtag entity
+                    .FirstOrDefaultAsync(e => e.UserId.Equals(tutorApplication.TutorId));
 
                 tutorApplication.ApplicationRevisions = await _unitOfWork.GetRepository<ApplicationRevision>().ExistEntities()
-                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+                    .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 tutorApplication.Documents = await _unitOfWork.GetRepository<Document>().ExistEntities()
-                .Include(e => e.DocumentFileUploads).ThenInclude(e => e.FileUpload)
-                .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
+                    .Include(e => e.DocumentFileUploads).ThenInclude(e => e.FileUpload)
+                    .Where(e => e.ApplicationId.Equals(tutorApplication.Id)).ToListAsync();
 
                 return tutorApplication;
             });
@@ -132,6 +132,50 @@ namespace App.Services.Services
             });
 
             return entity.ToRevisionResponse();
+        }
+        public async Task<Dictionary<string, object>> GetApplicationMetadataAsync()
+        {
+            var metadata = new Dictionary<string, object>();
+            
+            var enumMetadata = EnumHelper.GetEnumMetadata(
+                typeof(ApplicationStatus),
+                typeof(RevisionAction),
+                typeof(HardcopySubmitStatus)
+            );
+            
+            foreach (var kv in enumMetadata)
+            {
+                metadata.Add(kv.Key, kv.Value);
+            }
+            
+            var applicationProcess = new
+            {
+                UnSubmitted = "Hồ sơ đã được tạo nhưng chưa gửi cho hệ thống xác minh",
+                PendingVerification = "Hồ sơ đã gửi và đang chờ nhân viên xác minh",
+                RevisionRequested = "Nhân viên yêu cầu chỉnh sửa hồ sơ",
+                PendingReverification = "Hồ sơ đã chỉnh sửa và đang chờ xác minh lại",
+                Verified = "Hồ sơ đã được xác minh thành công"
+            };
+            metadata.Add("ApplicationProcess", applicationProcess);
+            
+            var revisionActions = new
+            {
+                Approve = "Phê duyệt hồ sơ và xác minh gia sư",
+                RequestRevision = "Yêu cầu gia sư chỉnh sửa hồ sơ",
+                Reject = "Từ chối hồ sơ"
+            };
+            metadata.Add("RevisionActions", revisionActions);
+            
+            var hardcopyStatuses = new
+            {
+                Pending = "Hồ sơ giấy đang chờ xử lý",
+                Processing = "Hồ sơ giấy đang được xem xét",
+                Verified = "Hồ sơ giấy đã được xác minh",
+                Rejected = "Hồ sơ giấy đã bị từ chối"
+            };
+            metadata.Add("HardcopyStatuses", hardcopyStatuses);
+            
+            return metadata;
         }
 
         #region private

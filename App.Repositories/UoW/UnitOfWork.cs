@@ -141,5 +141,21 @@ namespace App.Repositories.UoW
                 await _dbContext.Database.CloseConnectionAsync();
             }
         }
+
+        public async Task<Dictionary<string, List<string>>> GetUserRolesAsync(IEnumerable<string> userIds)
+        {
+            var userRoles = await _dbContext.UserRoles
+                .Join(_dbContext.Users, ur => ur.UserId, u => u.Id, (ur, u) => new { ur.UserId, ur.RoleId })
+                .Join(_dbContext.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => new { ur.UserId, RoleName = r.Name! })
+                .Where(ur => userIds.Contains(ur.UserId))
+                .ToListAsync();
+
+            return userRoles
+                .GroupBy(ur => ur.UserId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(ur => ur.RoleName).ToList()
+                );
+        }
     }
 }

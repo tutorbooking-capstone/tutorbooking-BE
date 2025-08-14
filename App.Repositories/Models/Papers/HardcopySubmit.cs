@@ -15,9 +15,16 @@ namespace App.Repositories.Models.Papers
 
     public enum HardcopySubmitStatus
     {
-        Pending = 0,    
+        [EnumDescription("Đang chờ xử lý")]
+        Pending = 0,
+        
+        [EnumDescription("Đang xử lý")]
         Processing = 1,
-        Verified = 2,     
-        Rejected = 3      
+        
+        [EnumDescription("Đã xác minh")]
+        Verified = 2,
+        
+        [EnumDescription("Đã từ chối")]
+        Rejected = 3
     }
 }

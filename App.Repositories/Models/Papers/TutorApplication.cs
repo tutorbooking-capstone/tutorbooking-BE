@@ -42,21 +42,22 @@ namespace App.Repositories.Models.Papers
 
     public enum ApplicationStatus
     {
-        // Initial status when was tutor create 
+        [EnumDescription("Chưa gửi hồ sơ")]
         UnSubmitted = 0,
 
-        // Initial status when tutor first submits application
+        [EnumDescription("Đang chờ xác minh")]
         PendingVerification = 1,
         
-        // Status when staff has requested changes to the application
+        [EnumDescription("Yêu cầu chỉnh sửa")]
         RevisionRequested = 2,
         
-        // Status when tutor has submitted revised documents after a revision request
+        [EnumDescription("Đang chờ xác minh lại")]
         PendingReverification = 3,
-        
-        // Status when all required documents have been verified
-        Verified =4,
 
+        [EnumDescription("Đã xác minh")]
+        Verified = 4,
+        
+        [EnumDescription("Đã từ chối")]
         Rejected = 5
     }
 }

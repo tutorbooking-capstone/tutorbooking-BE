@@ -598,9 +598,9 @@ namespace App.Services.Services.User
                 string firebaseUid = decodedToken.Uid;
                 string? email = decodedToken.Claims.FirstOrDefault(c => c.Key.Equals("email")).Value.ToString();
 
-                var user = await _userManager.Users.FirstOrDefaultAsync(u => u.FirebaseUserId.Equals(firebaseUid));
+                var user = await _userManager.Users.FirstOrDefaultAsync(u => u.FirebaseUserId!.Equals(firebaseUid));
                 if (user == null && !email.IsNullOrWhiteSpace())
-                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail.Equals(_userManager.KeyNormalizer.NormalizeEmail(email)));
+                    user = await _userManager.Users.FirstOrDefaultAsync(u => u.NormalizedEmail!.Equals(_userManager.KeyNormalizer.NormalizeEmail(email)));
                 if (user == null)
                 {
                     #region create learner
@@ -668,7 +668,7 @@ namespace App.Services.Services.User
                     Roles = roles.ToList(),
                 };
             } 
-            catch (FirebaseAuthException ex) // Hide AuthException to prevent attacks
+            catch (FirebaseAuthException) // Hide AuthException to prevent attacks
             {
                 //throw new ErrorException(401, ErrorCode.Unauthorized, "UNAUTHORIZED");
                 throw; // for debugging purposes, remove in production
