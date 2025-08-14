@@ -27,7 +27,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("request-verification")]
-        [AuthorizeRoles(Role.Tutor)]
+        //[AuthorizeRoles(Role.Tutor)]
         public async Task<IActionResult> RequestVerification(string tutorApplicationId)
         {
             await _service.RequestVerificationAsync(tutorApplicationId);
