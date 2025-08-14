@@ -133,8 +133,11 @@ namespace App.Services.Services
         {
             return await _unitOfWork.GetRepository<BookedSlot>()
                 .GetQueryable()
-                .Where(bs => bs.BookingId == bookingId && bs.BookedDate > DateTime.UtcNow && 
-                        bs.Status != SlotStatus.Cancelled && bs.Status != SlotStatus.CancelledDisputed)
+                .Where(bs => bs.BookingId == bookingId && 
+                        bs.BookedDate > DateTime.UtcNow && 
+                        bs.Status != SlotStatus.Cancelled && 
+                        bs.Status != SlotStatus.CancelledDisputed &&
+                        bs.Status != SlotStatus.Completed)  
                 .ToListAsync();
         }
 
