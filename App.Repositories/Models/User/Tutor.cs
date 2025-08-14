@@ -17,7 +17,7 @@ namespace App.Repositories.Models.User
         public string TeachingMethod { get; set; } = string.Empty;
 
         // Verification Info
-        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.PendingVerification;
+        public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Basic;
         public DateTime LastStatusUpdateAt { get; set; }
         public DateTime? BecameTutorAt { get; set; }
 

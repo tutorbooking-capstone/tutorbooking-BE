@@ -53,8 +53,11 @@ namespace App.Repositories.Models.Papers
         
         [EnumDescription("Đang chờ xác minh lại")]
         PendingReverification = 3,
-        
+
         [EnumDescription("Đã xác minh")]
-        Verified = 4
+        Verified = 4,
+        
+        [EnumDescription("Đã từ chối")]
+        Rejected = 5
     }
 }
