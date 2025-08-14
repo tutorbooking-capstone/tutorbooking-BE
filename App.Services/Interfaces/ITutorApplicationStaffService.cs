@@ -1,5 +1,7 @@
-﻿using App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs;
+﻿using App.Core.Base;
+using App.DTOs.ApplicationDTOs.ApplicationRevisionDTOs;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
+using App.Repositories.Models.Papers;
 
 namespace App.Services.Interfaces
 {
@@ -9,5 +11,6 @@ namespace App.Services.Interfaces
         Task<List<TutorApplicationResponse>> GetAllPendingTutorApplicationsAsync(int page, int size);
         Task<TutorApplicationResponse> GetTutorApplicationByIdAsync(string id);
         Task<Dictionary<string, object>> GetApplicationMetadataAsync();
+        Task<BasePaginatedList<TutorApplicationResponse>> GetAllTutorApplicationsAsync(ApplicationStatus? applicationStatus, int page, int size);
     }
 }

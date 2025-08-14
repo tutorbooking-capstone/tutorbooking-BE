@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.ApplicationDTOs.TutorApplicationDTOs;
+using App.Repositories.Models.Papers;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,24 @@ namespace TutorBooking.APIService.Controllers
                 message: "SUCCESS"
                 ));
         }
+
+        [Authorize]
+        [HttpPost("applications")]
+        public async Task<IActionResult> GetApplications(
+            [FromQuery] ApplicationStatus? status,
+            [FromQuery] int page = 1, 
+            [FromQuery] int size = 20)
+        {
+
+            var result = await _tutorApplicationStaffService.GetAllTutorApplicationsAsync(status, page, size);
+
+            return Ok(new BaseResponseModel<object>(
+                data: result.Items,
+                additionalData: result.AdditionalData,
+                message: "SUCCESS"
+                ));
+        }
+
 
         [HttpGet("{id}")]
         [Authorize]

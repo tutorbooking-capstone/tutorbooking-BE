@@ -9,7 +9,9 @@ using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
+using System.Configuration;
 using System.Text.Json;
 
 namespace App.Services.Services
@@ -46,6 +48,37 @@ namespace App.Services.Services
                 }
                 return tutorAppResponses;
             });
+            return result;
+        }
+
+        public async Task<BasePaginatedList<TutorApplicationResponse>> GetAllTutorApplicationsAsync(ApplicationStatus? applicationStatus, int page, int size)
+        {
+            var predicate = PredicateBuilder.New<TutorApplication>(true);
+            if (applicationStatus.HasValue)
+                predicate = predicate.And(e => e.Status == applicationStatus);
+
+            var result = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var query = _unitOfWork.GetRepository<TutorApplication>().ExistEntities()
+                    .OrderBy(e => e.CreatedTime)
+                    .Where(predicate);
+
+                var totalCount = await query.CountAsync();
+                
+                var tutorApplications = await query
+                    .Skip((page - 1) * size)
+                    .Take(size)
+                    .Select(e => e.ToTutorApplicationResponse())
+                    .ToListAsync();
+
+                return new BasePaginatedList<TutorApplicationResponse>(
+                    tutorApplications,
+                    totalCount,
+                    page - 1, // BasePaginatedList uses 0-based indexing
+                    size
+                );
+            });
+            
             return result;
         }
 
