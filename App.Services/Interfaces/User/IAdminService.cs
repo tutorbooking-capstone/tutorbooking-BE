@@ -9,7 +9,7 @@ namespace App.Services.Interfaces.User
         Task<BasePaginatedList<StaffManagerResponse>> GetAllStaffsAsync(StaffManagerFilterRequest filter);
         Task<StaffManagerResponse> CreateStaffManagerAsync(CreateStaffManagerRequest request);
         Task<BasePaginatedList<UserResponse>> GetAllUsersAsync(UserFilterRequest filter);
-        Task<StaffManagerResponse> ToggleAccountStatusAsync(AccountStatusRequest request, bool allowAllRoles = false);
+        Task<StaffManagerResponse> ToggleAccountStatusAsync(AccountStatusRequest request);
         Task DeleteAccountAsync(string userId);
         Task<StaffManagerResponse> ChangePasswordAsync(ChangePasswordRequest request);
     }

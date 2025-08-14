@@ -211,10 +211,22 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     $"Không tìm thấy ví cho người dùng có ID: {userId}");
             
-            // Get transactions for the wallet
+            // Lấy các withdrawal request của người dùng
+            var withdrawalIds = await _unitOfWork.GetRepository<WithdrawalRequest>()
+                .ExistEntities()
+                .Where(w => w.UserId == userId)
+                .Select(w => w.Id)
+                .ToListAsync();
+            
+            // Get transactions for the wallet, include withdrawal-related transactions
             var query = _unitOfWork.GetRepository<Transaction>()
                 .ExistEntities()
-                .Where(t => t.SourceWalletId == wallet.Id || t.TargetWalletId == wallet.Id)
+                .Where(t => 
+                    t.SourceWalletId == wallet.Id || 
+                    t.TargetWalletId == wallet.Id ||
+                    (withdrawalIds.Contains(t.ReferenceId ?? "") && t.Type == TransactionType.Withdrawal) ||
+                    (withdrawalIds.Contains(t.ReferenceId ?? "") && t.Type == TransactionType.Fee)
+                )
                 .OrderByDescending(t => t.CreatedAt)
                 .Include(t => t.SourceWallet)
                 .ThenInclude(w => w!.User)
