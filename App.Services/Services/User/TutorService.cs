@@ -201,6 +201,7 @@ namespace App.Services.Services.User
             var relevantTutors = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
                 //.Where(t => t.VerificationStatus != VerificationStatus.Basic)
+                .Where(t => t.User.DeletedTime == null)
                 .Where(t => t.Languages.Select(t => t.LanguageCode).Any(t => popularLanguages.Contains(t)) 
                 && t.VerificationStatus == VerificationStatus.Verified)
                 .Include(t => t.User)
@@ -473,8 +474,8 @@ namespace App.Services.Services.User
                 // Get tutor with basic info and application
                 var tutor = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Include(t => t.User)
+                    .Where(t => t.UserId == trimmedId && t.User.DeletedTime == null)
                     .Include(t => t.Application)
-                    .Where(t => t.UserId == trimmedId)
                     .Select(TutorResponse.ProjectionExpression)
                     .FirstOrDefaultAsync();
                     
@@ -596,7 +597,9 @@ namespace App.Services.Services.User
             var tutor = await GetTutorByIdAsync(userId);
             var tutorLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
                 .ExistEntities()
-                .Where(tl => tl.TutorId == userId)
+                .Include(tl => tl.Tutor)
+                .Include(tl => tl.Tutor.User)
+                .Where(tl => tl.TutorId == userId && tl.Tutor.User.DeletedTime == null)
                 .ToListAsync();
 
             return tutorLanguages.ToDTOs();
@@ -678,6 +681,8 @@ namespace App.Services.Services.User
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var query = _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                    .Include(t => t.User)
+                    .Where(t => t.User.DeletedTime == null)
                     .Where(predicate)
                     .OrderByDescending(ratingSort);
 

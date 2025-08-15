@@ -291,7 +291,7 @@ namespace App.Services.Services.User
             );
         }
 
-        public async Task<StaffManagerResponse> ToggleAccountStatusAsync(AccountStatusRequest request, bool allowAllRoles = false)
+        public async Task<StaffManagerResponse> ToggleAccountStatusAsync(AccountStatusRequest request)
         {
             EnsureAdminAccess();
             
@@ -300,9 +300,6 @@ namespace App.Services.Services.User
             
             // Kiểm tra role
             var roles = await _userManager.GetRolesAsync(user);
-            
-            if (!allowAllRoles && !roles.Contains(Role.Manager.ToString()) && !roles.Contains(Role.Staff.ToString()))
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Người dùng không phải là Manager hoặc Staff");
             
             // Không cho phép vô hiệu hóa Admin
             if (roles.Contains(Role.Admin.ToString()))
@@ -373,9 +370,16 @@ namespace App.Services.Services.User
                 ?? throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Không tìm thấy người dùng");
             
             var roles = await _userManager.GetRolesAsync(user);
-            if (!roles.Contains(Role.Manager.ToString()) && !roles.Contains(Role.Staff.ToString()))
-                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Người dùng không phải là Manager hoặc Staff");
             
+            // Chặn xóa tài khoản Admin
+            if (roles.Contains(Role.Admin.ToString()))
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Không thể xóa tài khoản Admin");
+
+            // Chỉ cho phép xóa Staff hoặc Manager
+            if (!roles.Contains(Role.Staff.ToString()) && !roles.Contains(Role.Manager.ToString()))
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Chỉ có thể xóa tài khoản Staff hoặc Manager");
+
+            // Xử lý xóa thực thể theo từng loại vai trò
             if (roles.Contains(Role.Manager.ToString()))
             {
                 var manager = await _unitOfWork.GetRepository<Manager>()
@@ -394,7 +398,27 @@ namespace App.Services.Services.User
                 if (staff != null)
                     _unitOfWork.GetRepository<Staff>().Delete(staff);
             }
+
+            // Xóa liên kết với vai trò
+            foreach (var role in roles)
+            {
+                await _userManager.RemoveFromRoleAsync(user, role);
+            }
             
+            // Xóa các login nếu có
+            var logins = await _userManager.GetLoginsAsync(user);
+            foreach (var login in logins)
+            {
+                await _userManager.RemoveLoginAsync(user, login.LoginProvider, login.ProviderKey);
+            }
+            
+            // Xóa các claim nếu có
+            var claims = await _userManager.GetClaimsAsync(user);
+            foreach (var claim in claims)
+            {
+                await _userManager.RemoveClaimAsync(user, claim);
+            }
+
             // Xóa user
             var result = await _userManager.DeleteAsync(user);
             if (!result.Succeeded)

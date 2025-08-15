@@ -95,7 +95,7 @@ namespace TutorBooking.APIService.Controllers
         [HttpPut("toggle-user-status")]
         public async Task<IActionResult> ToggleUserStatus([FromBody] AccountStatusRequest request)
         {
-            var response = await _adminService.ToggleAccountStatusAsync(request, true);
+            var response = await _adminService.ToggleAccountStatusAsync(request);
             string status = request.IsActive ? "kích hoạt" : "vô hiệu hóa";
             
             return Ok(new BaseResponseModel<StaffManagerResponse>(

@@ -188,14 +188,12 @@ namespace App.Services.Services
                 switch (resolution)
                 {
                     case DisputeResolution.LearnerWithdrew:
-                        // Return to original status - no escrow
-                        var updateProperties = slot.UpdateStatus(SlotStatus.Pending, GetAuthenticatedUserId());
+                        var updateProperties = slot.UpdateStatus(SlotStatus.AwaitingConfirmation, GetAuthenticatedUserId());
                         bookedSlotRepo.UpdateFields(slot, updateProperties);
                         break;
                         
                     case DisputeResolution.TutorNoResponse:
                     case DisputeResolution.StaffLearnerWin:
-                        // Refund to learner
                         await _walletService.RefundHeldFundToLearnerAsync(heldFund.Id);
                         break;
                         
