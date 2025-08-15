@@ -32,7 +32,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [Authorize]
-        [HttpPost("applications")]
+        [HttpGet("applications")]
         public async Task<IActionResult> GetApplications(
             [FromQuery] ApplicationStatus? status,
             [FromQuery] int page = 1, 
