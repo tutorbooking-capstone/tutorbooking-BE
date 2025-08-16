@@ -14,6 +14,7 @@ using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using LinqKit;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Razor.Language.Intermediate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using StackExchange.Profiling.Internal;
@@ -630,7 +631,10 @@ namespace App.Services.Services.User
                 .Select(x => x.LanguageCode)
                 .ToListAsync();
 
-                var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+               var tutors = new List<TutorCardDTO>();
+               foreach(var languageCode in popularLanguages)
+               {
+                    tutors.AddRange(await _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Include(t => t.User)
                     .Where(
                     t => t.User.DeletedTime == null
@@ -640,8 +644,8 @@ namespace App.Services.Services.User
                     .OrderByDescending(BookingSlotRating.RatingSortExpression)
                     .Take(6)
                     .Select(TutorCardDTO.Projection)
-                    .ToListAsync();
-
+                    .ToListAsync());
+               }
                 return tutors;
             });
 
