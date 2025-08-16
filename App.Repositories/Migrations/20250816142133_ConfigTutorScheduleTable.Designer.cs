@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250816142133_ConfigTutorScheduleTable")]
+    partial class ConfigTutorScheduleTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1146,14 +1149,6 @@ namespace App.Repositories.Migrations
                         .HasColumnType("text")
                         .HasColumnName("id");
 
-                    b.Property<bool>("IsForReschedule")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_for_reschedule");
-
-                    b.Property<string>("RescheduleRequestId")
-                        .HasColumnType("text")
-                        .HasColumnName("reschedule_request_id");
-
                     b.Property<DateTime>("SlotDateTime")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("slot_date_time");
@@ -1163,13 +1158,12 @@ namespace App.Repositories.Migrations
                         .HasColumnName("slot_index");
 
                     b.Property<string>("TutorBookingOfferId")
+                        .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("tutor_booking_offer_id");
 
                     b.HasKey("Id")
                         .HasName("pk_offered_slots");
-
-                    b.HasIndex("RescheduleRequestId");
 
                     b.HasIndex("TutorBookingOfferId")
                         .HasDatabaseName("ix_offered_slots_tutor_booking_offer_id");
@@ -1517,91 +1511,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("booking_slot_ratings");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.RescheduleRequest", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<string>("AcceptedSlotId")
-                        .HasColumnType("text")
-                        .HasColumnName("accepted_slot_id");
-
-                    b.Property<string>("BookedSlotId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("booked_slot_id");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("created_by");
-
-                    b.Property<DateTimeOffset>("CreatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_time");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("deleted_by");
-
-                    b.Property<DateTimeOffset?>("DeletedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("deleted_time");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("expires_at");
-
-                    b.Property<int>("Initiator")
-                        .HasColumnType("integer")
-                        .HasColumnName("initiator");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_updated_by");
-
-                    b.Property<DateTimeOffset>("LastUpdatedTime")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_updated_time");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("reason");
-
-                    b.Property<string>("RequestedByUserId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("requested_by_user_id");
-
-                    b.Property<DateTime?>("RespondedAt")
-                        .HasColumnType("timestamp without time zone")
-                        .HasColumnName("responded_at");
-
-                    b.Property<string>("ResponseNote")
-                        .HasColumnType("text")
-                        .HasColumnName("response_note");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer")
-                        .HasColumnName("status");
-
-                    b.HasKey("Id")
-                        .HasName("pk_reschedule_requests");
-
-                    b.HasIndex("AcceptedSlotId")
-                        .IsUnique();
-
-                    b.HasIndex("BookedSlotId")
-                        .HasDatabaseName("ix_reschedule_requests_booked_slot_id");
-
-                    b.ToTable("reschedule_requests");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
                 {
                     b.Property<string>("Id")
@@ -1703,34 +1612,6 @@ namespace App.Repositories.Migrations
                     b.ToTable("booked_slots");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingConfig", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
-
-                    b.Property<bool>("AllowInstantBooking")
-                        .HasColumnType("boolean")
-                        .HasColumnName("allow_instant_booking");
-
-                    b.Property<int>("MaxInstantBookingSlots")
-                        .HasColumnType("integer")
-                        .HasColumnName("max_instant_booking_slots");
-
-                    b.Property<string>("TutorId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("tutor_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_booking_configs");
-
-                    b.HasIndex("TutorId")
-                        .IsUnique();
-
-                    b.ToTable("booking_configs");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
                 {
                     b.Property<string>("Id")
@@ -1740,6 +1621,10 @@ namespace App.Repositories.Migrations
                     b.Property<DateTime>("AppliedFrom")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("applied_from");
+
+                    b.Property<int>("MaxInstantBookingSlots")
+                        .HasColumnType("integer")
+                        .HasColumnName("max_instant_booking_slots");
 
                     b.Property<string>("TutorId")
                         .IsRequired()
@@ -2586,7 +2471,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_bookings__tutors_tutor_temp_id2");
+                        .HasConstraintName("fk_bookings__tutors_tutor_temp_id1");
 
                     b.Navigation("CurrentDispute");
 
@@ -2623,7 +2508,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
-                        .HasConstraintName("fk_booking_disputes__tutors_tutor_temp_id1");
+                        .HasConstraintName("fk_booking_disputes__tutors_tutor_temp_id");
 
                     b.Navigation("Booking");
 
@@ -2757,7 +2642,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_learner_time_slot_requests__tutors_tutor_temp_id4");
+                        .HasConstraintName("fk_learner_time_slot_requests__tutors_tutor_temp_id3");
 
                     b.Navigation("Learner");
 
@@ -2815,7 +2700,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_lessons__tutors_tutor_temp_id5");
+                        .HasConstraintName("fk_lessons__tutors_tutor_temp_id4");
 
                     b.Navigation("Tutor");
                 });
@@ -2843,18 +2728,12 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.OfferedSlot", b =>
                 {
-                    b.HasOne("App.Repositories.Models.RescheduleRequest", "RescheduleRequest")
-                        .WithMany("OfferedSlots")
-                        .HasForeignKey("RescheduleRequestId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
                     b.HasOne("App.Repositories.Models.TutorBookingOffer", "TutorBookingOffer")
                         .WithMany("OfferedSlots")
                         .HasForeignKey("TutorBookingOfferId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("fk_offered_slots__tutor_booking_offers_tutor_booking_offer_id");
-
-                    b.Navigation("RescheduleRequest");
 
                     b.Navigation("TutorBookingOffer");
                 });
@@ -2910,7 +2789,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("App.Repositories.Models.Papers.TutorApplication", "TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_applications__tutors_tutor_temp_id6");
+                        .HasConstraintName("fk_tutor_applications__tutors_tutor_temp_id5");
 
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
                         .WithMany()
@@ -2940,32 +2819,13 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_booking_slot_ratings__tutors_tutor_temp_id3");
+                        .HasConstraintName("fk_booking_slot_ratings__tutors_tutor_temp_id2");
 
                     b.Navigation("Booking");
 
                     b.Navigation("Learner");
 
                     b.Navigation("Tutor");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.RescheduleRequest", b =>
-                {
-                    b.HasOne("App.Repositories.Models.OfferedSlot", "AcceptedSlot")
-                        .WithOne()
-                        .HasForeignKey("App.Repositories.Models.RescheduleRequest", "AcceptedSlotId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("App.Repositories.Models.Scheduling.BookedSlot", "BookedSlot")
-                        .WithMany("RescheduleRequests")
-                        .HasForeignKey("BookedSlotId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_reschedule_requests__booked_slots_booked_slot_id");
-
-                    b.Navigation("AcceptedSlot");
-
-                    b.Navigation("BookedSlot");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Scheduling.AvailabilitySlot", b =>
@@ -3007,18 +2867,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("HeldFund");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookingConfig", b =>
-                {
-                    b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
-                        .WithOne("BookingConfig")
-                        .HasForeignKey("App.Repositories.Models.Scheduling.BookingConfig", "TutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_booking_configs__tutors_tutor_temp_id");
-
-                    b.Navigation("Tutor");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
                 {
                     b.HasOne("App.Repositories.Models.User.Tutor", "Tutor")
@@ -3026,7 +2874,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_weekly_availability_patterns__tutors_tutor_temp_id11");
+                        .HasConstraintName("fk_weekly_availability_patterns__tutors_tutor_temp_id10");
 
                     b.Navigation("Tutor");
                 });
@@ -3068,7 +2916,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_booking_offers__tutors_tutor_temp_id7");
+                        .HasConstraintName("fk_tutor_booking_offers__tutors_tutor_temp_id6");
 
                     b.Navigation("Learner");
 
@@ -3091,7 +2939,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id8");
+                        .HasConstraintName("fk_tutor_hashtags__tutors_tutor_temp_id7");
 
                     b.Navigation("Hashtag");
 
@@ -3105,7 +2953,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_introduction_videos__tutors_tutor_temp_id9");
+                        .HasConstraintName("fk_tutor_introduction_videos__tutors_tutor_temp_id8");
 
                     b.Navigation("Tutor");
                 });
@@ -3117,7 +2965,7 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("TutorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id10");
+                        .HasConstraintName("fk_tutor_languages__tutors_tutor_temp_id9");
 
                     b.Navigation("Tutor");
                 });
@@ -3336,16 +3184,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Documents");
                 });
 
-            modelBuilder.Entity("App.Repositories.Models.RescheduleRequest", b =>
-                {
-                    b.Navigation("OfferedSlots");
-                });
-
-            modelBuilder.Entity("App.Repositories.Models.Scheduling.BookedSlot", b =>
-                {
-                    b.Navigation("RescheduleRequests");
-                });
-
             modelBuilder.Entity("App.Repositories.Models.Scheduling.WeeklyAvailabilityPattern", b =>
                 {
                     b.Navigation("Slots");
@@ -3379,8 +3217,6 @@ namespace App.Repositories.Migrations
                     b.Navigation("Application");
 
                     b.Navigation("AvailabilityPatterns");
-
-                    b.Navigation("BookingConfig");
 
                     b.Navigation("BookingSlotRatings");
 

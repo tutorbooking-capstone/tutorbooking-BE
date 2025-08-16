@@ -36,7 +36,7 @@ public record TimeSlotDTO
     public int SlotIndex { get; init; }
     public TimeSpan? StartTime { get; init; }
     public TimeSpan? EndTime { get; init; }
-    public SlotType Type { get; init; }
+    //public SlotType Type { get; init; }
     public string? BookingId { get; init; }
     public string? LearnerId { get; init; }
     public string? Note { get; init; }
@@ -92,10 +92,10 @@ public class TimeSlotDTOValidator : AbstractValidator<TimeSlotDTO>
             .InclusiveBetween(0, 47)
             .WithMessage("Slot index must be between 0 and 47.");
 
-        // Validate slot type is valid
-        RuleFor(x => x.Type)
-            .IsInEnum()
-            .WithMessage("Invalid slot type.");
+        // // Validate slot type is valid
+        // RuleFor(x => x.Type)
+        //     .IsInEnum()
+        //     .WithMessage("Invalid slot type.");
     }
 }
 #endregion
@@ -129,7 +129,7 @@ public static class WeeklyAvailabilityPatternExtensions
                 {
                     DayInWeek = dailyAvailability.Day,
                     SlotIndex = slot.SlotIndex,
-                    Type = slot.Type,
+                    //Type = slot.Type,
                     WeeklyPatternId = pattern.Id
                 });
             }

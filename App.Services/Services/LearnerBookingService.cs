@@ -287,7 +287,7 @@ namespace App.Services.Services
                 .ExistEntities()
                 .Include(bs => bs.Booking)
                 .Where(bs => bs.Booking!.LearnerId == learnerId && 
-                        (bs.Status == SlotStatus.Pending || bs.Status == SlotStatus.AwaitingConfirmation))
+                        (bs.Status == SlotStatus.Pending || bs.Status == SlotStatus.AwaitingPayout))
                 .Select(bs => new { bs.BookedDate.Date, bs.SlotIndex })
                 .ToListAsync();
 
@@ -364,7 +364,7 @@ namespace App.Services.Services
                         BookingId = booking.Id,
                         BookedDate = slotDate, 
                         SlotIndex = offeredSlot.SlotIndex,
-                        Status = SlotStatus.AwaitingConfirmation,
+                        Status = SlotStatus.AwaitingPayout,
                         HeldFundId = heldFund.Id
                     };
                     

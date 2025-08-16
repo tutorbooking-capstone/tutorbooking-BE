@@ -7,11 +7,11 @@ namespace App.Repositories.Models.Scheduling
     #region Enums
     public enum SlotStatus
     {
-        [EnumDescription("Đang chờ")]
+        [EnumDescription("Đang chờ diễn ra")]
         Pending = 0,
         
-        [EnumDescription("Đang chờ xác nhận")]
-        AwaitingConfirmation = 1,
+        [EnumDescription("Đang chờ thanh toán cho gia sư")]
+        AwaitingPayout = 1,
         
         [EnumDescription("Đã hoàn thành")]
         Completed = 2,
@@ -21,6 +21,9 @@ namespace App.Repositories.Models.Scheduling
         
         [EnumDescription("Đã hủy do tranh chấp")]
         CancelledDisputed = 4
+
+        // [EnumDescription("Đang chờ thanh toán cho gia sư")]
+        // AwaitingPayment = 5
     }
     #endregion
 
@@ -37,6 +40,7 @@ namespace App.Repositories.Models.Scheduling
         public virtual Booking? Booking { get; set; }
         public virtual HeldFund? HeldFund { get; set; }
         public virtual BookingDispute? Dispute { get; set; }
+        public virtual ICollection<RescheduleRequest> RescheduleRequests { get; set; } = new List<RescheduleRequest>();
 
         #region Behaviors
         public Expression<Func<BookedSlot, object>>[] MarkAsCompleted(string updatedBy)
@@ -115,6 +119,25 @@ namespace App.Repositories.Models.Scheduling
             return BookedDate > DateTime.UtcNow && 
                     Status != SlotStatus.Cancelled && 
                     Status != SlotStatus.CancelledDisputed;
+        }
+
+        public BookedSlot RescheduleToNewSlot(DateTime newDateTime, int newSlotIndex, string updatedBy)
+        {
+            var newSlot = new BookedSlot
+            {
+                BookingId = this.BookingId,
+                BookedDate = newDateTime,
+                SlotIndex = newSlotIndex,
+                Status = SlotStatus.Pending,
+                SlotNote = this.SlotNote,
+                HeldFundId = this.HeldFundId,
+                CreatedBy = updatedBy,
+                CreatedTime = CoreHelper.SystemTimeNow,
+                LastUpdatedBy = updatedBy,
+                LastUpdatedTime = CoreHelper.SystemTimeNow
+            };
+            
+            return newSlot;
         }
         #endregion
     }

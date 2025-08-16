@@ -2,6 +2,7 @@ using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.ScheduleDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
@@ -105,7 +106,7 @@ namespace App.Services.Services
                                 SlotIndex = slot.SlotIndex,
                                 StartTime = TimeSpan.FromMinutes(slot.SlotIndex * 30),
                                 EndTime = TimeSpan.FromMinutes((slot.SlotIndex + 1) * 30),
-                                Type = booking != null ? SlotType.Booked : slot.Type,
+                                //Type = booking != null ? SlotType.Booked : slot.Type,
                                 BookingId = booking?.BookingId,
                                 LearnerId = booking?.Booking?.LearnerId,
                                 Note = booking?.Booking?.Note
@@ -166,7 +167,7 @@ namespace App.Services.Services
                 patternRepo.Delete(existingPattern);
 
             var availabilitySlots = request.Slots.Select(s => 
-                AvailabilitySlot.CreateAvailable(s.DayInWeek, s.SlotIndex)
+                AvailabilitySlot.Create(s.DayInWeek, s.SlotIndex)
             );
 
             var newPattern = WeeklyAvailabilityPattern.Create(tutorId, appliedFromDate, availabilitySlots);
@@ -282,7 +283,7 @@ namespace App.Services.Services
 
                 if (applicablePattern?.Slots != null)
                     timeSlotIndices = applicablePattern.Slots
-                        .Where(s => s.DayInWeek == currentDayOfWeek && s.Type == SlotType.Available)
+                        .Where(s => s.DayInWeek == currentDayOfWeek)
                         .Select(s => s.SlotIndex)
                         .ToList();
                 
@@ -290,6 +291,189 @@ namespace App.Services.Services
             }
 
             return result;
+        }
+
+        public async Task<WeeklyPatternResponse> CreateWeeklyPatternAsync(CreateWeeklyPatternRequest request)
+        {
+            var tutorId = _currentUserProvider.GetCurrentUserId();
+            if (tutorId is null)
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized, 
+                    ErrorCode.Unauthorized, 
+                    "User is not authenticated.");
+
+            // Convert DateTime to UTC before using
+            var appliedFromDate = ConvertToUtc(request.AppliedFrom).Date;
+            var today = DateTime.UtcNow.Date;
+
+            // Business Rule 1: AppliedFrom must be greater than today
+            if (appliedFromDate <= today)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Chỉ có thể đặt lịch rảnh cho các ngày trong tương lai, bắt đầu từ ngày mai.");
+
+            // Business Rule 2: AppliedFrom must be Monday
+            if (appliedFromDate.DayOfWeek != DayOfWeek.Monday)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Ngày bắt đầu của lịch tuần phải là Thứ Hai.");
+
+            var availabilitySlots = request.Slots.Select(s => 
+                AvailabilitySlot.Create(s.DayInWeek, s.SlotIndex)
+            );
+
+            var newPattern = WeeklyAvailabilityPattern.Create(
+                tutorId, 
+                appliedFromDate, 
+                availabilitySlots);
+
+            _unitOfWork.GetRepository<WeeklyAvailabilityPattern>().Insert(newPattern);
+            await _unitOfWork.SaveAsync();
+
+            // Return response by querying back from DB to have ID and consistent data
+            return await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .AsNoTracking()
+                .Where(p => p.Id == newPattern.Id)
+                .Select(WeeklyPatternResponse.Projection)
+                .FirstAsync();
+        }
+
+        public async Task<WeeklyPatternDetailResponse> GetWeeklyPatternDetailAsync(string patternId)
+        {
+            var tutorId = _currentUserProvider.GetCurrentUserId();
+            if (tutorId is null)
+                throw new ErrorException(
+                    StatusCodes.Status401Unauthorized, 
+                    ErrorCode.Unauthorized, 
+                    "User is not authenticated.");
+
+            var pattern = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .Include(p => p.Slots)
+                .FirstOrDefaultAsync(p => p.Id == patternId);
+
+            if (pattern == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Weekly pattern not found.");
+
+            if (pattern.TutorId != tutorId)
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden, 
+                    ErrorCode.Forbidden, 
+                    "You are not authorized to view this pattern.");
+
+            return WeeklyPatternDetailResponse.FromEntity(pattern);
+        }
+
+        public async Task<List<WeeklyPatternWithDatesResponse>> GetWeeklyPatternsWithDatesAsync(string tutorId)
+        {
+            var tutorExists = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                .AnyAsync(t => t.UserId == tutorId);
+
+            if (!tutorExists)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy gia sư với ID đã cung cấp.");
+
+            // Get all patterns for this tutor, ordered by AppliedFrom date
+            var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .AsNoTracking()
+                .Where(p => p.TutorId == tutorId)
+                .OrderByDescending(p => p.AppliedFrom)
+                .ToListAsync();
+
+            return patterns.ToWeeklyPatternsWithDates();
+        }
+        public async Task<List<DailyScheduleResponse>> GetTutorScheduleAsync(string tutorId, DateTime startDate, DateTime endDate)
+        {
+            if (startDate > endDate)
+                throw new ArgumentException("Ngày bắt đầu phải trước hoặc bằng ngày kết thúc");
+
+            // Convert to UTC for consistency
+            var utcStartDate = ConvertToUtc(startDate);
+            var utcEndDate = ConvertToUtc(endDate);
+
+            // Get all patterns that apply to the date range
+            var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
+                .ExistEntities()
+                .Where(p => p.TutorId == tutorId && p.AppliedFrom <= utcEndDate)
+                .OrderByDescending(p => p.AppliedFrom)
+                .ToListAsync();
+
+            var patternIds = patterns.Select(p => p.Id).ToList();
+
+            // Get all availability slots for these patterns
+            var availabilitySlots = await _unitOfWork.GetRepository<AvailabilitySlot>()
+                .ExistEntities()
+                .Where(s => s.WeeklyPatternId != null && patternIds.Contains(s.WeeklyPatternId))
+                .ToListAsync();
+
+            // Get all pending booked slots in date range
+            var bookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
+                .ExistEntities()
+                .Where(bs => 
+                    bs.Booking!.TutorId == tutorId && 
+                    bs.BookedDate >= utcStartDate && 
+                    bs.BookedDate <= utcEndDate &&
+                    bs.Status == SlotStatus.Pending)
+                .Include(bs => bs.Booking)  
+                .ToListAsync();
+
+            // Get all offered slots in date range (regardless of IsForReschedule)
+            var offeredSlots = await _unitOfWork.GetRepository<OfferedSlot>()
+                .ExistEntities()
+                .Where(os => 
+                    os.SlotDateTime >= utcStartDate && 
+                    os.SlotDateTime <= utcEndDate)
+                .ToListAsync();
+
+            var result = new List<DailyScheduleResponse>();
+
+            foreach (var pattern in patterns)
+            {
+                var currentWeekStart = ConvertToUtc(pattern.AppliedFrom);
+                
+                while (currentWeekStart <= utcEndDate)
+                {
+                    if (currentWeekStart.AddDays(6) < utcStartDate)
+                    {
+                        currentWeekStart = currentWeekStart.AddDays(7);
+                        continue;
+                    }
+
+                    var patternSlots = availabilitySlots
+                        .Where(s => s.WeeklyPatternId == pattern.Id)
+                        .GroupBy(s => s.DayInWeek);
+                    
+                    foreach (var dayGroup in patternSlots)
+                    {
+                        var dayInWeek = dayGroup.Key;
+                        var date = AvailabilitySlot.CalculateDateForDay(currentWeekStart, dayInWeek);
+
+                        if (date < utcStartDate.Date || date > utcEndDate.Date)
+                            continue;
+
+                        var daySlots = dayGroup.ToList();
+                        var timeSlots = daySlots.ToTimeSlotResponses(
+                            bookedSlots, 
+                            offeredSlots,
+                            date);
+
+                        result.Add(DailyScheduleResponse.Create(dayInWeek, date, timeSlots));
+                    }
+
+                    currentWeekStart = currentWeekStart.AddDays(7);
+                }
+            }
+
+            return result.OrderBy(d => d.Date).ToList();
         }
     }
 }

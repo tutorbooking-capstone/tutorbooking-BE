@@ -139,5 +139,36 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách gia sư."
 			));
 		}
+
+        [HttpGet("{tutorId}/booking-config")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetBookingConfig(string tutorId)
+        {
+            var config = await _tutorService.GetBookingConfigAsync(tutorId);
+            return Ok(new BaseResponseModel<BookingConfigDTO>(
+                data: config,
+                message: "Cấu hình đặt lịch của gia sư"
+            ));
+        }
+
+        [HttpPut("booking-config")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> UpdateBookingConfig([FromBody] UpdateBookingConfigRequest request)
+        {
+            await _tutorService.UpdateBookingConfigAsync(request);
+            return Ok(new BaseResponseModel<object>(
+                message: "Cập nhật cấu hình đặt lịch thành công!"
+            ));
+        }
+
+        // [HttpPost("sync-booking-configs")]
+        // [AuthorizeRoles(Role.Admin, Role.Staff)]
+        // public async Task<IActionResult> SyncBookingConfigs()
+        // {
+        //     await _tutorService.SyncBookingConfigsAsync();
+        //     return Ok(new BaseResponseModel<object>(
+        //         message: "Đồng bộ cấu hình đặt lịch cho tất cả gia sư thành công!"
+        //     ));
+        // }
     }
 }

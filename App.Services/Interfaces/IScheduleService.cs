@@ -9,5 +9,10 @@ namespace App.Services.Interfaces
         Task<List<WeeklyPatternResponse>> GetAllWeeklyPatternsAsync(string tutorId);
         Task<List<DailyAvailabilityPatternDTO>> GetWeekAvailabilityAsync(string tutorId, DateTime startDate);
         Task DeleteWeeklyPatternAsync(string patternId);
+        
+        Task<WeeklyPatternResponse> CreateWeeklyPatternAsync(CreateWeeklyPatternRequest request);
+        Task<WeeklyPatternDetailResponse> GetWeeklyPatternDetailAsync(string patternId);
+        Task<List<WeeklyPatternWithDatesResponse>> GetWeeklyPatternsWithDatesAsync(string tutorId);
+        Task<List<DailyScheduleResponse>> GetTutorScheduleAsync(string tutorId, DateTime startDate, DateTime endDate);
     }
 }

@@ -32,7 +32,8 @@ namespace App.Services.Interfaces.User
             int page = 1,
             int size = 20);
 
-		// Status Management 
-		//Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
+        Task<BookingConfigDTO> GetBookingConfigAsync(string tutorId);
+        Task UpdateBookingConfigAsync(UpdateBookingConfigRequest request);
+        Task SyncBookingConfigsAsync();
     }
 }

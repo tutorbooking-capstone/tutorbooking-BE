@@ -2,9 +2,44 @@
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
+using FluentValidation;
 
 namespace App.DTOs.AppUserDTOs.TutorDTOs
 {
+    public class BookingConfigDTO
+    {
+        public string TutorId { get; set; } = string.Empty;
+        public bool AllowInstantBooking { get; set; }
+        public int MaxInstantBookingSlots { get; set; }
+        
+        public static BookingConfigDTO FromEntity(BookingConfig entity)
+        {
+            return new BookingConfigDTO
+            {
+                TutorId = entity.TutorId,
+                AllowInstantBooking = entity.AllowInstantBooking,
+                MaxInstantBookingSlots = entity.MaxInstantBookingSlots
+            };
+        }
+    }
+    
+    public class UpdateBookingConfigRequest
+    {
+        public bool AllowInstantBooking { get; set; }
+        public int MaxInstantBookingSlots { get; set; }
+    }
+
+    public class UpdateBookingConfigRequestValidator : AbstractValidator<UpdateBookingConfigRequest>
+    {
+        public UpdateBookingConfigRequestValidator()
+        {
+            RuleFor(x => x.MaxInstantBookingSlots)
+                .GreaterThan(0)
+                .When(x => x.AllowInstantBooking)
+                .WithMessage("Số lượng slot phải lớn hơn 0 khi cho phép đặt lịch tức thì");
+        }
+    }
+
     public class TutorResponse
     {  
         public string UserId { get; set; } = string.Empty;
@@ -75,7 +110,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                     ? p.Slots.Select(s => new AvailabilitySlotDTO
                     {
                         Id = s.Id,
-                        Type = s.Type,
+                        //Type = s.Type,
                         DayInWeek = s.DayInWeek,
                         SlotIndex = s.SlotIndex
                     }).ToList()

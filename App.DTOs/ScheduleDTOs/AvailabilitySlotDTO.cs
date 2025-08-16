@@ -4,7 +4,7 @@ namespace App.DTOs.ScheduleDTOs
 {
     public class AvailabilitySlotDTO
     {
-        public SlotType Type { get; set; }
+        public SlotType Type { get; set; } = SlotType.Available; // Default value
         public DayInWeek DayInWeek { get; set; }
         public int SlotIndex { get; set; }
 
@@ -32,7 +32,7 @@ namespace App.DTOs.ScheduleDTOs
         {
             return new AvailabilitySlot
             {
-                Type = this.Type,
+                //Type = this.Type,
                 DayInWeek = this.DayInWeek,
                 SlotIndex = this.SlotIndex
             };

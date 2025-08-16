@@ -350,6 +350,10 @@ namespace App.Services.Services.User
                 // Set application reference
                 newTutor.Application = tutorApplication;
 
+                // Create default booking config
+                var bookingConfig = BookingConfig.CreateDefault(userId);
+                _unitOfWork.GetRepository<BookingConfig>().Insert(bookingConfig);
+
                 await _unitOfWork.SaveAsync();
                 await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
 
@@ -753,5 +757,76 @@ namespace App.Services.Services.User
     
             return response;
 		}
+
+        public async Task<BookingConfigDTO> GetBookingConfigAsync(string tutorId)
+        {
+            var config = await _unitOfWork.GetRepository<BookingConfig>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(c => c.TutorId == tutorId);
+            
+            if (config == null)
+            {
+                // Tự động tạo config nếu chưa có
+                config = BookingConfig.CreateDefault(tutorId);
+                _unitOfWork.GetRepository<BookingConfig>().Insert(config);
+                await _unitOfWork.SaveAsync();
+            }
+            
+            return BookingConfigDTO.FromEntity(config);
+        }
+
+        public async Task UpdateBookingConfigAsync(UpdateBookingConfigRequest request)
+        {
+            var tutorId = _userService.GetCurrentUserId();
+            
+            var config = await _unitOfWork.GetRepository<BookingConfig>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(c => c.TutorId == tutorId);
+            
+            if (config == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy cấu hình đặt lịch cho gia sư này. Vui lòng thử lại sau.");
+            
+            var changedProperties = config.Update(
+                request.AllowInstantBooking, 
+                request.MaxInstantBookingSlots);
+            
+            if (changedProperties.Length > 0)
+            {
+                _unitOfWork.GetRepository<BookingConfig>().UpdateFields(config, changedProperties);
+                await _unitOfWork.SaveAsync();
+            }
+        }
+
+        public async Task SyncBookingConfigsAsync()
+        {
+            // Lấy danh sách các tutor chưa có BookingConfig
+            var tutorsWithoutConfig = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () => {
+                // Get all tutor IDs
+                var allTutorIds = await _unitOfWork.GetRepository<Tutor>()
+                    .ExistEntities()
+                    .Select(t => t.UserId)
+                    .ToListAsync();
+                
+                // Get tutor IDs that already have configs
+                var existingConfigTutorIds = await _unitOfWork.GetRepository<BookingConfig>()
+                    .ExistEntities()
+                    .Select(c => c.TutorId)
+                    .ToListAsync();
+                
+                // Find tutors without configs
+                return allTutorIds.Except(existingConfigTutorIds).ToList();
+            });
+            
+            // Tạo config mặc định cho các tutor chưa có
+            if (tutorsWithoutConfig.Any())
+            {
+                var newConfigs = tutorsWithoutConfig.Select(BookingConfig.CreateDefault).ToList();
+                _unitOfWork.GetRepository<BookingConfig>().InsertRange(newConfigs);
+                await _unitOfWork.SaveAsync();
+            }
+        }
     }
 }

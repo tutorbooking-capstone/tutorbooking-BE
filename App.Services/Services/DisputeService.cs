@@ -188,7 +188,7 @@ namespace App.Services.Services
                 switch (resolution)
                 {
                     case DisputeResolution.LearnerWithdrew:
-                        var updateProperties = slot.UpdateStatus(SlotStatus.AwaitingConfirmation, GetAuthenticatedUserId());
+                        var updateProperties = slot.UpdateStatus(SlotStatus.AwaitingPayout, GetAuthenticatedUserId());
                         bookedSlotRepo.UpdateFields(slot, updateProperties);
                         break;
                         

@@ -70,6 +70,8 @@ namespace App.Repositories.Context
         public DbSet<TutorIntroductionVideo> TutorIntroductionVideos { get; set; }
 
         public DbSet<BookingDispute> BookingDisputes { get; set; }
+        public DbSet<RescheduleRequest> RescheduleRequests { get; set; }
+        public DbSet<BookingConfig> BookingConfigs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -687,6 +689,44 @@ namespace App.Repositories.Context
                 .OnDelete(DeleteBehavior.SetNull);
             #endregion
 
+            #region RescheduleRequest Configuration
+            // RescheduleRequest -> BookedSlot (M:1)
+            modelBuilder.Entity<RescheduleRequest>()
+                .HasOne(r => r.BookedSlot)
+                .WithMany(b => b.RescheduleRequests)
+                .HasForeignKey(r => r.BookedSlotId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // RescheduleRequest -> OfferedSlot (1:M)
+            modelBuilder.Entity<RescheduleRequest>()
+                .HasMany(r => r.OfferedSlots)
+                .WithOne(o => o.RescheduleRequest)
+                .HasForeignKey(o => o.RescheduleRequestId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // RescheduleRequest -> AcceptedSlot (1:1) - optional
+            modelBuilder.Entity<RescheduleRequest>()
+                .HasOne(r => r.AcceptedSlot)
+                .WithOne()
+                .HasForeignKey<RescheduleRequest>(r => r.AcceptedSlotId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Cấu hình kiểu dữ liệu DateTime
+            modelBuilder.Entity<RescheduleRequest>()
+                .Property(r => r.CreatedAt)
+                .HasColumnType("timestamp without time zone");
+
+            modelBuilder.Entity<RescheduleRequest>()
+                .Property(r => r.ExpiresAt)
+                .HasColumnType("timestamp without time zone");
+
+            modelBuilder.Entity<RescheduleRequest>()
+                .Property(r => r.RespondedAt)
+                .HasColumnType("timestamp without time zone");
+            #endregion
+
 
             #region TutorIntroductionVideo Configuration
             // TutorIntroductionVideo -> Tutor (M:1)
@@ -695,6 +735,20 @@ namespace App.Repositories.Context
                 .WithMany(t => t.IntroductionVideos)
                 .HasForeignKey(tiv => tiv.TutorUserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            #endregion
+
+            #region BookingConfig Configuration
+            // BookingConfig -> Tutor (1:1)
+            modelBuilder.Entity<BookingConfig>()
+                .HasOne(bc => bc.Tutor)
+                .WithOne(t => t.BookingConfig)
+                .HasForeignKey<BookingConfig>(bc => bc.TutorId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Đảm bảo TutorId là unique
+            modelBuilder.Entity<BookingConfig>()
+                .HasIndex(bc => bc.TutorId)
+                .IsUnique();
             #endregion
 
             // Manager configuration

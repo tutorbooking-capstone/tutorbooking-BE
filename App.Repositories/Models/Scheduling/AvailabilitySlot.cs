@@ -5,9 +5,14 @@ namespace App.Repositories.Models.Scheduling
     #region Enums 
     public enum SlotType
     {   
-        Available = 0,    // Available for booking
-        Unavailable = 1,  // Tutor marked as busy
-        Booked = 2        // Booked by a learner or has notes
+        [EnumDescription("Có thể đặt lịch")]
+        Available = 0,    // Slot is available for booking
+        
+        [EnumDescription("Tạm giữ")]
+        OnHold = 1,       // Slot is temporarily held (e.g., pending confirmation)
+        
+        [EnumDescription("Đã đặt lịch")] 
+        Booked = 2        // Slot is booked by a learner
     }
 
     public enum DayInWeek
@@ -24,7 +29,7 @@ namespace App.Repositories.Models.Scheduling
 
     public class AvailabilitySlot : CoreEntity
     {
-        public SlotType Type { get; set; }
+        // public SlotType Type { get; set; }
         public DayInWeek DayInWeek { get; set; }
 
         // Slot index within the day (e.g., 0 for 00:00-00:30, ..., 47 for 23:30-24:00)
@@ -51,23 +56,18 @@ namespace App.Repositories.Models.Scheduling
             return weekStart.AddDays(offset);
         }
 
-        public static AvailabilitySlot Create(SlotType type, DayInWeek dayInWeek, int slotIndex)
+        public static AvailabilitySlot Create(DayInWeek dayInWeek, int slotIndex)
         {
             return new AvailabilitySlot
             {
-                Type = type,
                 DayInWeek = dayInWeek,
                 SlotIndex = slotIndex
             };
         }
 
+        // Đã đơn giản hóa phương thức này
         public static AvailabilitySlot CreateAvailable(DayInWeek dayInWeek, int slotIndex)
-            => new AvailabilitySlot
-            {
-                Type = SlotType.Available,
-                DayInWeek = dayInWeek,
-                SlotIndex = slotIndex
-            };
+            => Create(dayInWeek, slotIndex);
 
         public bool IsValid()
         {
@@ -77,10 +77,6 @@ namespace App.Repositories.Models.Scheduling
 
             // Validate DayInWeek (phải là giá trị hợp lệ trong enum)
             if (!Enum.IsDefined(typeof(DayInWeek), DayInWeek))
-                return false;
-
-            // Validate Type (phải là giá trị hợp lệ trong enum)
-            if (!Enum.IsDefined(typeof(SlotType), Type))
                 return false;
 
             return true;

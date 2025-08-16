@@ -16,7 +16,7 @@ namespace App.DTOs.ScheduleDTOs
                 AppliedFrom = pattern.AppliedFrom,
                 Slots = pattern.Slots != null ? pattern.Slots.Select(slot => new AvailabilitySlotDTO
                 {
-                    Type = slot.Type,
+                    //Type = slot.Type,
                     DayInWeek = slot.DayInWeek,
                     SlotIndex = slot.SlotIndex
                 }).ToList() : new List<AvailabilitySlotDTO>()
