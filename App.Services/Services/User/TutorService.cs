@@ -619,36 +619,26 @@ namespace App.Services.Services.User
 
         public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync()
         {
-            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
-            {
-                // Get popular languages in a single query
-                var popularLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
-                    .ExistEntities()
-                    .GroupBy(tl => tl.LanguageCode)
-                    .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
-                    .OrderByDescending(x => x.Count)
-                    .Take(7)
-                    .Select(x => x.LanguageCode)
-                    .ToListAsync();
-
-                var tutors = new List<TutorCardDTO>();
-
-                foreach(var language in popularLanguages)
-                {
-                    var languageTutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                        .Include(t => t.User)
-                        .Where(t => t.User.DeletedTime == null
-                            && t.VerificationStatus == VerificationStatus.Verified
-                            && t.Languages.Any(l => l.LanguageCode.Equals(language)))
+            var response = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .GroupBy(tl => tl.LanguageCode)
+                .Select(g => new { 
+                    LanguageCode = g.Key, 
+                    Count = g.Count(),
+                    Tutors = g.Select(tl => tl.Tutor)
+                        .Where(t => t.User.DeletedTime == null 
+                            && t.VerificationStatus == VerificationStatus.Verified)
+                        .AsQueryable()
                         .OrderByDescending(BookingSlotRating.RatingSortExpression)
-                        .Take(7) 
-                        .Select(TutorCardDTO.Projection)
-                        .ToListAsync();
-                    tutors.AddRange(languageTutors);
-                }
-                return tutors.Distinct().ToList();
-            });
-            return response;
+                        .Take(6)
+                        .Select(TutorCardDTO.SimpleProjection)
+                        .ToList()
+                })
+                .OrderByDescending(g => g.Count)
+                .Take(7)
+                .ToListAsync();
+
+            return response.SelectMany(t => t.Tutors).ToList();
         }
 
 		public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(

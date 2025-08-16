@@ -20,7 +20,6 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public List<TutorHashtagDTO> Hashtags { get; set; } = new List<TutorHashtagDTO>();
 
 
-
         public static Expression<Func<Tutor, TutorCardDTO>> Projection = t => new TutorCardDTO()
         {
             TutorId = t.UserId,
@@ -71,6 +70,40 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                                         Name = th.Hashtag.Name
                                     }).ToList()
         };
+
+        public static Expression<Func<Tutor, TutorCardDTO>> SimpleProjection = t => new TutorCardDTO()
+        {
+            TutorId = t.UserId,
+            ProfileImageUrl = t.User.ProfilePictureUrl,
+            FullName = t.User.FullName,
+            NickName = t.NickName,
+            Description = t.Description,
+            IsProfessional = t.BookingSlotRatings.Count >= 50
+                                        &&
+                                        t.BookingSlotRatings
+                                        .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                                        .DefaultIfEmpty()
+                                        .Average() >= 4.5,
+            Rating = t.BookingSlotRatings
+                                .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
+                                .DefaultIfEmpty()
+                                .Average(),
+            TotalReviews = t.BookingSlotRatings.Count,
+            Languages = t.Languages.OrderByDescending(l => l.IsPrimary)
+                                    .ThenByDescending(l => l.Proficiency)
+                                    .Select(l => new TutorCardLanguageDTO
+                                    {
+                                        LanguageCode = l.LanguageCode,
+                                        IsPrimary = l.IsPrimary,
+                                        Proficiency = l.Proficiency
+                                    })
+                                    .ToList(),
+            IntroductionVideoUrl = t.IntroductionVideos
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Select(iv => iv.Url)
+                                                .FirstOrDefault() ?? string.Empty
+        };
+
     }
 
     public class TutorCardLanguageDTO
