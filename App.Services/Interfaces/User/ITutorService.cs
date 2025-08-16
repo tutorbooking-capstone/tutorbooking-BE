@@ -31,9 +31,12 @@ namespace App.Services.Interfaces.User
             string? tutorName,
             int page = 1,
             int size = 20);
+        Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync();
 
         Task<BookingConfigDTO> GetBookingConfigAsync(string tutorId);
         Task UpdateBookingConfigAsync(UpdateBookingConfigRequest request);
         Task SyncBookingConfigsAsync();
+        // Status Management 
+        //Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
     }
 }

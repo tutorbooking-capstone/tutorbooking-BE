@@ -227,6 +227,9 @@ namespace App.Services.Services
                 .FirstOrDefaultAsync(e => e.UserId.Equals(tutorId));
             if (tutor == null)
                 throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_NOT_FOUND");
+            if (tutor.VerificationStatus == VerificationStatus.Verified)
+                return; // No need to update if already verified
+
             tutor.VerificationStatus = status;
             _unitOfWork.GetRepository<Tutor>().Update(tutor);
             await _unitOfWork.SaveAsync();
