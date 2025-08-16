@@ -621,34 +621,33 @@ namespace App.Services.Services.User
         {
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
-                // get popular languages
+                // Get popular languages in a single query
                 var popularLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
-                .ExistEntities()
-                .GroupBy(tl => tl.LanguageCode)
-                .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
-                .OrderByDescending(x => x.Count)
-                .Take(7)
-                .Select(x => x.LanguageCode)
-                .ToListAsync();
+                    .ExistEntities()
+                    .GroupBy(tl => tl.LanguageCode)
+                    .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
+                    .OrderByDescending(x => x.Count)
+                    .Take(7)
+                    .Select(x => x.LanguageCode)
+                    .ToListAsync();
 
-               var tutors = new List<TutorCardDTO>();
-               foreach(var languageCode in popularLanguages)
-               {
-                    tutors.AddRange(await _unitOfWork.GetRepository<Tutor>().ExistEntities()
-                    .Include(t => t.User)
-                    .Where(
-                    t => t.User.DeletedTime == null
-                    && t.VerificationStatus == VerificationStatus.Verified
-                    && t.Languages.Any(l => popularLanguages.Contains(l.LanguageCode))
-                    )
-                    .OrderByDescending(BookingSlotRating.RatingSortExpression)
-                    .Take(6)
-                    .Select(TutorCardDTO.Projection)
-                    .ToListAsync());
-               }
-                return tutors;
+                var tutors = new List<TutorCardDTO>();
+
+                foreach(var language in popularLanguages)
+                {
+                    var languageTutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                        .Include(t => t.User)
+                        .Where(t => t.User.DeletedTime == null
+                            && t.VerificationStatus == VerificationStatus.Verified
+                            && t.Languages.Any(l => l.LanguageCode.Equals(language)))
+                        .OrderByDescending(BookingSlotRating.RatingSortExpression)
+                        .Take(7) 
+                        .Select(TutorCardDTO.Projection)
+                        .ToListAsync();
+                    tutors.AddRange(languageTutors);
+                }
+                return tutors.Distinct().ToList();
             });
-
             return response;
         }
 
