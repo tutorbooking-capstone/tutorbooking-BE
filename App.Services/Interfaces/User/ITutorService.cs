@@ -31,8 +31,9 @@ namespace App.Services.Interfaces.User
             string? tutorName,
             int page = 1,
             int size = 20);
+        Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync();
 
-		// Status Management 
-		//Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
+        // Status Management 
+        //Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
     }
 }

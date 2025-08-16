@@ -616,6 +616,38 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
+        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync()
+        {
+            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                // get popular languages
+                var popularLanguages = await _unitOfWork.GetRepository<TutorLanguage>()
+                .ExistEntities()
+                .GroupBy(tl => tl.LanguageCode)
+                .Select(g => new { LanguageCode = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(7)
+                .Select(x => x.LanguageCode)
+                .ToListAsync();
+
+                var tutors = await _unitOfWork.GetRepository<Tutor>().ExistEntities()
+                    .Include(t => t.User)
+                    .Where(
+                    t => t.User.DeletedTime == null
+                    && t.VerificationStatus == VerificationStatus.Verified
+                    && t.Languages.Any(l => popularLanguages.Contains(l.LanguageCode))
+                    )
+                    .OrderByDescending(BookingSlotRating.RatingSortExpression)
+                    .Take(6)
+                    .Select(TutorCardDTO.Projection)
+                    .ToListAsync();
+
+                return tutors;
+            });
+
+            return response;
+        }
+
 		public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
             string[]? languageCodes,
             string? primaryLanguageCode,
@@ -671,76 +703,20 @@ namespace App.Services.Services.User
             if (!fullName.IsNullOrWhiteSpace())
                 predicate.And(t => t.User.FullName.ToLower().Contains(fullName.ToLower()));
 
-            // Rating sort expression
-            Expression<Func<Tutor, double>> ratingSort = e => e.BookingSlotRatings.Any() ?
-                (e.BookingSlotRatings.Select(r => (r.TeachingQuality + r.Attitude + r.Commitment) / 3.0).Average() *
-                Math.Min(e.BookingSlotRatings.Count / 10.0, 1.0)) + // Confidence factor
-                (e.BookingSlotRatings.Select(r => (r.TeachingQuality + r.Attitude + r.Commitment) / 3.0).Average() * 0.3) // Base quality weight
-                : 0;// Default score for tutors with no ratings
-
             var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
             {
                 var query = _unitOfWork.GetRepository<Tutor>().ExistEntities()
                     .Include(t => t.User)
                     .Where(t => t.User.DeletedTime == null)
                     .Where(predicate)
-                    .OrderByDescending(ratingSort);
+                    .OrderByDescending(BookingSlotRating.RatingSortExpression);
 
                 // Get total count before pagination
                 var totalCount = await query.CountAsync();
 
                 var tutors = await query
                     .Skip((page - 1) * size).Take(size)
-                    .Select(t => new TutorCardDTO()
-                    {
-                        TutorId = t.UserId,
-                        ProfileImageUrl = t.User.ProfilePictureUrl,
-                        FullName = t.User.FullName,
-                        NickName = t.NickName,
-                        Description = t.Description,
-                        IsProfessional = t.BookingSlotRatings.Count >= 50 
-                                        && 
-                                        t.BookingSlotRatings
-                                        .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
-                                        .DefaultIfEmpty()
-                                        .Average() >= 4.5,
-                        Rating = t.BookingSlotRatings
-                                .Select(e => (e.TeachingQuality + e.Attitude + e.Commitment) / 3)
-                                .DefaultIfEmpty()
-                                .Average(),
-                        TotalReviews = t.BookingSlotRatings.Count,
-                        Languages = t.Languages.OrderByDescending(l => l.IsPrimary)
-                                    .ThenByDescending(l => l.Proficiency)
-                                    .Select(l => new TutorCardLanguageDTO
-                                    {
-                                        LanguageCode = l.LanguageCode,
-                                        IsPrimary = l.IsPrimary,
-                                        Proficiency = l.Proficiency
-                                    })
-                                    .ToList(),
-                        AvailabilityPatterns = t.AvailabilityPatterns.
-                                                OrderByDescending(a => a.AppliedFrom)
-                                                .Take(1)
-                                                .SelectMany(a => a.Slots
-                                                                .GroupBy(slot => slot.DayInWeek)
-                                                                .Select(group => new DailyAvailabilityPatternDTO
-                                                                {
-                                                                    Day = group.Key,
-                                                                    Date = a.AppliedFrom.AddDays((int)group.Key),
-                                                                    TimeSlotIndex = group.Select(slot => slot.SlotIndex).OrderBy(x => x).ToList()
-                                                                }))
-                                                .ToList(),
-                        IntroductionVideoUrl = t.IntroductionVideos
-                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
-                                                .Select(iv => iv.Url)
-                                                .FirstOrDefault() ?? string.Empty,
-                        Hashtags = t.Hashtags
-                                    .Select(th => new TutorHashtagDTO
-                                    {
-                                        HashtagId = th.HashtagId,
-                                        Name = th.Hashtag.Name
-                                    }).ToList()
-                    })
+                    .Select(TutorCardDTO.Projection)
                     .ToListAsync();
 
                 return new BasePaginatedList<TutorCardDTO>(
