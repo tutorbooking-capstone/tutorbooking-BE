@@ -216,6 +216,7 @@ namespace App.Services.Services
 
             return await GetBookingOfferByIdForTutorAsync(offerId);
         }
+
         public async Task DeleteBookingOfferAsync(string offerId)
         {
             var tutorId = GetAuthenticatedTutorId();

@@ -11,7 +11,7 @@ namespace App.Repositories.Models
         public string? LessonId { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
-        public TimeSpan ExpirationPeriod { get; set; } = TimeSpan.FromMinutes(30); // Mặc định 30 phút
+        public TimeSpan ExpirationPeriod { get; set; } = TimeSpan.FromMinutes(60 * 24); // Mặc định 1 ngày
         public bool IsRejected { get; set; } = false; 
 
         public virtual Tutor? Tutor { get; set; }
@@ -60,7 +60,7 @@ namespace App.Repositories.Models
                 LearnerId = learnerId,
                 LessonId = lessonId,
                 CreatedAt = now,
-                ExpirationPeriod = TimeSpan.FromMinutes(30),
+                ExpirationPeriod = TimeSpan.FromMinutes(60 * 24),
                 OfferedSlots = offeredSlots.Select(s => new OfferedSlot
                 {
                     SlotDateTime = s.SlotDateTime,

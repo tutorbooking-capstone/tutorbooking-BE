@@ -142,5 +142,36 @@ namespace App.DTOs.ScheduleDTOs
                 return TimeSlotResponse.FromAvailabilitySlot(slot, bookedSlot, offeredSlot);
             }).ToList();
         }
+
+        public static Dictionary<string, (DateTime Start, DateTime? End)> GetPatternEffectiveDateRanges(
+            this List<WeeklyAvailabilityPattern> patterns)
+        {
+            var patternEffectiveDates = new Dictionary<string, (DateTime Start, DateTime? End)>();
+            
+            for (int i = 0; i < patterns.Count; i++)
+            {
+                DateTime start = patterns[i].AppliedFrom;
+                DateTime? end = (i < patterns.Count - 1) ? patterns[i + 1].AppliedFrom.AddDays(-1) : null;
+                patternEffectiveDates[patterns[i].Id] = (start, end);
+            }
+            
+            return patternEffectiveDates;
+        }
+
+        public static WeeklyAvailabilityPattern? FindEffectivePatternForDate(
+            this List<WeeklyAvailabilityPattern> patterns,
+            Dictionary<string, (DateTime Start, DateTime? End)> effectiveDateRanges,
+            DateTime date)
+        {
+            foreach (var pattern in patterns)
+            {
+                var (start, end) = effectiveDateRanges[pattern.Id];
+                
+                if (date >= start && (!end.HasValue || date <= end))
+                    return pattern;
+            }
+            
+            return null;
+        }
     }
 }

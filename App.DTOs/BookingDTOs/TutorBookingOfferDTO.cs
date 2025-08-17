@@ -124,10 +124,15 @@ namespace App.DTOs.BookingDTOs
                 .NotEmpty().WithMessage("ID của bài học không được để trống.");
 
             RuleFor(x => x.OfferedSlots)
-                .NotEmpty().WithMessage("Cần có ít nhất một slot được đề nghị.");
+                .NotEmpty().WithMessage("Cần có ít nhất 3 slot khi offer.")
+                .Must(slots => slots.Count >= 3).WithMessage("Cần có ít nhất 3 slot offer.");
 
             RuleForEach(x => x.OfferedSlots)
                 .SetValidator(new OfferedSlotDTOValidator());
+
+            RuleFor(x => x.OfferedSlots)
+                .Must(slots => slots.Any() && slots.Min(s => s.SlotDateTime) >= DateTime.UtcNow.AddHours(48))
+                .WithMessage("Slot đầu tiên phải cách thời điểm hiện tại ít nhất 48 giờ.");
         }
     }
 

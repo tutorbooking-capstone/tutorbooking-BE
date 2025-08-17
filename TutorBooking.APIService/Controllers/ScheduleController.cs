@@ -20,6 +20,7 @@ namespace TutorBooking.APIService.Controllers
         }
         #endregion
 
+        #region Old version
         [HttpGet("tutors/{tutorId}/availability")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTutorAvailability(
@@ -44,15 +45,6 @@ namespace TutorBooking.APIService.Controllers
                 message: "Cập nhật lịch rãnh thành công!"));
         }
 
-        [HttpDelete("weekly-pattern/{patternId}")]
-        [AuthorizeRoles(Role.Tutor)]
-        public async Task<IActionResult> DeleteWeeklyPattern(string patternId)
-        {
-            await _scheduleService.DeleteWeeklyPatternAsync(patternId);
-            return Ok(new BaseResponseModel<object>(
-                data: null, 
-                message: "Xóa lịch tuần thành công!"));
-        }
 
         [HttpGet("tutors/{tutorId}/weekly-patterns")]
         [AllowAnonymous]
@@ -77,6 +69,8 @@ namespace TutorBooking.APIService.Controllers
                 message: "Lịch rảnh dự kiến của gia sư trong 7 ngày"
             ));
         }
+        #endregion
+
 
         [HttpPost("weekly-pattern/create")]
         [AuthorizeRoles(Role.Tutor)]
@@ -108,6 +102,58 @@ namespace TutorBooking.APIService.Controllers
                 message: "Danh sách lịch tuần của gia sư kèm thời hạn"));
         }
 
+        private async Task<Dictionary<string, object>> GetMetadataAsync() => 
+            await _scheduleService.GetScheduleMetadataAsync();
+
+        [HttpGet("metadata")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetMetadata()
+        {
+            var metadata = await GetMetadataAsync();
+            
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Metadata cho lịch trình"
+            ));
+        }
+
+        [HttpGet("weekly-pattern/{patternId}/blocked-slots")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> GetBlockedSlots([FromRoute] string patternId)
+        {
+            var blockedSlots = await _scheduleService.GetBlockedSlotsForPatternAsync(patternId);
+            var metadata = await GetMetadataAsync();
+            
+            return Ok(new BaseResponseModel<List<SlotRequest>>(
+                data: blockedSlots,
+                additionalData: metadata,
+                message: "Danh sách slot không thể chỉnh sửa trong lịch tuần"));
+        }
+
+        [HttpPut("weekly-pattern/{patternId}")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> EditWeeklyPattern(
+            [FromRoute] string patternId,
+            [FromBody] List<SlotRequest> newSlots)
+        {
+            var response = await _scheduleService.EditWeeklyPatternAsync(patternId, newSlots);
+            return Ok(new BaseResponseModel<WeeklyPatternResponse>(
+                data: response, 
+                message: "Cập nhật lịch tuần thành công!"));
+        }
+
+        
+        [HttpDelete("weekly-pattern/{patternId}")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> DeleteWeeklyPattern(string patternId)
+        {
+            await _scheduleService.DeleteWeeklyPatternAsync(patternId);
+            return Ok(new BaseResponseModel<object>(
+                data: null, 
+                message: "Xóa lịch tuần thành công!"));
+        }
+
+        
         [HttpGet("tutors/{tutorId}/schedule")]
         [AllowAnonymous]
         public async Task<IActionResult> GetTutorSchedule(
@@ -116,10 +162,14 @@ namespace TutorBooking.APIService.Controllers
             [FromQuery] DateTime endDate)
         {
             var schedule = await _scheduleService.GetTutorScheduleAsync(tutorId, startDate, endDate);
+            var metadata = await GetMetadataAsync();
+            
             return Ok(new BaseResponseModel<List<DailyScheduleResponse>>(
                 data: schedule,
+                additionalData: metadata,
                 message: "Lịch trình của gia sư"
             ));
         }
+
     }
 }

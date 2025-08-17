@@ -4,7 +4,7 @@ namespace App.DTOs.ScheduleDTOs
 {
     public class AvailabilitySlotDTO
     {
-        public SlotType Type { get; set; } = SlotType.Available; // Default value
+        //public SlotType Type { get; set; } = SlotType.Available;
         public DayInWeek DayInWeek { get; set; }
         public int SlotIndex { get; set; }
 
@@ -19,9 +19,9 @@ namespace App.DTOs.ScheduleDTOs
             if (!Enum.IsDefined(typeof(DayInWeek), DayInWeek))
                 return false;
 
-            // Validate Type (phải là giá trị hợp lệ trong enum)
-            if (!Enum.IsDefined(typeof(SlotType), Type))
-                return false;
+            // // Validate Type (phải là giá trị hợp lệ trong enum)
+            // if (!Enum.IsDefined(typeof(SlotType), Type))
+            //     return false;
 
             return true;
         }
