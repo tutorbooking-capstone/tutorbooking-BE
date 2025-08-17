@@ -22,7 +22,6 @@ namespace App.Services.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly INotificationService _notificationService;
 
-        // Định nghĩa hằng số thời gian tối thiểu (1 giờ)
         private const int MIN_HOURS_BEFORE_BOOKING = 1;
 
         public LearnerBookingService(
@@ -459,13 +458,14 @@ namespace App.Services.Services
         {
             var learnerId = GetAuthenticatedLearnerId();
             
-            // Tìm offer
             var offerRepo = _unitOfWork.GetRepository<TutorBookingOffer>();
+            var slotRepo = _unitOfWork.GetRepository<OfferedSlot>();
+            
             var offer = await offerRepo.ExistEntities()
+                .Include(o => o.OfferedSlots)
                 .Include(o => o.Tutor).ThenInclude(t => t!.User)
                 .Include(o => o.Learner).ThenInclude(l => l!.User)
                 .Include(o => o.Lesson)
-                .Include(o => o.OfferedSlots)
                 .FirstOrDefaultAsync(o => o.Id == offerId && o.LearnerId == learnerId);
 
             if (offer == null)
@@ -474,38 +474,40 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Offer not found or you don't have permission to reject it.");
 
-            // Kiểm tra nếu offer đã hết hạn
             if (offer.IsExpired())
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
                     "Cannot reject an expired offer.");
 
-            // Đánh dấu offer là đã từ chối
+            if (offer.OfferedSlots?.Any() == true)
+                slotRepo.DeleteRange(offer.OfferedSlots);
+
             var updateFields = offer.MarkAsRejected();
             if (updateFields.Any())
-            {
                 offerRepo.UpdateFields(offer, updateFields);
-                await _unitOfWork.SaveAsync();
                 
-                // Gửi thông báo cho tutor
-                // await _notificationService.SendToUsersAsync(new()
-                // {
-                //     Content = new()
-                //     {
-                //         NotificationPriority = ENotificationPriority.Normal,
-                //         Title = "PUSH_ON_LEARNER_REJECT_OFFER",
-                //         Content = "PUSH_ON_LEARNER_REJECT_OFFER_BODY",
-                //         AdditionalData = JsonSerializer.Serialize(new
-                //         {
-                //             OfferId = offer.Id,
-                //             LessonId = offer.LessonId,
-                //             SenderId = learnerId,
-                //         }),
-                //     },
-                //     ReceiverUserIds = [offer.TutorId]
-                // });
-            }
+            await _unitOfWork.SaveAsync();
+            
+            #region Send notification to tutor
+            // // Gửi thông báo cho tutor
+            // await _notificationService.SendToUsersAsync(new()
+            // {
+            //     Content = new()
+            //     {
+            //         NotificationPriority = ENotificationPriority.Normal,
+            //         Title = "PUSH_ON_LEARNER_REJECT_OFFER",
+            //         Content = "PUSH_ON_LEARNER_REJECT_OFFER_BODY",
+            //         AdditionalData = JsonSerializer.Serialize(new
+            //         {
+            //             OfferId = offer.Id,
+            //             LessonId = offer.LessonId,
+            //             SenderId = learnerId,
+            //         }),
+            //     },
+            //     ReceiverUserIds = [offer.TutorId]
+            // });
+            #endregion
 
             return await offerRepo.ExistEntities()
                 .Where(o => o.Id == offerId)

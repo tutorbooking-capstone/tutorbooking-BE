@@ -11,6 +11,7 @@ using TutorBooking.APIService.Hubs;
 using TutorBooking.APIService.Hubs.ChatHubs;
 using TutorBooking.APIService.Hubs.NotificationHubs;
 using TutorBooking.APIService.Middleware;
+using App.Services.Infras;
 
 namespace TutorBooking.APIService
 {
@@ -113,28 +114,22 @@ namespace TutorBooking.APIService
             app.UseSwagger();
             app.UseSwaggerUI();
             
-            // Thêm Hangfire Dashboard
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
                 Authorization = env.IsDevelopment() ? Array.Empty<IDashboardAuthorizationFilter>() : new[] { new HangfireAuthorizationFilter() },
                 IsReadOnlyFunc = (context) => false
             });
+            HangfireConfig.ConfigureRecurringJobs();
             #endregion
 
             app.UseHttpsRedirection();
             app.UseRouting();
             app.UseCors("AllowFrontend");
 
-            // Exception handling middleware should come first to catch exceptions from subsequent middleware.
-            app.UseMiddleware<ExceptionMiddleware>(); // Correct: Placed early to handle exceptions globally.
-            // Authentication must come before Authorization and custom permission checks.
-            app.UseAuthentication(); // Correct: Establishes user identity.
-            
-            // Authorization checks if the authenticated user has permission based on standard policies/roles.
-            app.UseAuthorization(); // Correct: Must follow UseAuthentication.
-            // Custom Permission middleware performs additional checks, relying on the authenticated user.
-            app.UseMiddleware<PermissionMiddleware>(); // Correct: Placed after Authentication and Authorization as it likely depends on the established user identity and roles.
-
+            app.UseMiddleware<ExceptionMiddleware>(); 
+            app.UseAuthentication(); 
+            app.UseAuthorization(); 
+            app.UseMiddleware<PermissionMiddleware>(); 
 
             app.UseEndpoints(endpoints =>
             {
@@ -161,6 +156,7 @@ namespace TutorBooking.APIService
                     options.AllowStatefulReconnects = true;
                 });
 			});
+
         }
     }
 

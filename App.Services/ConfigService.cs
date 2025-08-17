@@ -2,6 +2,7 @@
 using App.Core.Provider;
 using App.Repositories.Models;
 using App.Services.Events;
+using App.Services.Hangfire;
 using App.Services.Infras;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
@@ -79,6 +80,7 @@ namespace App.Services
 
             #region Hangfire Services
             services.AddHangfireServices(configuration);
+            services.AddScoped<OfferExpirationService>();
             #endregion
 
             #region Notification Events
@@ -143,23 +145,25 @@ namespace App.Services
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // Cấu hình Hangfire với PostgreSQL
             services.AddHangfire(config =>
             {
                 config.UsePostgreSqlStorage(options =>
                 {
                     options.UseNpgsqlConnection(configuration.GetConnectionString("DeployConnection"));
                 });
-                
-                // Bỏ qua các công việc đã thất bại sau 3 lần thử lại
-                config.UseFilter(new AutomaticRetryAttribute { Attempts = 3 });
+                //config.UseMAMQSqlExtension();
+                config.UseFilter(new AutomaticRetryAttribute 
+                { 
+                    Attempts = 3,
+                    OnAttemptsExceeded = AttemptsExceededAction.Delete 
+                });
             });
             
-            // Đăng ký BackgroundJobClient để sử dụng với DI
             services.AddHangfireServer(options =>
             {
-                options.WorkerCount = 1; // Số lượng worker, có thể điều chỉnh tùy theo tài nguyên
-                options.Queues = new[] { "default" }; // Queue mặc định
+                options.WorkerCount = 1; 
+                options.Queues = new[] { "tutorbooking_jobs", "default" }; 
+                options.ServerName = "TutorBookingServer";
             });
 
             return services;

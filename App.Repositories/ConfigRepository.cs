@@ -73,31 +73,28 @@ namespace App.Repositories
             return services;
         }
 
-        public static IServiceCollection AddHangfireServices(
-            this IServiceCollection services,
-            IConfiguration configuration)
-        {
-            // Cấu hình Hangfire với PostgreSQL
-            services.AddHangfire(config =>
-            {
-                config.UsePostgreSqlStorage(options =>
-                {
-                    options.UseNpgsqlConnection(configuration.GetConnectionString("DeployConnection"));
-                });
+        // public static IServiceCollection AddHangfireServices(
+        //     this IServiceCollection services,
+        //     IConfiguration configuration)
+        // {
+        //     services.AddHangfire(config =>
+        //     {
+        //         config.UsePostgreSqlStorage(options =>
+        //         {
+        //             options.UseNpgsqlConnection(configuration.GetConnectionString("DeployConnection"));
+        //         });
                 
-                // Bỏ qua các công việc đã thất bại sau 3 lần thử lại
-                config.UseFilter(new AutomaticRetryAttribute { Attempts = 3 });
-            });
+        //         config.UseFilter(new AutomaticRetryAttribute { Attempts = 3 });
+        //     });
             
-            // Đăng ký BackgroundJobClient để sử dụng với DI
-            services.AddHangfireServer(options =>
-            {
-                options.WorkerCount = 1; // Số lượng worker, có thể điều chỉnh tùy theo tài nguyên
-                options.Queues = new[] { "default" }; // Queue mặc định
-            });
+        //     services.AddHangfireServer(options =>
+        //     {
+        //         options.WorkerCount = 1; // Số lượng worker, có thể điều chỉnh tùy theo tài nguyên
+        //         options.Queues = new[] { "default" }; // Queue mặc định
+        //     });
 
-            return services;
-        }
+        //     return services;
+        // }
         #endregion
     }
 }

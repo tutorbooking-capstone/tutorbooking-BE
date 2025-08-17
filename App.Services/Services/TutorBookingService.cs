@@ -8,6 +8,7 @@ using App.Repositories.Models.Notifications;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Infras;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -154,6 +155,9 @@ namespace App.Services.Services
                 ReceiverUserIds = [request.LearnerId]
             });
 
+            var expirationTime = (newOffer.UpdatedAt ?? newOffer.CreatedAt).Add(newOffer.ExpirationPeriod);
+            HangfireConfig.ScheduleOfferExpirationJob(newOffer.Id, expirationTime);
+
             return createdOffer;
         }
 
@@ -221,11 +225,18 @@ namespace App.Services.Services
         {
             var tutorId = GetAuthenticatedTutorId();
             var offerRepo = _unitOfWork.GetRepository<TutorBookingOffer>();
-            var offer = await offerRepo.ExistEntities().FirstOrDefaultAsync(o => o.Id == offerId && o.TutorId == tutorId);
+            var slotRepo = _unitOfWork.GetRepository<OfferedSlot>();
+            
+            var offer = await offerRepo.ExistEntities()
+                .Include(o => o.OfferedSlots)
+                .FirstOrDefaultAsync(o => o.Id == offerId && o.TutorId == tutorId);
 
             if (offer == null)
                 throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Offer not found or you don't have permission to delete it.");
 
+            if (offer.OfferedSlots?.Any() == true)
+                slotRepo.DeleteRange(offer.OfferedSlots);
+                
             offerRepo.Delete(offer, isSoftDelete: false);
             await _unitOfWork.SaveAsync();
         }
