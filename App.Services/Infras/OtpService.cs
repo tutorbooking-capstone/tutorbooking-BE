@@ -58,6 +58,10 @@ namespace App.Services.Infras
             _logger.LogInformation("OTP generated for identifier: {Identifier}, use case: {UseCase}, expires at: {ExpiryTime}",
                 identifier, useCase, expiryTime);
 
+#if DEBUG
+            Console.WriteLine($"{useCase} OTP generated: {plainOtp}");
+#endif
+
             return Task.FromResult(plainOtp);
         }
 

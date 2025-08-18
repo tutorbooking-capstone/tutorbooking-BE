@@ -643,12 +643,6 @@ namespace App.Repositories.Context
             #endregion
 
             #region BookingDispute Configuration
-            // BookingDispute -> Booking (M:1)
-            modelBuilder.Entity<BookingDispute>()
-                .HasOne(d => d.Booking)
-                .WithMany(b => b.DisputeHistory)
-                .HasForeignKey(d => d.BookingId)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // BookingDispute -> Learner (M:1)
             modelBuilder.Entity<BookingDispute>()
