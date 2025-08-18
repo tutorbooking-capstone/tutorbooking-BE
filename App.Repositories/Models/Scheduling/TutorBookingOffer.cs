@@ -27,6 +27,13 @@ namespace App.Repositories.Models
             var referenceTime = UpdatedAt ?? CreatedAt;
             return DateTime.UtcNow > referenceTime.Add(ExpirationPeriod);
         }
+
+        public static Expression<Func<TutorBookingOffer, bool>> IsExpiredExpression()
+        {
+            var now = DateTime.UtcNow;
+            return offer => !offer.IsRejected && 
+                    (offer.UpdatedAt ?? offer.CreatedAt).Add(offer.ExpirationPeriod) < now;
+        }
         
         public DateTime GetExpirationTime()
         {

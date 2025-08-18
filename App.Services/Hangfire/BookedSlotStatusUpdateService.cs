@@ -36,7 +36,7 @@ namespace App.Services.Hangfire
                     .ExistEntities()
                     .Include(bs => bs.Booking)
                     .Where(bs => bs.Status == SlotStatus.Pending &&
-                            CalculateSlotEndTime(bs.BookedDate, bs.SlotIndex) < now)
+                            bs.BookedDate.Date.AddMinutes((bs.SlotIndex + 1) * 30) < now)
                     .ToListAsync();
 
                 _logger.LogInformation("Tìm thấy {Count} slot đã kết thúc cần cập nhật", completedSlots.Count);
