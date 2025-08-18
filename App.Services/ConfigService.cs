@@ -142,6 +142,7 @@ namespace App.Services
             return services;
         }
 
+        //Outtime when deployed
         public static IServiceCollection AddHangfireServices(
             this IServiceCollection services,
             IConfiguration configuration)
