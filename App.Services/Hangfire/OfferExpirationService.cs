@@ -29,10 +29,12 @@ namespace App.Services.Hangfire
         {
             try
             {
+                _logger.LogInformation("Bắt đầu xử lý các offer hết hạn");
+
                 var expiredOffers = await _unitOfWork.GetRepository<TutorBookingOffer>()
                     .ExistEntities()
-                    .Where(o => !o.IsRejected &&
-                        (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod) < DateTime.UtcNow)
+                    .Where(o => !o.IsRejected)
+                    .Where(o => (o.UpdatedAt ?? o.CreatedAt).AddMinutes(o.ExpirationPeriod.TotalMinutes) < DateTime.UtcNow)
                     .Include(o => o.OfferedSlots)
                     .ToListAsync();
 
@@ -50,7 +52,7 @@ namespace App.Services.Hangfire
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving expired offers");
+                _logger.LogError(ex, "Lỗi khi xử lý offer hết hạn");
             }
         }
 
