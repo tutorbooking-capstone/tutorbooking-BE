@@ -12,6 +12,18 @@ namespace App.Services.Infras
                 "delete-expired-offers",    
                 service => service.ProcessExpiredOffersAsync(),
                 "*/15 * * * *");
+            
+            RecurringJob.RemoveIfExists("process-pending-held-funds");
+            RecurringJob.AddOrUpdate<BookingHeldFundService>(
+                "process-pending-held-funds",
+                service => service.ProcessPendingHeldFundsAsync(),
+                "0 */1 * * *");  
+                
+            RecurringJob.RemoveIfExists("update-completed-slots");
+            RecurringJob.AddOrUpdate<BookedSlotStatusUpdateService>(
+                "update-completed-slots",
+                service => service.ProcessCompletedSlotsAsync(),
+                "*/5 * * * *");   
         }
 
         public static void ScheduleOfferExpirationJob(string offerId, DateTimeOffset expirationTime)
@@ -19,6 +31,20 @@ namespace App.Services.Infras
             BackgroundJob.Schedule<OfferExpirationService>(
                 service => service.HandleExpiredOfferAsync(offerId),
                 expirationTime);
+        }
+
+        public static void ScheduleHeldFundReleaseJob(string heldFundId, DateTime releaseTime)
+        {
+            BackgroundJob.Schedule<BookingHeldFundService>(
+                service => service.ProcessHeldFundReleaseAsync(heldFundId),
+                releaseTime - DateTime.UtcNow);
+        }
+        
+        public static void ScheduleSlotStatusUpdateJob(string slotId, DateTime endTime)
+        {
+            BackgroundJob.Schedule<BookedSlotStatusUpdateService>(
+                service => service.ProcessSpecificSlotAsync(slotId),
+                endTime - DateTime.UtcNow);
         }
     }
 }

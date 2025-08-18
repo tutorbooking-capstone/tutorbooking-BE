@@ -14,5 +14,6 @@ namespace App.Services.Interfaces
         
         Task<BookingResponse> AcceptTutorOfferAsync(AcceptOfferRequest request);
         Task<TutorBookingOfferResponse> RejectBookingOfferAsync(string offerId);
+        Task<BookingResponse> CreateInstantBookingAsync(InstantBookingRequest request);
     }
 }

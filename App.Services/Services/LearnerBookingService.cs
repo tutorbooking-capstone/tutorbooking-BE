@@ -7,6 +7,7 @@ using App.Repositories.Models.Notifications;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
+using App.Services.Infras;
 using App.Services.Interfaces;
 using Hangfire;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,8 @@ namespace App.Services.Services
         private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly INotificationService _notificationService;
 
-        private const int MIN_HOURS_BEFORE_BOOKING = 1;
+        private const int MIN_HOURS_BEFORE_BOOKING = 24;
+        private const int RELEASE_TIME_OFFSET_HOURS = 3*24;
 
         public LearnerBookingService(
             IUnitOfWork unitOfWork,
@@ -229,19 +231,19 @@ namespace App.Services.Services
                 .ToList();
         }
 
-        public async Task<BookingResponse> AcceptTutorOfferAsync(AcceptOfferRequest request)
+        private async Task<(
+            TutorBookingOffer offer, 
+            Wallet learnerWallet, 
+            decimal totalPrice)> 
+            ValidateOfferAndBookingConditionsAsync(string offerId, string learnerId)
         {
-            var learnerId = _currentUserProvider.GetCurrentUserId();
-            if (string.IsNullOrEmpty(learnerId))
-                throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "User not authenticated");
-
             // Get the offer with all related data
             var offer = await _unitOfWork.GetRepository<TutorBookingOffer>()
                 .ExistEntities()
                 .Include(o => o.OfferedSlots)
                 .Include(o => o.Lesson)
                 .Include(o => o.Tutor)
-                .FirstOrDefaultAsync(o => o.Id == request.OfferId && o.LearnerId == learnerId);
+                .FirstOrDefaultAsync(o => o.Id == offerId && o.LearnerId == learnerId);
 
             if (offer == null)
                 throw new ErrorException(
@@ -255,42 +257,20 @@ namespace App.Services.Services
                     ErrorCode.BadRequest, 
                     "The lesson associated with this offer no longer exists");
 
-            // Kiểm tra hạn sử dụng của offer
             if (offer.IsExpired())
-            {
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
                     $"This offer has expired. Offers are valid for {offer.ExpirationPeriod.TotalMinutes} minutes after creation or update.");
-            }
 
-            // Kiểm tra thời gian của các slot
-            var now = DateTime.UtcNow;
-            var minAllowedTime = now.AddHours(MIN_HOURS_BEFORE_BOOKING);
-            
-            foreach (var slot in offer.OfferedSlots)
-            {
-                var slotStartTime = CalculateSlotStartTime(slot.SlotDateTime.Date, slot.SlotIndex);
-                if (slotStartTime <= minAllowedTime)
-                {
-                    throw new ErrorException(
-                        StatusCodes.Status400BadRequest,
-                        ErrorCode.BadRequest,
-                        $"Cannot book slots that start less than {MIN_HOURS_BEFORE_BOOKING} hour(s) from now. Please contact the tutor for rescheduling.");
-                }
-            }
-
-            // Kiểm tra xem có slot nào đã được book trước đó không
-            // Lấy tất cả các BookedSlot của learner
             var existingBookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
                 .ExistEntities()
                 .Include(bs => bs.Booking)
                 .Where(bs => bs.Booking!.LearnerId == learnerId && 
-                        (bs.Status == SlotStatus.Pending || bs.Status == SlotStatus.AwaitingPayout))
+                        (bs.Status == SlotStatus.Pending))
                 .Select(bs => new { bs.BookedDate.Date, bs.SlotIndex })
                 .ToListAsync();
 
-            // Kiểm tra xem có slot nào trong offer trùng với các slot đã book không
             foreach (var offeredSlot in offer.OfferedSlots)
             {
                 var slotDate = offeredSlot.SlotDateTime.Date;
@@ -301,15 +281,13 @@ namespace App.Services.Services
                     throw new ErrorException(
                         StatusCodes.Status400BadRequest,
                         ErrorCode.BadRequest,
-                        $"You already have a booking for slot {slotIndex} on {slotDate.ToString("dd/MM/yyyy")}. Please check your schedule.");
+                        $"You already have a booking for slot {slotIndex} on {slotDate:dd/MM/yyyy}. Please check your schedule.");
                 }
             }
 
-            // Calculate total price
             var slotCount = offer.OfferedSlots.Count;
             var totalPrice = offer.Lesson.Price * slotCount;
 
-            // Check if learner has enough balance
             var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(w => w.UserId == learnerId);
@@ -320,50 +298,163 @@ namespace App.Services.Services
             if (learnerWallet.Balance < totalPrice)
                 throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Insufficient funds in wallet");
 
-            // Create a lesson snapshot
-            var lessonSnapshot = LessonSnapshot.CreateFromLesson(offer.Lesson);
+            return (offer, learnerWallet, totalPrice);
+        }
+
+        private async Task<(
+            Lesson lesson, 
+            Tutor tutor, 
+            Wallet learnerWallet, 
+            List<(DateTime date, int slotIndex)> slots, 
+            decimal totalPrice)> 
+            ValidateInstantBookingConditionsAsync(InstantBookingRequest request, string learnerId)
+        {
+            // Validate tutor
+            var tutor = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(t => t.UserId == request.TutorId);
+                
+            if (tutor == null)
+                throw new ErrorException(StatusCodes.Status404NotFound, ErrorCode.NotFound, "Tutor not found");
+                
+            // Validate lesson
+            var lesson = await _unitOfWork.GetRepository<Lesson>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(l => l.Id == request.LessonId && l.TutorId == request.TutorId);
+                
+            if (lesson == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound, 
+                    ErrorCode.NotFound, 
+                    "Lesson not found or does not belong to this tutor");
+                    
+            // Check booking config - ONLY FOR INSTANT BOOKING
+            var bookingConfig = await _unitOfWork.GetRepository<BookingConfig>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(bc => bc.TutorId == request.TutorId);
+                
+            if (bookingConfig == null || !bookingConfig.AllowInstantBooking)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    "This tutor does not allow instant booking");
+                    
+            var now = DateTime.UtcNow;
+            var minAllowedTime = now.AddHours(MIN_HOURS_BEFORE_BOOKING);
+            var slots = new List<(DateTime date, int slotIndex)>();
+            
+            foreach (var slotRequest in request.Slots)
+            {
+                var slotDate = slotRequest.SlotDate.Date;
+                var slotIndex = slotRequest.SlotIndex;
+                
+                var slotStartTime = CalculateSlotStartTime(slotDate, slotIndex);
+                if (slotStartTime <= minAllowedTime)
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        $"Cannot book slots that start less than {MIN_HOURS_BEFORE_BOOKING} hour(s) from now");
+                        
+                slots.Add((slotDate, slotIndex));
+            }
+            
+            if (bookingConfig != null)
+            {
+                var existingBookedSlotsCount = await _unitOfWork.GetRepository<BookedSlot>()
+                    .ExistEntities()
+                    .Include(bs => bs.Booking)
+                    .CountAsync(bs => bs.Booking!.TutorId == request.TutorId && 
+                            bs.Booking!.LearnerId == learnerId &&
+                            (bs.Status == SlotStatus.Pending));
+
+                if (existingBookedSlotsCount + slots.Count > bookingConfig.MaxInstantBookingSlots)
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        $"You cannot book more than {bookingConfig.MaxInstantBookingSlots} slots with this tutor");
+            }
+            
+            var existingBookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
+                .ExistEntities()
+                .Include(bs => bs.Booking)
+                .Where(bs => bs.Booking!.LearnerId == learnerId && 
+                        (bs.Status == SlotStatus.Pending))
+                .Select(bs => new { bs.BookedDate.Date, bs.SlotIndex })
+                .ToListAsync();
+
+            foreach (var (slotDate, slotIndex) in slots)
+            {
+                if (existingBookedSlots.Any(bs => bs.Date == slotDate && bs.SlotIndex == slotIndex))
+                    throw new ErrorException(
+                        StatusCodes.Status400BadRequest,
+                        ErrorCode.BadRequest,
+                        $"You already have a booking for slot {slotIndex} on {slotDate:dd/MM/yyyy}");
+            }
+            
+            var totalPrice = lesson.Price * slots.Count;
+            
+            var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == learnerId);
+                
+            if (learnerWallet == null)
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Learner wallet not found");
+                
+            if (learnerWallet.Balance < totalPrice)
+                throw new ErrorException(StatusCodes.Status400BadRequest, ErrorCode.BadRequest, "Insufficient funds in wallet");
+                
+            return (lesson, tutor, learnerWallet, slots, totalPrice);
+        }
+
+        private async Task<BookingResponse> CreateBookingAsync(
+            string tutorId,
+            string learnerId,
+            Lesson lesson,
+            List<(DateTime date, int slotIndex)> slots,
+            Wallet learnerWallet,
+            decimal totalPrice,
+            TutorBookingOffer? offer = null)  
+        {
+            var lessonSnapshot = LessonSnapshot.CreateFromLesson(lesson);
             
             return await _unitOfWork.ExecuteInTransactionAsync(async () => {
-                // Insert lesson snapshot
                 _unitOfWork.GetRepository<LessonSnapshot>().Insert(lessonSnapshot);
                 
-                // Create booking
                 var booking = new Booking
                 {
-                    TutorId = offer.TutorId,
+                    TutorId = tutorId,
                     LearnerId = learnerId,
-                    Note = $"Booking created from offer {offer.Id}",
+                    Note = offer != null 
+                        ? $"Booking created from offer {offer.Id}" 
+                        : "Instant booking",
                     LessonSnapshotId = lessonSnapshot.Id,
-                    OriginalOfferId = offer.Id
+                    OriginalOfferId = offer?.Id
                 };
                 
                 booking.TrackCreate(learnerId);
                 _unitOfWork.GetRepository<Booking>().Insert(booking);
                 
-                // Create booked slots and held funds
                 var bookedSlots = new List<BookedSlot>();
                 var heldFunds = new List<HeldFund>();
                 var escrowWallet = await GetEscrowWalletAsync();
                 
-                foreach (var offeredSlot in offer.OfferedSlots)
+                foreach (var (slotDate, slotIndex) in slots)
                 {
-                    var slotDate = offeredSlot.SlotDateTime.Date;
-                    var slotStartTime = CalculateSlotStartTime(slotDate, offeredSlot.SlotIndex);
-                    var slotEndTime = slotStartTime.AddMinutes(offer.Lesson.DurationInMinutes);
-                    var releaseTime = slotEndTime.AddHours(24); 
+                    var slotStartTime = CalculateSlotStartTime(slotDate, slotIndex);
+                    var slotEndTime = CalculateSlotEndTime(slotDate, slotIndex);
+                    var releaseTime = slotEndTime.AddHours(RELEASE_TIME_OFFSET_HOURS); 
                     
-                    // Create held fund
-                    var heldFund = HeldFund.CreateForBooking(string.Empty, offer.Lesson.Price, releaseTime);
+                    var heldFund = HeldFund.CreateForBooking(string.Empty, lesson.Price, releaseTime);
                     _unitOfWork.GetRepository<HeldFund>().Insert(heldFund);
                     heldFunds.Add(heldFund);
                     
-                    // Create booked slot
+                    // Tạo booked slot
                     var bookedSlot = new BookedSlot
                     {
                         BookingId = booking.Id,
                         BookedDate = slotDate, 
-                        SlotIndex = offeredSlot.SlotIndex,
-                        Status = SlotStatus.AwaitingPayout,
+                        SlotIndex = slotIndex,
+                        Status = SlotStatus.Pending, 
                         HeldFundId = heldFund.Id
                     };
                     
@@ -373,6 +464,8 @@ namespace App.Services.Services
                     
                     heldFund.BookedSlotId = bookedSlot.Id;
                     _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, h => h.BookedSlotId!); 
+
+                    HangfireConfig.ScheduleSlotStatusUpdateJob(bookedSlot.Id, slotEndTime);
                 }
                 
                 var transaction = Transaction.CreatePaymentTransaction(
@@ -380,50 +473,45 @@ namespace App.Services.Services
                     escrowWallet.Id,
                     totalPrice,
                     booking.Id,
-                    $"Payment for booking {booking.Id} with {slotCount} slots held in escrow"
+                    $"Payment for booking {booking.Id} with {slots.Count} slots held in escrow"
                 );
                 
                 _unitOfWork.GetRepository<Transaction>().Insert(transaction);
                 
-                // Update wallet balances
                 var learnerUpdateFields = learnerWallet.SubtractBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerUpdateFields);
                 
                 var escrowUpdateFields = escrowWallet.AddBalance(totalPrice);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
                 
-                _unitOfWork.GetRepository<TutorBookingOffer>().Delete(offer);
-                
-                // Xóa tất cả LearnerTimeSlotRequest liên quan đến tutor này
-                var timeSlotRequests = await _unitOfWork.GetRepository<LearnerTimeSlotRequest>()
-                    .ExistEntities()
-                    .Where(r => r.LearnerId == learnerId && r.TutorId == offer.TutorId)
-                    .ToListAsync();
-                
-                foreach (var request in timeSlotRequests)
-                {
-                    _unitOfWork.GetRepository<LearnerTimeSlotRequest>().Delete(request);
-                }
+                if (offer != null)
+                    _unitOfWork.GetRepository<TutorBookingOffer>().Delete(offer);
                 
                 await _unitOfWork.SaveAsync();
                 
-                // Schedule release of funds using Hangfire with injected client
                 foreach (var heldFund in heldFunds)
                 {
                     if (heldFund.ReleaseAt.HasValue)
-                        _backgroundJobClient.Schedule<IPaymentProcessingService>(
-                            service => service.ProcessHeldFundReleaseAsync(heldFund.Id),
-                            heldFund.ReleaseAt.Value - DateTime.UtcNow
-                        );
+                    {
+                        HangfireConfig.ScheduleHeldFundReleaseJob(heldFund.Id, heldFund.ReleaseAt.Value);
+                    }
                 }
+
+                string notificationTitle = offer != null 
+                    ? "PUSH_ON_LEARNER_ACCEPT_OFFER" 
+                    : "PUSH_ON_LEARNER_INSTANT_BOOK";
+                    
+                string notificationContent = offer != null 
+                    ? "PUSH_ON_LEARNER_ACCEPT_OFFER_BODY" 
+                    : "PUSH_ON_LEARNER_INSTANT_BOOK_BODY";
 
                 await _notificationService.SendToUsersAsync(new()
                 {
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_LEARNER_ACCEPT_OFFER",
-                        Content = "PUSH_ON_LEARNER_ACCEPT_OFFER_BODY",
+                        Title = notificationTitle,
+                        Content = notificationContent,
                         AdditionalData = JsonSerializer.Serialize(new
                         {
                             Id = booking.Id,
@@ -433,24 +521,8 @@ namespace App.Services.Services
                     },
                     ReceiverUserIds = [booking.TutorId]
                 });
-
-                // Map to response
-                return new BookingResponse
-                {
-                    Id = booking.Id,
-                    TutorId = booking.TutorId,
-                    LearnerId = booking.LearnerId,
-                    LessonName = lessonSnapshot.Name,
-                    TotalPrice = totalPrice,
-                    SlotCount = slotCount,
-                    BookedSlots = bookedSlots.Select(bs => new BookedSlotDTO
-                    {
-                        Id = bs.Id,
-                        BookedDate = bs.BookedDate,
-                        SlotIndex = bs.SlotIndex,
-                        Status = bs.Status
-                    }).ToList()
-                };
+                
+                return BookingResponse.FromEntity(booking, lessonSnapshot, bookedSlots, totalPrice);
             });
         }
 
@@ -519,18 +591,6 @@ namespace App.Services.Services
                 .FirstAsync();
         }
 
-        private async Task<Wallet> GetSystemWalletAsync()
-        {
-            var systemWallet = await _unitOfWork.GetRepository<Wallet>()
-                .ExistEntities()
-                .FirstOrDefaultAsync(w => w.Type == WalletType.System);
-                
-            if (systemWallet == null)
-                throw new ErrorException(StatusCodes.Status500InternalServerError, ErrorCode.ServerError, "System wallet not found");
-                
-            return systemWallet;
-        }
-
         private async Task<Wallet> GetEscrowWalletAsync()
         {
             var escrowWallet = await _unitOfWork.GetRepository<Wallet>()
@@ -546,15 +606,54 @@ namespace App.Services.Services
             return escrowWallet;
         }
 
-        // Helper method to calculate actual start time from date and slot index
         private DateTime CalculateSlotStartTime(DateTime date, int slotIndex)
         {
-            // Giả sử mỗi slot là 30 phút và slot đầu tiên (index 0) bắt đầu lúc 8:00 sáng
-            // Bạn có thể điều chỉnh logic này theo cách tính slot của hệ thống của bạn
-            int hoursToAdd = slotIndex / 2; // Mỗi giờ có 2 slot (30 phút mỗi slot)
-            int minutesToAdd = (slotIndex % 2) * 30; // 0 hoặc 30 phút
-            
-            return date.AddHours(8 + hoursToAdd).AddMinutes(minutesToAdd);
+            return date.Date.AddMinutes(slotIndex * 30);
+        }
+
+        private DateTime CalculateSlotEndTime(DateTime date, int slotIndex)
+        {
+            return date.Date.AddMinutes((slotIndex + 1) * 30);
+        }
+
+
+        public async Task<BookingResponse> AcceptTutorOfferAsync(AcceptOfferRequest request)
+        {
+            var learnerId = _currentUserProvider.GetCurrentUserId();
+            if (string.IsNullOrEmpty(learnerId))
+                throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "User not authenticated");
+
+            var (offer, learnerWallet, totalPrice) = await ValidateOfferAndBookingConditionsAsync(request.OfferId, learnerId);
+
+            var slots = offer.OfferedSlots.Select(os => (os.SlotDateTime.Date, os.SlotIndex)).ToList();
+
+            return await CreateBookingAsync(
+                offer.TutorId, 
+                learnerId, 
+                offer.Lesson!, 
+                slots,
+                learnerWallet, 
+                totalPrice,
+                offer); 
+        }
+
+        public async Task<BookingResponse> CreateInstantBookingAsync(InstantBookingRequest request)
+        {
+            var learnerId = _currentUserProvider.GetCurrentUserId();
+            if (string.IsNullOrEmpty(learnerId))
+                throw new ErrorException(StatusCodes.Status401Unauthorized, ErrorCode.Unauthorized, "User not authenticated");
+
+            var (lesson, tutor, learnerWallet, slots, totalPrice) = 
+                await ValidateInstantBookingConditionsAsync(request, learnerId);
+
+            return await CreateBookingAsync(
+                tutor.UserId, 
+                learnerId, 
+                lesson, 
+                slots,
+                learnerWallet, 
+                totalPrice,
+                null); 
         }
     }
 }

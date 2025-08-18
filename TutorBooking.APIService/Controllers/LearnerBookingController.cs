@@ -106,5 +106,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "Từ chối gói học thành công."
             ));
         }
+
+        [HttpPost("instant-booking")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> CreateInstantBooking([FromBody] InstantBookingRequest request)
+        {
+            var result = await _service.CreateInstantBookingAsync(request);
+            return Ok(new BaseResponseModel<BookingResponse>(
+                data: result,
+                message: "Đặt lịch thành công!"
+            ));
+        }
     }
 }

@@ -81,6 +81,7 @@ namespace App.Services
             #region Hangfire Services
             services.AddHangfireServices(configuration);
             services.AddScoped<OfferExpirationService>();
+            services.AddScoped<BookingHeldFundService>();
             #endregion
 
             #region Notification Events
