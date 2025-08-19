@@ -7,6 +7,7 @@ namespace App.DTOs.LegalDocumentDTOs
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public DateTimeOffset CreatedTime { get; set; }
         public DateTimeOffset LastUpdatedTime { get; set; }
@@ -21,6 +22,7 @@ namespace App.DTOs.LegalDocumentDTOs
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                Category = entity.Category,
                 Description = entity.Description,
                 Versions = entity.Versions?
                     .Where(e => e.Status == LegalDocumentStatus.Active)
@@ -40,6 +42,7 @@ namespace App.DTOs.LegalDocumentDTOs
             {
                 Id = entity.Id,
                 Name = entity.Name,
+                Category = entity.Category,
                 Description = entity.Description,
                 Versions = entity.Versions?.Select(v => v.ToResponseWithoutContent()).ToList(),
                 CreatedTime = entity.CreatedTime,
