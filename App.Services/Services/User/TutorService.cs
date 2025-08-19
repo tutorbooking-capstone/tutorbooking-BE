@@ -356,7 +356,6 @@ namespace App.Services.Services.User
                 _unitOfWork.GetRepository<BookingConfig>().Insert(bookingConfig);
 
                 await _unitOfWork.SaveAsync();
-                await _userService.AddRoleToUserAsync(userId, Role.Tutor.ToStringRole());
 
                 return newTutor.ToTutorResponse();
             }, 
