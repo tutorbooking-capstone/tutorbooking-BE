@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
+using App.DTOs.UserDTOs;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Services.Interfaces.User;
@@ -158,6 +159,16 @@ namespace TutorBooking.APIService.Controllers
             await _tutorService.UpdateBookingConfigAsync(request);
             return Ok(new BaseResponseModel<object>(
                 message: "Cập nhật cấu hình đặt lịch thành công!"
+            ));
+        }
+
+        [HttpPut("update-profile")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateTutorProfileRequest request)
+        {
+            await _tutorService.UpdateTutorProfileAsync(request);
+            return Ok(new BaseResponseModel<object>(
+                message: "Cập nhật thông tin gia sư thành công!"
             ));
         }
 

@@ -4,6 +4,7 @@ using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.BlogDTOs;
 using App.DTOs.HashtagDTOs;
 using App.DTOs.RatingDTOs;
+using App.DTOs.UserDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Papers;
 using App.Repositories.Models.Rating;
@@ -467,6 +468,15 @@ namespace App.Services.Services.User
         {
             var tutorId = _userService.GetCurrentUserId();
             await UpdateTutorHashtagsAsync(tutorId, request);
+            await _unitOfWork.SaveAsync();
+        }
+        public async Task UpdateTutorProfileAsync(UpdateTutorProfileRequest request)
+        {
+            var userId = _userService.GetCurrentUserId();
+            var tutor = await GetTutorByIdAsync(userId, false);
+            
+            tutor.Update(request);
+            _unitOfWork.GetRepository<Tutor>().Update(tutor);
             await _unitOfWork.SaveAsync();
         }
 
