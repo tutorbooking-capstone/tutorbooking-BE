@@ -139,6 +139,9 @@ namespace App.Repositories.Models.Scheduling
             
             return newSlot;
         }
+
+        public DateTime GetSlotStartTime => BookedDate + (SlotIndex * TimeSpan.FromMinutes(30));
+        
         #endregion
     }
 }
