@@ -51,6 +51,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public string TeachingMethod { get; set; } = string.Empty;
 		public string ProfileImageUrl  { get; set; } = string.Empty;
 		//public VerificationStatus VerificationStatus { get; set; }
+        public string IntroductionVideoUrl { get; set; } = string.Empty;
         public DateTime? BecameTutorAt { get; set; }
         public float AverageTeachingQuality { get; set; } 
         public float AverageAttitude { get; set; } 
@@ -75,6 +76,10 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             Description = t.Description,
             TeachingMethod = t.TeachingMethod,
             ProfileImageUrl = t.User == null ? string.Empty : t.User.ProfilePictureUrl ?? string.Empty,
+            IntroductionVideoUrl = t.IntroductionVideos
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Select(iv => iv.Url)
+                                                .FirstOrDefault() ?? string.Empty,
             //VerificationStatus = t.Languages.Any(),
             BecameTutorAt = t.BecameTutorAt,
             ApplicationId = t.Application != null ? t.Application.Id : null
