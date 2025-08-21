@@ -6,6 +6,7 @@ namespace App.DTOs.LegalDocumentDTOs
     public class LegalDocumentCreateRequest
     {
         public string Name { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
     }
 
@@ -16,6 +17,7 @@ namespace App.DTOs.LegalDocumentDTOs
             return new LegalDocument
             {
                 Name = request.Name,
+                Category = request.Category,
                 Description = request.Description,
             };
         }
@@ -28,6 +30,9 @@ namespace App.DTOs.LegalDocumentDTOs
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("NAME_REQUIRED")
                 .MaximumLength(100).WithMessage("NAME_MAX_100_CHARACTERS");
+            RuleFor(x => x.Category)
+                .NotEmpty().WithMessage("CATEGORY_REQUIRED")
+                .MaximumLength(100).WithMessage("CATEGORY_MAX_100_CHARACTERS");
             RuleFor(x => x.Description)
                 .NotEmpty().WithMessage("DESCRIPTION_REQUIRED")
                 .MaximumLength(500).WithMessage("DESCRIPTION_MAX_500_CHARACTERS");

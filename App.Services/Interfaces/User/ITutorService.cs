@@ -1,6 +1,7 @@
 ﻿using App.Core.Base;
 using App.DTOs.AppUserDTOs.TutorDTOs;
 using App.DTOs.HashtagDTOs;
+using App.DTOs.UserDTOs;
 using App.Repositories.Models.Scheduling;
 
 namespace App.Services.Interfaces.User
@@ -36,6 +37,7 @@ namespace App.Services.Interfaces.User
         Task<BookingConfigDTO> GetBookingConfigAsync(string tutorId);
         Task UpdateBookingConfigAsync(UpdateBookingConfigRequest request);
         Task SyncBookingConfigsAsync();
+        Task UpdateTutorProfileAsync(UpdateTutorProfileRequest request);
         // Status Management 
         //Task UpdateVerificationStatusAsync(string id, VerificationStatus status, string? updatedBy = null);
     }

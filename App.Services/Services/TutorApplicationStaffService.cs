@@ -10,6 +10,7 @@ using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
 using LinqKit;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Configuration;
 using System.Text.Json;
@@ -135,6 +136,15 @@ namespace App.Services.Services
 
                     await UpdateApplicationStatusAsync(request.ApplicationId, ApplicationStatus.Verified);
                     await UpdateTutorVerificationStatusAsync(tutorApplication.TutorId, VerificationStatus.Verified);
+                    try
+                    {
+                        await _userService.AddRoleToUserAsync(tutorApplication.TutorId, Role.Tutor.ToStringRole());
+                    }
+                    catch (ErrorException ex)
+                    {
+                        if (ex.StatusCode != StatusCodes.Status400BadRequest)
+                            throw;
+                    }
 
                     break;
                 case RevisionAction.RequestRevision:
