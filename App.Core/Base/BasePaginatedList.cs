@@ -1,4 +1,6 @@
-﻿namespace App.Core.Base
+﻿using System.Linq.Expressions;
+
+namespace App.Core.Base
 {
     public class BasePaginatedList<T>
     {

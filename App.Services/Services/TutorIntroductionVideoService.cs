@@ -5,6 +5,7 @@ using App.Repositories.Models;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -48,15 +49,31 @@ namespace App.Services.Services
             return response;
         }
 
-        public async Task<ICollection<TutorIntroductionVideoResponse>> GetPendingAsync(int page, int size)
+
+        public async Task<BasePaginatedList<TutorIntroductionVideoResponse>> GetAsync(TutorIntroductionVideoStatus? status, string? userId,int page = 1, int size = 10)
         {
-            return await _unitOfWork.GetRepository<TutorIntroductionVideo>().ExistEntities()
-                .Where(e => e.Status == TutorIntroductionVideoStatus.Pending)
-                .OrderBy(e => e.CreatedTime)
-                .Select(e => e.ToResponse())
-                .Skip((page - 1) * size)
-                .Take(size)
-                .ToListAsync();
+            var predicate = PredicateBuilder.New<TutorIntroductionVideo>(e => e.Status == TutorIntroductionVideoStatus.Pending);
+            if (status != null)
+                predicate = predicate.And(e => e.Status == status);
+            if (userId != null)
+                predicate = predicate.And(e => e.TutorUserId.Equals(userId));
+
+            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var totalCount = await _unitOfWork.GetRepository<TutorIntroductionVideo>().ExistEntities()
+                .Where(predicate)
+                .CountAsync();
+
+                var result = await _unitOfWork.GetRepository<TutorIntroductionVideo>().ExistEntities()
+               .Where(predicate)
+               .OrderBy(e => e.CreatedTime)
+               .Select(e => e.ToResponse())
+               .Skip((page - 1) * size)
+               .Take(size)
+               .ToListAsync();
+                return new BasePaginatedList<TutorIntroductionVideoResponse>(result, totalCount, page - 1, size);
+            });
+            return response;
         }
 
         public async Task<TutorIntroductionVideoResponse?> GetByIdAsync(string id)
@@ -73,17 +90,9 @@ namespace App.Services.Services
             return entity;
         }
 
-        public async Task<ICollection<TutorIntroductionVideoResponse>> GetByCurrentUserIdAsync(int page = 1, int size = 10)
+        public async Task<BasePaginatedList<TutorIntroductionVideoResponse>> GetByCurrentUserIdAsync(TutorIntroductionVideoStatus? status, int page = 1, int size = 10)
         {
-            var user = _userService.GetCurrentUserId();
-
-            return await _unitOfWork.GetRepository<TutorIntroductionVideo>().ExistEntities()
-                .Where(e => e.TutorUserId.Equals(user))
-                .OrderByDescending(e => e.CreatedTime)
-                .Select(e => e.ToResponse())
-                .Skip((page - 1) * size)
-                .Take(size)
-                .ToListAsync();
+            return await GetAsync(status, _userService.GetCurrentUserId(), page, size);
         }
 
         public async Task<TutorIntroductionVideoResponse> ReviewAsync(TutorIntroductionVideoReviewRequest request)

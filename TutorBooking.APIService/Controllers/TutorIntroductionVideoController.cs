@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.AppUserDTOs.TutorDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -42,20 +43,27 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<TutorIntroductionVideoResponse?>(video, "SUCCESS"));
         }
 
-        [HttpGet("pending")]
-        [Authorize]
-        public async Task<IActionResult> GetPendingTutorIntroductionVideos(int page = 1, int size = 20)
+        [HttpGet]
+        [Authorize]// TODO: Staff Role 
+        public async Task<IActionResult> GetTutorIntroductionVideos(
+            TutorIntroductionVideoStatus? status, 
+            string? tutorId, 
+            int page = 1, 
+            int size = 20)
         {
-            var videos = await _tutorIntroductionVideoService.GetPendingAsync(page, size);
-            return Ok(new BaseResponseModel<ICollection<TutorIntroductionVideoResponse>>(videos, "SUCCESS"));
+            var videos = await _tutorIntroductionVideoService.GetAsync(status, tutorId, page, size);
+            return Ok(new BaseResponseModel<BasePaginatedList<TutorIntroductionVideoResponse>>(videos, videos.AdditionalData, "SUCCESS"));
         }
 
         [HttpGet("current-user")]
         [Authorize]
-        public async Task<IActionResult> GetCurrentUserTutorIntroductionVideos(int page = 1, int size = 10)
+        public async Task<IActionResult> GetCurrentUserTutorIntroductionVideos(
+            TutorIntroductionVideoStatus? status, 
+            int page = 1, 
+            int size = 10)
         {
-            var videos = await _tutorIntroductionVideoService.GetByCurrentUserIdAsync(page, size);
-            return Ok(new BaseResponseModel<ICollection<TutorIntroductionVideoResponse>>(videos, "SUCCESS"));
+            var videos = await _tutorIntroductionVideoService.GetByCurrentUserIdAsync(status, page, size);
+            return Ok(new BaseResponseModel<BasePaginatedList<TutorIntroductionVideoResponse>>(videos, videos.AdditionalData, "SUCCESS"));
         }
 
         [HttpPost("review")]
