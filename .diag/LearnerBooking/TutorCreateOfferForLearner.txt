@@ -1,0 +1,112 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant TutorBookingController
+    participant ITutorBookingService
+    participant TutorBookingService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant TutorBookingOffer
+    participant OfferedSlot
+    participant NotificationService
+    participant HangfireConfig
+
+    Tutor->>Browser: Submit Create Booking Offer Request
+    Browser->>TutorBookingController: HTTP POST /api/tutor-bookings/offers
+    activate TutorBookingController
+    TutorBookingController->>ITutorBookingService: CreateBookingOfferAsync()
+    activate ITutorBookingService
+    ITutorBookingService->>TutorBookingService: CreateBookingOfferAsync()
+    activate TutorBookingService
+
+    TutorBookingService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>TutorBookingService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    TutorBookingService->>IUnitOfWork: GetRepository<Learner>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Learner>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: ExistEntities().AnyAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Learner Exists
+    activate Database
+    Database-->>GenericRepository: Exists result
+    deactivate Database
+    GenericRepository-->>TutorBookingService: Learner exists
+    deactivate GenericRepository
+
+    TutorBookingService->>IUnitOfWork: GetRepository<Lesson>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Lesson>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Lesson by Id and TutorId
+    activate Database
+    Database-->>GenericRepository: Lesson data
+    deactivate Database
+    GenericRepository-->>TutorBookingService: Lesson entity
+    deactivate GenericRepository
+
+    TutorBookingService->>IUnitOfWork: GetRepository<TutorBookingOffer>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<TutorBookingOffer>
+    deactivate IUnitOfWork
+
+    TutorBookingService->>TutorBookingOffer: Create()
+    activate TutorBookingOffer
+    TutorBookingOffer->>OfferedSlot: Create() for each slot
+    activate OfferedSlot
+    OfferedSlot-->>TutorBookingOffer: OfferedSlot entity
+    deactivate OfferedSlot
+    TutorBookingOffer-->>TutorBookingService: new TutorBookingOffer entity
+    deactivate TutorBookingOffer
+
+    TutorBookingService->>GenericRepository: Insert(newOffer)
+    activate GenericRepository
+    GenericRepository-->>TutorBookingService: (entity marked for insert)
+    deactivate GenericRepository
+
+    TutorBookingService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>TutorBookingService: (save complete)
+    deactivate IUnitOfWork
+
+    TutorBookingService->>GenericRepository: Query Created Offer
+    activate GenericRepository
+    GenericRepository->>Database: Query Created Offer with Includes
+    activate Database
+    Database-->>GenericRepository: Created Offer data
+    deactivate Database
+    GenericRepository-->>TutorBookingService: createdOffer entity
+    deactivate GenericRepository
+
+    TutorBookingService->>NotificationService: SendToUsersAsync()
+    activate NotificationService
+    NotificationService-->>TutorBookingService: (notification sent)
+    deactivate NotificationService
+
+    TutorBookingService->>HangfireConfig: ScheduleOfferExpirationJob()
+    activate HangfireConfig
+    HangfireConfig-->>TutorBookingService: (job scheduled)
+    deactivate HangfireConfig
+
+    TutorBookingService-->>ITutorBookingService: createdOffer
+    deactivate TutorBookingService
+    ITutorBookingService-->>TutorBookingController: createdOffer
+    deactivate ITutorBookingService
+    TutorBookingController-->>Browser: HTTP 201 Created
+    deactivate TutorBookingController
+    Browser-->>Tutor: Display success message

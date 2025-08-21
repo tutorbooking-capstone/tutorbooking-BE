@@ -1,0 +1,65 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant TutorController
+    participant ITutorService
+    participant TutorService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant BookingConfig
+    Tutor->>Browser: Submit Update Booking Config Request
+    Browser->>TutorController: HTTP PUT /api/Tutor/booking-config
+    activate TutorController
+    TutorController->>ITutorService: UpdateBookingConfigAsync()
+    activate ITutorService
+    ITutorService->>TutorService: UpdateBookingConfigAsync()
+    activate TutorService
+    TutorService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>TutorService: currentUserId()
+    deactivate ICurrentUserProvider
+    TutorService->>IUnitOfWork: GetRepository<BookingConfig>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query BookingConfig
+    activate Database
+    Database-->>GenericRepository: BookingConfig data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: BookingConfig entity
+    deactivate GenericRepository
+    IUnitOfWork-->>TutorService: BookingConfig entity
+    deactivate IUnitOfWork
+    TutorService->>BookingConfig: Update()
+    activate BookingConfig
+    BookingConfig-->>TutorService: (updated)
+    deactivate BookingConfig
+    TutorService->>IUnitOfWork: GetRepository<BookingConfig>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorService: IGenericRepository<BookingConfig>
+    deactivate IUnitOfWork
+    TutorService->>GenericRepository: UpdateFields()
+    activate GenericRepository
+    GenericRepository-->>TutorService: (entity marked for update)
+    deactivate GenericRepository
+    TutorService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>TutorService: (save complete)
+    deactivate IUnitOfWork
+    TutorService-->>ITutorService: (completion)
+    deactivate TutorService
+    ITutorService-->>TutorController: (completion)
+    deactivate ITutorService
+    TutorController-->>Browser: HTTP 200 OK
+    deactivate TutorController
+    Browser-->>Tutor: Display success message

@@ -1,0 +1,85 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant LessonController
+    participant ILessonService
+    participant LessonService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+
+    Tutor->>Browser: Submit Update Lesson Request
+    Browser->>LessonController: HTTP PUT /api/Lesson/{id}
+    activate LessonController
+    LessonController->>ILessonService: UpdateLessonAsync()
+    activate ILessonService
+    ILessonService->>LessonService: UpdateLessonAsync()
+    activate LessonService
+
+    LessonService->>LessonService: GetLessonEntityByIdAsync()
+    LessonService->>IUnitOfWork: GetRepository<Lesson>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Lesson
+    activate Database
+    Database-->>GenericRepository: Lesson data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: Lesson entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LessonService: Lesson entity
+    deactivate IUnitOfWork
+
+    LessonService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>LessonService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    LessonService->>LessonService: Check ownership
+    LessonService->>LessonService: UpdateLessonEntity()
+
+    LessonService->>IUnitOfWork: GetRepository<Lesson>()
+    activate IUnitOfWork
+    IUnitOfWork-->>LessonService: IGenericRepository<Lesson>
+    deactivate IUnitOfWork
+
+    LessonService->>GenericRepository: Update()
+    activate GenericRepository
+    GenericRepository-->>LessonService: (entity marked for update)
+    deactivate GenericRepository
+
+    LessonService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>LessonService: (save complete)
+    deactivate IUnitOfWork
+
+    LessonService->>LessonService: GetLessonByIdAsync()
+    LessonService->>IUnitOfWork: GetRepository<Lesson>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().Where().Select().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Lesson
+    activate Database
+    Database-->>GenericRepository: Updated Lesson data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: LessonResponse
+    deactivate GenericRepository
+    IUnitOfWork-->>LessonService: LessonResponse
+    deactivate IUnitOfWork
+
+    LessonService-->>ILessonService: LessonResponse
+    deactivate LessonService
+    ILessonService-->>LessonController: LessonResponse
+    deactivate ILessonService
+    LessonController-->>Browser: HTTP 200 OK
+    deactivate LessonController
+    Browser-->>Tutor: Display success message and updated lesson details

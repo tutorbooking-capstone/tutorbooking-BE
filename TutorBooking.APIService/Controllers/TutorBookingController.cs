@@ -14,12 +14,10 @@ namespace TutorBooking.APIService.Controllers
     public class TutorBookingController : ControllerBase
     {
         private readonly ITutorBookingService _service;
-        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public TutorBookingController(ITutorBookingService service, PushNotificationEventHandler notificationEventHandler)
+        public TutorBookingController(ITutorBookingService service)
         {
             _service = service;
-            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpGet("time-slots")]

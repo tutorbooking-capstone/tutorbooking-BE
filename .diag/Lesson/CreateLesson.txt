@@ -1,0 +1,46 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+  participant Tutor as Tutor
+  participant Browser as Browser
+  participant LessonController as LessonController
+  participant ILessonService as ILessonService
+  participant LessonService as LessonService
+  participant ICurrentUserProvider as ICurrentUserProvider
+  participant IUnitOfWork as IUnitOfWork
+  participant GenericRepository as GenericRepository
+  participant Database as Database
+
+  Tutor ->> Browser: Submit Create Lesson Request
+  Browser ->>+ LessonController: HTTP POST /api/Lesson
+  LessonController ->>+ ILessonService: CreateLessonAsync()
+  ILessonService ->>+ LessonService: CreateLessonAsync()
+  LessonService ->>+ ICurrentUserProvider: GetCurrentUserId()
+  ICurrentUserProvider -->>- LessonService: currentUserId()
+  LessonService ->>+ IUnitOfWork: GetRepository<Tutor>()
+  IUnitOfWork ->>+ GenericRepository: ExistEntities()
+  GenericRepository -->>- IUnitOfWork: IQueryable<Tutor>
+  IUnitOfWork -->>- LessonService: IGenericRepository<Tutor>
+  LessonService ->> LessonService: CheckTutorExists()
+  LessonService ->>+ IUnitOfWork: GetRepository<Lesson>()
+  IUnitOfWork -->>- LessonService: IGenericRepository<Lesson>
+  LessonService ->>+ GenericRepository: Insert()
+  GenericRepository -->>- LessonService: (entity added)
+  LessonService ->>+ IUnitOfWork: SaveAsync()
+  IUnitOfWork ->>+ Database: SaveChanges()
+  Database -->>- IUnitOfWork: (data persisted)
+  IUnitOfWork -->>- LessonService: (save complete)
+  LessonService ->>+ IUnitOfWork: GetRepository<Lesson>()
+  IUnitOfWork ->>+ GenericRepository: ExistEntities()
+  GenericRepository -->>- IUnitOfWork: IQueryable<Lesson>
+  IUnitOfWork -->>- LessonService: IGenericRepository<Lesson>
+  LessonService ->>+ GenericRepository: FirstAsync()
+  GenericRepository ->>+ Database: Query
+  Database -->>- GenericRepository: Lesson data
+  GenericRepository -->>- LessonService: LessonResponse
+  LessonService -->>- ILessonService: LessonResponse
+  ILessonService -->>- LessonController: LessonResponse
+  LessonController -->>- Browser: HTTP 201 Created
+  Browser -->> Tutor: Display success message and new lesson

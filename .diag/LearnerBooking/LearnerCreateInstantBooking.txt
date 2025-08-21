@@ -1,0 +1,269 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Learner
+    participant Browser
+    participant LearnerBookingController
+    participant ILearnerBookingService
+    participant LearnerBookingService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant NotificationService
+    participant Hangfire
+
+    Learner->>Browser: Submit Instant Booking Request
+    Browser->>LearnerBookingController: HTTP POST /api/learner-bookings/instant-booking
+    activate LearnerBookingController
+    LearnerBookingController->>ILearnerBookingService: CreateInstantBookingAsync()
+    activate ILearnerBookingService
+    ILearnerBookingService->>LearnerBookingService: CreateInstantBookingAsync()
+    activate LearnerBookingService
+    
+    LearnerBookingService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>LearnerBookingService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    LearnerBookingService->>LearnerBookingService: ValidateInstantBookingConditionsAsync()
+    activate LearnerBookingService
+    LearnerBookingService->>IUnitOfWork: GetRepository<Tutor>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Tutor
+    activate Database
+    Database-->>GenericRepository: Tutor data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: Tutor entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: Tutor entity
+    deactivate IUnitOfWork
+
+    LearnerBookingService->>IUnitOfWork: GetRepository<Lesson>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Lesson
+    activate Database
+    Database-->>GenericRepository: Lesson data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: Lesson entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: Lesson entity
+    deactivate IUnitOfWork
+
+    LearnerBookingService->>IUnitOfWork: GetRepository<BookingConfig>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query BookingConfig
+    activate Database
+    Database-->>GenericRepository: BookingConfig data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: BookingConfig entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: BookingConfig entity
+    deactivate IUnitOfWork
+
+    LearnerBookingService->>IUnitOfWork: GetRepository<BookedSlot>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().CountAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query BookedSlot
+    activate Database
+    Database-->>GenericRepository: BookedSlot count
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: BookedSlot count
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: BookedSlot count
+    deactivate IUnitOfWork
+
+    LearnerBookingService->>IUnitOfWork: GetRepository<BookedSlot>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().ToListAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query BookedSlot
+    activate Database
+    Database-->>GenericRepository: BookedSlot list
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: BookedSlot list
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: BookedSlot list
+    deactivate IUnitOfWork
+
+    LearnerBookingService->>IUnitOfWork: GetRepository<Wallet>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Learner Wallet
+    activate Database
+    Database-->>GenericRepository: Learner Wallet data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: Learner Wallet entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: Learner Wallet entity
+    deactivate IUnitOfWork
+    deactivate LearnerBookingService
+
+    LearnerBookingService->>LearnerBookingService: CreateBookingAsync()
+    activate LearnerBookingService
+    LearnerBookingService->>IUnitOfWork: ExecuteInTransactionAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: Begin Transaction
+    activate Database
+    Database-->>IUnitOfWork: Transaction Started
+    deactivate Database
+
+    IUnitOfWork->>GenericRepository: Insert(LessonSnapshot)
+    activate GenericRepository
+    GenericRepository->>Database: Insert LessonSnapshot
+    activate Database
+    Database-->>GenericRepository: (inserted)
+    deactivate Database
+    deactivate GenericRepository
+
+    IUnitOfWork->>GenericRepository: Insert(Booking)
+    activate GenericRepository
+    GenericRepository->>Database: Insert Booking
+    activate Database
+    Database-->>GenericRepository: (inserted)
+    deactivate Database
+    deactivate GenericRepository
+
+    IUnitOfWork->>LearnerBookingService: GetEscrowWalletAsync()
+    activate LearnerBookingService
+    LearnerBookingService->>IUnitOfWork: GetRepository<Wallet>()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Escrow Wallet
+    activate Database
+    Database-->>GenericRepository: Escrow Wallet data
+    deactivate Database
+    GenericRepository-->>IUnitOfWork: Escrow Wallet entity
+    deactivate GenericRepository
+    IUnitOfWork-->>LearnerBookingService: Escrow Wallet entity
+    deactivate IUnitOfWork
+    deactivate LearnerBookingService
+
+    loop For Each Booked Slot
+        IUnitOfWork->>GenericRepository: Insert(HeldFund)
+        activate GenericRepository
+        GenericRepository->>Database: Insert HeldFund
+        activate Database
+        Database-->>GenericRepository: (inserted)
+        deactivate Database
+        deactivate GenericRepository
+
+        IUnitOfWork->>GenericRepository: Insert(BookedSlot)
+        activate GenericRepository
+        GenericRepository->>Database: Insert BookedSlot
+        activate Database
+        Database-->>GenericRepository: (inserted)
+        deactivate Database
+        deactivate GenericRepository
+
+        IUnitOfWork->>GenericRepository: UpdateFields(HeldFund)
+        activate GenericRepository
+        GenericRepository-->>IUnitOfWork: (entity marked for update)
+        deactivate GenericRepository
+
+        LearnerBookingService->>Hangfire: ScheduleSlotStatusUpdateJob()
+        activate Hangfire
+        Hangfire-->>LearnerBookingService: (job scheduled)
+        deactivate Hangfire
+    end
+
+    IUnitOfWork->>GenericRepository: Insert(Transaction)
+    activate GenericRepository
+    GenericRepository->>Database: Insert Transaction
+    activate Database
+    Database-->>GenericRepository: (inserted)
+    deactivate Database
+    deactivate GenericRepository
+
+    IUnitOfWork->>GenericRepository: UpdateFields(Learner Wallet)
+    activate GenericRepository
+    GenericRepository-->>IUnitOfWork: (entity marked for update)
+    deactivate GenericRepository
+
+    IUnitOfWork->>GenericRepository: UpdateFields(Escrow Wallet)
+    activate GenericRepository
+    GenericRepository-->>IUnitOfWork: (entity marked for update)
+    deactivate GenericRepository
+
+    IUnitOfWork->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>IUnitOfWork: (save complete)
+    deactivate IUnitOfWork
+
+    loop For Each Held Fund
+        LearnerBookingService->>Hangfire: ScheduleHeldFundReleaseJob()
+        activate Hangfire
+        Hangfire-->>LearnerBookingService: (job scheduled)
+        deactivate Hangfire
+    end
+
+    LearnerBookingService->>NotificationService: SendToUsersAsync()
+    activate NotificationService
+    NotificationService->>IUnitOfWork: ExecuteWithConnectionReuseAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>GenericRepository: Insert(NotificationEntity)
+    activate GenericRepository
+    GenericRepository->>Database: Insert NotificationEntity
+    activate Database
+    Database-->>GenericRepository: (inserted)
+    deactivate Database
+    deactivate GenericRepository
+    IUnitOfWork->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>IUnitOfWork: (save complete)
+    deactivate IUnitOfWork
+
+    IUnitOfWork->>GenericRepository: InsertRange(AppUserNotification)
+    activate GenericRepository
+    GenericRepository->>Database: Insert AppUserNotification
+    activate Database
+    Database-->>GenericRepository: (inserted)
+    deactivate Database
+    deactivate GenericRepository
+    IUnitOfWork->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>IUnitOfWork: (save complete)
+    deactivate IUnitOfWork
+    IUnitOfWork-->>NotificationService: (completion)
+    deactivate IUnitOfWork
+    NotificationService-->>LearnerBookingService: (notification sent)
+    deactivate NotificationService
+
+    IUnitOfWork->>Database: Commit Transaction
+    activate Database
+    Database-->>IUnitOfWork: Transaction Committed
+    deactivate Database
+    IUnitOfWork-->>LearnerBookingService: (transaction complete)
+    deactivate IUnitOfWork
+    deactivate LearnerBookingService
+
+    LearnerBookingService-->>ILearnerBookingService: BookingResponse
+    deactivate LearnerBookingService
+    ILearnerBookingService-->>LearnerBookingController: BookingResponse
+    deactivate ILearnerBookingService
+    LearnerBookingController-->>Browser: HTTP 200 OK (BookingResponse)
+    deactivate LearnerBookingController
+    Browser-->>Learner: Display booking success
