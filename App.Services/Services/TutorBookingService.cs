@@ -1,6 +1,7 @@
 using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
+using App.Core.Utils;
 using App.DTOs.BookingDTOs;
 using App.DTOs.NotificationDTOs;
 using App.Repositories.Models;
@@ -300,9 +301,14 @@ namespace App.Services.Services
                     ErrorCode.Forbidden, 
                     "You are not authorized to modify this booked slot.");
 
+            if (bookedSlot.Status != SlotStatus.Pending)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    "SLOT_STATUS_MUST_BE_PENDING");
             try
             {
-                var updateFields = bookedSlot.MarkAsCompleted(tutorId);
+                var updateFields = bookedSlot.ModifySlotStatus(tutorId, SlotStatus.AwaitingPayout);
 
                 if (updateFields.Any())
                 {
