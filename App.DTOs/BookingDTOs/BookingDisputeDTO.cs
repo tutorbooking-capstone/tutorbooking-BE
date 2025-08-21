@@ -18,7 +18,7 @@ namespace App.DTOs.BookingDTOs
     public class CreateDisputeRequest
     {
         [Required]
-        public string BookingId { get; set; } = string.Empty;
+        public string BookedSlotId { get; set; } = string.Empty;
 
         [Required]
         [MinLength(10)]
@@ -60,7 +60,7 @@ namespace App.DTOs.BookingDTOs
     {
         public string Id { get; set; } = string.Empty;
         public string CaseNumber { get; set; } = string.Empty;
-        public string BookingId { get; set; } = string.Empty;
+        public string BookedSlotId { get; set; } = string.Empty;
         public BookingUserInfo? Learner { get; set; }
         public BookingUserInfo? Tutor { get; set; }
         public string LearnerReason { get; set; } = string.Empty;
@@ -87,7 +87,7 @@ namespace App.DTOs.BookingDTOs
             {
                 Id = d.Id,
                 CaseNumber = d.CaseNumber,
-                BookingId = d.BookingId,
+                BookedSlotId = d.BookedSlotId,
                 Learner = BookingUserInfo.FromUser(d.Learner),
                 Tutor = BookingUserInfo.FromUser(d.Tutor),
                 LearnerReason = d.LearnerReason,
@@ -117,8 +117,8 @@ namespace App.DTOs.BookingDTOs
     {
         public CreateDisputeRequestValidator()
         {
-            RuleFor(x => x.BookingId)
-                .NotEmpty().WithMessage("ID của booking không được để trống.");
+            RuleFor(x => x.BookedSlotId)
+                .NotEmpty().WithMessage("ID của bookedSlot không được để trống.");
 
             RuleFor(x => x.Reason)
                 .NotEmpty().WithMessage("Lý do khiếu nại không được để trống.")

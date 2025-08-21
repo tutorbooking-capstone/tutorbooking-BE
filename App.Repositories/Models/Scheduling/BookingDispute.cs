@@ -1,5 +1,6 @@
 using App.Core.Base;
 using App.Core.Utils;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using System.Linq.Expressions;
 
@@ -45,7 +46,7 @@ namespace App.Repositories.Models
     public class BookingDispute : CoreEntity
     {
         // Thông tin cơ bản
-        public string BookingId { get; set; } = string.Empty;
+        public string BookedSlotId { get; set; } = string.Empty;
         public string LearnerId { get; set; } = string.Empty;
         public string TutorId { get; set; } = string.Empty;
         public string? StaffId { get; set; }  
@@ -65,9 +66,9 @@ namespace App.Repositories.Models
         public DateTime? TutorRespondedAt { get; set; }
         public DateTime? StaffReviewEndTime { get; set; } // Thời gian kết thúc xem xét (48h)
         public DateTime? ResolvedAt { get; set; }
-        
+
         // Thuộc tính navigation
-        public virtual Booking? Booking { get; set; }
+        public virtual BookedSlot? BookedSlot { get; set; }
         public virtual Learner? Learner { get; set; }
         public virtual Tutor? Tutor { get; set; }
         public virtual AppUser? Staff { get; set; }
@@ -75,7 +76,7 @@ namespace App.Repositories.Models
         #region Behaviors
         // Tạo mới một khiếu nại
         public static BookingDispute CreateDispute(
-            string bookingId,
+            string bookedSlotId,
             string learnerId,
             string tutorId,
             string learnerReason,
@@ -86,7 +87,7 @@ namespace App.Repositories.Models
             
             return new BookingDispute
             {
-                BookingId = bookingId,
+                BookedSlotId = bookedSlotId,
                 LearnerId = learnerId,
                 TutorId = tutorId,
                 CaseNumber = caseNumber,

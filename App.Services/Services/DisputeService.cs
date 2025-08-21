@@ -12,6 +12,8 @@ using App.Core.Constants;
 using App.DTOs.NotificationDTOs;
 using Microsoft.AspNetCore.Http;
 using System.Text.Json;
+using System.Linq.Expressions;
+using Microsoft.AspNetCore.Hosting;
 
 namespace App.Services.Services
 {
@@ -21,17 +23,20 @@ namespace App.Services.Services
         private readonly ICurrentUserProvider _currentUserProvider;
         private readonly IWalletService _walletService;
         private readonly INotificationService _notificationService;
+        private readonly ITutorBookingService _tutorBookingService;
 
         public DisputeService(
             IUnitOfWork unitOfWork,
             ICurrentUserProvider currentUserProvider,
             IWalletService walletService,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            ITutorBookingService tutorBookingService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
             _walletService = walletService;
             _notificationService = notificationService;
+            _tutorBookingService = tutorBookingService;
         }
 
         #region Helper Methods
@@ -75,41 +80,55 @@ namespace App.Services.Services
             return tutor.UserId;
         }
 
-        private async Task<Booking> GetAndValidateBookingAsync(string bookingId, string learnerId)
+        private async Task<BookedSlot> GetAndValidateBookedSlotAsync(string bookedSlotId, string learnerId)
         {
-            var booking = await _unitOfWork.GetRepository<Booking>()
+            var bookedSlot = await _unitOfWork.GetRepository<BookedSlot>()
                 .GetQueryable()
-                .Include(b => b.Tutor)
-                .Include(b => b.Learner)
-                .Include(b => b.BookedSlots)
-                .FirstOrDefaultAsync(b => b.Id == bookingId && b.LearnerId == learnerId);
+                .Include(bs => bs.Booking)
+                    .ThenInclude(b => b!.Tutor)
+                .Include(bs => bs.Booking)
+                    .ThenInclude(b => b!.Learner)
+                .FirstOrDefaultAsync(bs => bs.Id == bookedSlotId && bs.Booking!.LearnerId == learnerId);
                 
-            if (booking == null)
+            if (bookedSlot == null)
                 throw new ErrorException(
                     StatusCodes.Status404NotFound, 
                     ErrorCode.NotFound, 
-                    "Không tìm thấy thông tin đặt chỗ");
-                
-            if (booking.Status == BookingStatus.Cancelled)
+                    "Không tìm thấy thông tin slot đã đặt");
+
+            if (bookedSlot.Status == SlotStatus.Cancelled || bookedSlot.Status == SlotStatus.CancelledDisputed)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest, 
                     ErrorCode.BadRequest, 
-                    "Đặt chỗ này đã bị hủy");
-                
-            if (booking.Status == BookingStatus.Disputed)
+                    "Slot này đã bị hủy");
+
+            if (bookedSlot.Status == SlotStatus.Completed)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Slot này đã hoàn thành. Không thể khiếu nại");
+
+            if (bookedSlot.Status != SlotStatus.AwaitingPayout)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Slot này chưa đến giai đoạn được khiếu nại.");
+
+            if (!string.IsNullOrEmpty(bookedSlot.DisputeId))
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest, 
                     ErrorCode.BadRequest, 
-                    "Đặt chỗ này đang trong quá trình tranh chấp");
+                    "Slot này đang trong quá trình tranh chấp");
                 
-            return booking;
+            return bookedSlot;
         }
 
         private async Task<BookingDispute> GetAndValidateDisputeAsync(string disputeId, bool checkEscalated = false)
         {
             var dispute = await _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
-                .Include(d => d.Booking)
+                .Include(d => d.BookedSlot)
+                    .ThenInclude(bs => bs!.Booking)
                 .Include(d => d.Learner)
                 .Include(d => d.Tutor)
                 .FirstOrDefaultAsync(d => d.Id == disputeId);
@@ -129,119 +148,49 @@ namespace App.Services.Services
             return dispute;
         }
 
-        private async Task<List<BookedSlot>> GetUpcomingSlotsAsync(string bookingId)
+        private async Task ProcessDisputeResolution(BookingDispute dispute, DisputeResolution resolution)
         {
-            return await _unitOfWork.GetRepository<BookedSlot>()
-                .GetQueryable()
-                .Where(bs => bs.BookingId == bookingId && 
-                        bs.BookedDate > DateTime.UtcNow && 
-                        bs.Status != SlotStatus.Cancelled && 
-                        bs.Status != SlotStatus.CancelledDisputed &&
-                        bs.Status != SlotStatus.Completed)  
-                .ToListAsync();
-        }
-
-        private async Task CancelUpcomingSlotsAsync(string bookingId, string disputeId)
-        {
-            var slots = await GetUpcomingSlotsAsync(bookingId);
-            var userId = GetAuthenticatedUserId();
             var bookedSlotRepo = _unitOfWork.GetRepository<BookedSlot>();
-            var heldFundRepo = _unitOfWork.GetRepository<HeldFund>();
+            var bookedSlot = dispute.BookedSlot;
             
-            foreach (var slot in slots)
+            if (bookedSlot == null)
             {
-                var updateProperties = slot.MarkAsCancelledDisputed(disputeId, userId);
-                bookedSlotRepo.UpdateFields(slot, updateProperties.ToArray());
+                bookedSlot = await bookedSlotRepo.GetByIdAsync(dispute.BookedSlotId);
+                if (bookedSlot == null)
+                    return;
+            }
                 
-                if (!string.IsNullOrEmpty(slot.HeldFundId))
+            // Process funds based on resolution
+            if (!string.IsNullOrEmpty(bookedSlot.HeldFundId))
+            {
+                var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(bookedSlot.HeldFundId);
+                if (heldFund != null)
                 {
-                    var heldFund = await heldFundRepo.GetByIdAsync(slot.HeldFundId);
-                    if (heldFund != null)
+                    Expression<Func<BookedSlot, object>>[] updateProperties;
+                    switch (resolution)
                     {
-                        var updateFundProperties = heldFund.UpdateStatus(HeldFundStatus.Disputed);
-                        heldFundRepo.UpdateFields(heldFund, updateFundProperties.ToArray());
+                        case DisputeResolution.LearnerWithdrew:
+                        case DisputeResolution.StaffTutorWin:
+                            updateProperties = bookedSlot.UpdateStatus(SlotStatus.AwaitingPayout, GetAuthenticatedUserId());
+                            bookedSlotRepo.UpdateFields(bookedSlot, updateProperties);
+                            break;
+                            
+                        case DisputeResolution.TutorNoResponse:
+                        case DisputeResolution.StaffLearnerWin:
+                            updateProperties = bookedSlot.UpdateStatus(SlotStatus.CancelledDisputed, GetAuthenticatedUserId());
+                            await _walletService.RefundHeldFundToLearnerAsync(heldFund.Id);
+                            break;
+                            
+                        case DisputeResolution.StaffDraw:
+                            // 50% to tutor, 50% to learner
+                            await _walletService.PartialRefundForDisputeAsync(
+                                heldFund.Id,
+                                0.5m, // 50% to tutor
+                                bookedSlot.BookingId);
+                            break;
                     }
                 }
             }
-        }
-
-        private async Task ProcessDisputeResolution(BookingDispute dispute, DisputeResolution resolution)
-        {
-            // Get all affected slots
-            var affectedSlots = await _unitOfWork.GetRepository<BookedSlot>()
-                .GetQueryable()
-                .Where(bs => bs.DisputeId == dispute.Id)
-                .ToListAsync();
-
-            var bookedSlotRepo = _unitOfWork.GetRepository<BookedSlot>();
-                
-            // Process funds based on resolution
-            foreach (var slot in affectedSlots)
-            {
-                if (string.IsNullOrEmpty(slot.HeldFundId))
-                    continue;
-                    
-                var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(slot.HeldFundId);
-                if (heldFund == null)
-                    continue;
-                
-                switch (resolution)
-                {
-                    case DisputeResolution.LearnerWithdrew:
-                        var updateProperties = slot.UpdateStatus(SlotStatus.AwaitingPayout, GetAuthenticatedUserId());
-                        bookedSlotRepo.UpdateFields(slot, updateProperties);
-                        break;
-                        
-                    case DisputeResolution.TutorNoResponse:
-                    case DisputeResolution.StaffLearnerWin:
-                        await _walletService.RefundHeldFundToLearnerAsync(heldFund.Id);
-                        break;
-                        
-                    case DisputeResolution.StaffTutorWin:
-                        // 5% to tutor, 95% to learner
-                        await _walletService.PartialRefundForDisputeAsync(
-                            heldFund.Id, 
-                            0.05m, // 5% to tutor
-                            dispute.BookingId);
-                        break;
-                        
-                    case DisputeResolution.StaffDraw:
-                        // Full refund to learner, no penalty to tutor
-                        await _walletService.RefundHeldFundToLearnerAsync(heldFund.Id);
-                        break;
-                }
-            }
-            
-            // Update booking status
-            if (dispute.Booking != null)
-            {
-                BookingStatus newStatus;
-                
-                switch (resolution)
-                {
-                    case DisputeResolution.LearnerWithdrew:
-                        newStatus = BookingStatus.Confirmed;
-                        break;
-                    case DisputeResolution.TutorNoResponse:
-                    case DisputeResolution.StaffLearnerWin:
-                    case DisputeResolution.StaffTutorWin:
-                    case DisputeResolution.StaffDraw:
-                        newStatus = BookingStatus.Cancelled;
-                        break;
-                    default:
-                        newStatus = BookingStatus.Confirmed;
-                        break;
-                }
-
-                var bookingRepo = _unitOfWork.GetRepository<Booking>();
-                
-                var updateProperties = dispute.Booking.UpdateStatus(newStatus, GetAuthenticatedUserId());
-                bookingRepo.UpdateFields(dispute.Booking, updateProperties.ToArray());
-                
-                var clearDisputeProperties = dispute.Booking.ClearCurrentDispute();
-                bookingRepo.UpdateFields(dispute.Booking, clearDisputeProperties.ToArray());
-            }
-            
             // Send notifications
             await SendDisputeResolvedNotificationsAsync(dispute, resolution);
         }
@@ -292,13 +241,13 @@ namespace App.Services.Services
             switch (resolution)
             {
                 case DisputeResolution.LearnerWithdrew:
-                    tutorMessage = $"Học viên đã rút lại khiếu nại {dispute.CaseNumber}. Booking tiếp tục như bình thường.";
-                    learnerMessage = $"Bạn đã rút lại khiếu nại {dispute.CaseNumber}. Booking tiếp tục như bình thường.";
+                    tutorMessage = $"Học viên đã rút lại khiếu nại {dispute.CaseNumber}. Slot tiếp tục như bình thường.";
+                    learnerMessage = $"Bạn đã rút lại khiếu nại {dispute.CaseNumber}. Slot tiếp tục như bình thường.";
                     break;
                     
                 case DisputeResolution.TutorNoResponse:
-                    tutorMessage = $"Bạn không phản hồi khiếu nại {dispute.CaseNumber} đúng hạn. Hệ thống đã hủy các buổi học còn lại và hoàn tiền cho học viên.";
-                    learnerMessage = $"Gia sư không phản hồi khiếu nại {dispute.CaseNumber}. Hệ thống đã hủy các buổi học còn lại và hoàn tiền cho bạn.";
+                    tutorMessage = $"Bạn không phản hồi khiếu nại {dispute.CaseNumber} đúng hạn. Hệ thống đã hủy slot và hoàn tiền cho học viên.";
+                    learnerMessage = $"Gia sư không phản hồi khiếu nại {dispute.CaseNumber}. Hệ thống đã hủy slot và hoàn tiền cho bạn.";
                     break;
                     
                 case DisputeResolution.StaffLearnerWin:
@@ -383,39 +332,30 @@ namespace App.Services.Services
             }
         }
 
-        private async Task<decimal> CalculateDisputedAmount(List<BookedSlot> slots)
+        private async Task<decimal> CalculateDisputedAmount(BookedSlot slot)
         {
-            if (slots == null || !slots.Any())
-                return 0;
-                
-            decimal total = 0;
-            
-            foreach (var slot in slots)
+            // Get HeldFund amount if available
+            if (!string.IsNullOrEmpty(slot.HeldFundId))
             {
-                // Get HeldFund amount if available
-                if (!string.IsNullOrEmpty(slot.HeldFundId))
+                var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(slot.HeldFundId);
+                if (heldFund != null)
                 {
-                    var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(slot.HeldFundId);
-                    if (heldFund != null)
-                    {
-                        total += heldFund.Amount;
-                        continue;
-                    }
-                }
-                
-                // Otherwise try to get from booking's lesson
-                if (slot.Booking?.LessonSnapshot != null)
-                {
-                    // Use the snapshot price
-                    var lessonSnapshot = await _unitOfWork.GetRepository<LessonSnapshot>().GetByIdAsync(slot.Booking.LessonSnapshotId!);
-                    if (lessonSnapshot != null)
-                    {
-                        total += lessonSnapshot.Price;
-                    }
+                    return heldFund.Amount;
                 }
             }
             
-            return total;
+            // Otherwise try to get from booking's lesson
+            if (slot.Booking?.LessonSnapshot != null)
+            {
+                // Use the snapshot price
+                var lessonSnapshot = await _unitOfWork.GetRepository<LessonSnapshot>().GetByIdAsync(slot.Booking.LessonSnapshotId!);
+                if (lessonSnapshot != null)
+                {
+                    return lessonSnapshot.Price;
+                }
+            }
+            
+            return 0;
         }
         #endregion
 
@@ -423,14 +363,7 @@ namespace App.Services.Services
         public async Task<BookingDisputeResponse> CreateDisputeAsync(CreateDisputeRequest request)
         {
             var learnerId = await GetAuthenticatedLearnerIdAsync();
-            var booking = await GetAndValidateBookingAsync(request.BookingId, learnerId);
-            
-            // Check if there's already an active dispute
-            if (booking.Status == BookingStatus.DisputeRequested)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Đặt chỗ này đã có khiếu nại đang chờ xử lý");
+            var bookedSlot = await GetAndValidateBookedSlotAsync(request.BookedSlotId, learnerId);
             
             // Create evidence URLs JSON if provided
             string? evidenceUrlsJson = null;
@@ -439,25 +372,30 @@ namespace App.Services.Services
             
             // Create dispute
             var dispute = BookingDispute.CreateDispute(
-                request.BookingId,
+                bookedSlot.Id,
                 learnerId,
-                booking.TutorId,
+                bookedSlot.Booking!.TutorId,
                 request.Reason,
                 evidenceUrlsJson);
 
             var disputeRepo = _unitOfWork.GetRepository<BookingDispute>();
+            var bookedSlotRepo = _unitOfWork.GetRepository<BookedSlot>();
             var bookingRepo = _unitOfWork.GetRepository<Booking>();
                 
             // Add to database
             disputeRepo.Insert(dispute);
             
-            // Update booking status
-            var updateProperties = booking.UpdateStatus(BookingStatus.DisputeRequested, learnerId);
-            bookingRepo.UpdateFields(booking, updateProperties.ToArray());
+            // Update slot with dispute reference
+            var slotUpdateProperties = bookedSlot.MarkAsCancelledDisputed(dispute.Id, learnerId);
+            bookedSlotRepo.UpdateFields(bookedSlot, slotUpdateProperties.ToArray());
             
-            // Set current dispute
-            var disputeProperties = booking.SetCurrentDispute(dispute.Id);
-            bookingRepo.UpdateFields(booking, disputeProperties.ToArray());
+            // Update booking status to dispute requested
+            var updateProperties = bookedSlot.Booking!.UpdateStatus(BookingStatus.DisputeRequested, learnerId);
+            bookingRepo.UpdateFields(bookedSlot.Booking, updateProperties.ToArray());
+            
+            // Set current dispute on booking
+            var disputeProperties = bookedSlot.Booking.SetCurrentDispute(dispute.Id);
+            bookingRepo.UpdateFields(bookedSlot.Booking, disputeProperties.ToArray());
             
             await _unitOfWork.SaveAsync();
             
@@ -620,11 +558,11 @@ namespace App.Services.Services
             disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
             
             // Get booking and escalate
-            var booking = await _unitOfWork.GetRepository<Booking>().GetByIdAsync(dispute.BookingId);
-            if (booking != null)
+            var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
+            if (bookedSlot?.Booking != null)
             {
-                var updateBookingProperties = booking.UpdateStatus(BookingStatus.Disputed, tutorId);
-                _unitOfWork.GetRepository<Booking>().UpdateFields(booking, updateBookingProperties.ToArray());
+                var updateBookingProperties = bookedSlot.Booking.UpdateStatus(BookingStatus.Disputed, tutorId);
+                _unitOfWork.GetRepository<Booking>().UpdateFields(bookedSlot.Booking, updateBookingProperties.ToArray());
             }
             
             // Escalate to staff review
@@ -632,8 +570,16 @@ namespace App.Services.Services
             var escalateProperties = dispute.EscalateToStaff(staffId);
             disputeRepo.UpdateFields(dispute, escalateProperties.ToArray());
             
-            // Cancel upcoming slots and move funds to escrow
-            await CancelUpcomingSlotsAsync(dispute.BookingId, dispute.Id);
+            // Update HeldFund status if exists
+            if (!string.IsNullOrEmpty(bookedSlot?.HeldFundId))
+            {
+                var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(bookedSlot.HeldFundId);
+                if (heldFund != null)
+                {
+                    var updateFundProperties = heldFund.UpdateStatus(HeldFundStatus.Disputed);
+                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, updateFundProperties.ToArray());
+                }
+            }
             
             await _unitOfWork.SaveAsync();
             
@@ -829,7 +775,8 @@ namespace App.Services.Services
             // 3. No tutor response yet
             var expiredDisputes = await _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
-                .Include(d => d.Booking)
+                .Include(d => d.BookedSlot)
+                    .ThenInclude(bs => bs!.Booking)
                 .Where(d => d.Status == DisputeStatus.PendingReconciliation &&
                             d.ReconciliationEndTime < DateTime.UtcNow &&
                             string.IsNullOrEmpty(d.TutorResponse))
@@ -863,7 +810,8 @@ namespace App.Services.Services
             // 2. StaffReviewEndTime has passed
             var expiredDisputes = await _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
-                .Include(d => d.Booking)
+                .Include(d => d.BookedSlot)
+                    .ThenInclude(bs => bs!.Booking)
                 .Where(d => d.Status == DisputeStatus.AwaitingStaffReview &&
                             d.StaffReviewEndTime.HasValue &&
                             d.StaffReviewEndTime.Value < DateTime.UtcNow)
@@ -898,7 +846,8 @@ namespace App.Services.Services
         {
             var dispute = await _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
-                .Include(d => d.Booking)
+                .Include(d => d.BookedSlot)
+                    .ThenInclude(bs => bs!.Booking)
                 .Include(d => d.Learner).ThenInclude(l => l!.User)
                 .Include(d => d.Tutor).ThenInclude(t => t!.User)
                 .FirstOrDefaultAsync(d => d.Id == disputeId);
@@ -916,24 +865,26 @@ namespace App.Services.Services
         {
             var bookingDisputeResponse = await GetDisputeResponseAsync(dispute.Id);
             
-            // Get affected slots
-            var affectedSlots = await _unitOfWork.GetRepository<BookedSlot>()
+            // Get the specific disputed slot
+            var disputedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>()
                 .GetQueryable()
                 .Include(bs => bs.HeldFund)
-                .Where(bs => bs.BookingId == dispute.BookingId && 
-                        (bs.Status == SlotStatus.CancelledDisputed || bs.DisputeId == dispute.Id))
-                .ToListAsync();
+                .FirstOrDefaultAsync(bs => bs.Id == dispute.BookedSlotId);
                 
-            var slotResponses = affectedSlots.Select(s => new BookedSlotDTO
+            var slotResponses = new List<BookedSlotDTO>();
+            if (disputedSlot != null)
             {
-                Id = s.Id,
-                BookedDate = s.BookedDate,
-                SlotIndex = s.SlotIndex,
-                Status = s.Status
-            }).ToList();
+                slotResponses.Add(new BookedSlotDTO
+                {
+                    Id = disputedSlot.Id,
+                    BookedDate = disputedSlot.BookedDate,
+                    SlotIndex = disputedSlot.SlotIndex,
+                    Status = disputedSlot.Status
+                });
+            }
             
-            // Calculate disputed amount
-            var disputedAmount = await CalculateDisputedAmount(affectedSlots);
+            // Calculate disputed amount for this specific slot
+            var disputedAmount = disputedSlot != null ? await CalculateDisputedAmount(disputedSlot) : 0;
             
             return new DisputeDetailResponse
             {
