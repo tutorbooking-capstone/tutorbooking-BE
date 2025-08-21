@@ -394,8 +394,8 @@ namespace App.Services.Services
             bookingRepo.UpdateFields(bookedSlot.Booking, updateProperties.ToArray());
             
             // Set current dispute on booking
-            var disputeProperties = bookedSlot.Booking.SetCurrentDispute(dispute.Id);
-            bookingRepo.UpdateFields(bookedSlot.Booking, disputeProperties.ToArray());
+            //var disputeProperties = bookedSlot.Booking.SetCurrentDispute(dispute.Id);
+            //bookingRepo.UpdateFields(bookedSlot.Booking, disputeProperties.ToArray());
             
             await _unitOfWork.SaveAsync();
             
