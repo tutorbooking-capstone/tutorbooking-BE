@@ -108,6 +108,22 @@ namespace App.Services.Services
             entity.Review(ref request);
             _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(entity);
             await _unitOfWork.SaveAsync();
+
+            // If the status is approved, reject all other approved videos
+            if (entity.Status == TutorIntroductionVideoStatus.Approved)
+            {
+                var approvedEntities = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
+                    .ExistEntities()
+                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Approved) && !e.Id.Equals(entity.Id))
+                    .ToArrayAsync();
+                if (approvedEntities.Length > 0)
+                    foreach (var approvedEntity in approvedEntities)
+                    {
+                        approvedEntity.Status = TutorIntroductionVideoStatus.Rejected;
+                        _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(approvedEntity);
+                    }
+            }
+            await _unitOfWork.SaveAsync();
             return entity.ToResponse();
         }
 

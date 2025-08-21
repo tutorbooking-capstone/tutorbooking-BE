@@ -52,7 +52,7 @@ namespace TutorBooking.APIService.Controllers
             int size = 20)
         {
             var videos = await _tutorIntroductionVideoService.GetAsync(status, tutorId, page, size);
-            return Ok(new BaseResponseModel<BasePaginatedList<TutorIntroductionVideoResponse>>(videos, videos.AdditionalData, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(videos.Items, videos.AdditionalData, "SUCCESS"));
         }
 
         [HttpGet("current-user")]
@@ -63,7 +63,7 @@ namespace TutorBooking.APIService.Controllers
             int size = 10)
         {
             var videos = await _tutorIntroductionVideoService.GetByCurrentUserIdAsync(status, page, size);
-            return Ok(new BaseResponseModel<BasePaginatedList<TutorIntroductionVideoResponse>>(videos, videos.AdditionalData, "SUCCESS"));
+            return Ok(new BaseResponseModel<object>(videos.Items, videos.AdditionalData, "SUCCESS"));
         }
 
         [HttpPost("review")]
