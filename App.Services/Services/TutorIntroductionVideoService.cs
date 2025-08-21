@@ -34,7 +34,7 @@ namespace App.Services.Services
                 #region delete other pending entities
                 var pendingEntities = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
                     .ExistEntities()
-                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Pending))
+                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Pending) && !e.Id.Equals(entity.Id))
                     .ToArrayAsync();
                 if (pendingEntities.Length > 0)
                 {
