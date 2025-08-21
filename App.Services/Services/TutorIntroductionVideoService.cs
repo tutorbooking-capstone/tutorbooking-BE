@@ -5,7 +5,7 @@ using App.Repositories.Models;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
 using App.Services.Interfaces.User;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace App.Services.Services
