@@ -163,7 +163,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPut("update-profile")]
-        [AuthorizeRoles(Role.Tutor)]
+        [Authorize]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateTutorProfileRequest request)
         {
             await _tutorService.UpdateTutorProfileAsync(request);
