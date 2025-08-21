@@ -666,21 +666,22 @@ namespace App.Repositories.Context
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Booking -> CurrentDispute (1:1) optional
-            modelBuilder.Entity<Booking>()
-                .HasOne(b => b.CurrentDispute)
-                .WithOne()
-                .HasForeignKey<Booking>(b => b.CurrentDisputeId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull);
+            // BookingDispute -> BookedSlot (M:1)
+            modelBuilder.Entity<BookingDispute>()
+                .HasOne(d => d.BookedSlot)
+                .WithMany() // Nếu BookedSlot không có navigation property về BookingDisputes
+                .HasForeignKey(d => d.BookedSlotId)
+                .IsRequired(false) // Đảm bảo khóa ngoại là tùy chọn
+                .OnDelete(DeleteBehavior.SetNull); // Đặt thành NULL khi BookedSlot bị xóa
 
-            // BookedSlot -> Dispute (M:1) optional
+            // BookedSlot -> Dispute (M:1) (cấu hình này đã có ở AppDbContext.cs từ trước)
             modelBuilder.Entity<BookedSlot>()
                 .HasOne(bs => bs.Dispute)
-                .WithMany()
+                .WithMany() // Nếu BookingDispute không có navigation property về BookedSlots (nhưng thực tế là có)
                 .HasForeignKey(bs => bs.DisputeId)
-                .IsRequired(false)
-                .OnDelete(DeleteBehavior.SetNull);
+                .IsRequired(false) // Đảm bảo khóa ngoại là tùy chọn
+                .OnDelete(DeleteBehavior.SetNull); // Đặt thành NULL khi BookingDispute bị xóa
+
             #endregion
 
             #region RescheduleRequest Configuration

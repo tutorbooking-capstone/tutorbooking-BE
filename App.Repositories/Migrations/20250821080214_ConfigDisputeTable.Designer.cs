@@ -3,6 +3,7 @@ using System;
 using App.Repositories.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace App.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250821080214_ConfigDisputeTable")]
+    partial class ConfigDisputeTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -230,6 +233,10 @@ namespace App.Repositories.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_time");
 
+                    b.Property<string>("CurrentDisputeId")
+                        .HasColumnType("text")
+                        .HasColumnName("current_dispute_id");
+
                     b.Property<string>("DeletedBy")
                         .HasColumnType("text")
                         .HasColumnName("deleted_by");
@@ -274,6 +281,10 @@ namespace App.Repositories.Migrations
                     b.HasKey("Id")
                         .HasName("pk_bookings");
 
+                    b.HasIndex("CurrentDisputeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_bookings_current_dispute_id");
+
                     b.HasIndex("LearnerId");
 
                     b.HasIndex("LessonSnapshotId")
@@ -293,6 +304,10 @@ namespace App.Repositories.Migrations
                     b.Property<string>("BookedSlotId")
                         .HasColumnType("text")
                         .HasColumnName("booked_slot_id");
+
+                    b.Property<string>("BookingId")
+                        .HasColumnType("text")
+                        .HasColumnName("booking_id");
 
                     b.Property<string>("CaseNumber")
                         .IsRequired()
@@ -362,6 +377,9 @@ namespace App.Repositories.Migrations
                         .HasName("pk_booking_disputes");
 
                     b.HasIndex("BookedSlotId");
+
+                    b.HasIndex("BookingId")
+                        .HasDatabaseName("ix_booking_disputes_booking_id");
 
                     b.HasIndex("LearnerId");
 
@@ -2555,6 +2573,12 @@ namespace App.Repositories.Migrations
 
             modelBuilder.Entity("App.Repositories.Models.Booking", b =>
                 {
+                    b.HasOne("App.Repositories.Models.BookingDispute", "CurrentDispute")
+                        .WithOne()
+                        .HasForeignKey("App.Repositories.Models.Booking", "CurrentDisputeId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_bookings__booking_disputes_current_dispute_id");
+
                     b.HasOne("App.Repositories.Models.User.Learner", "Learner")
                         .WithMany("Bookings")
                         .HasForeignKey("LearnerId")
@@ -2574,6 +2598,8 @@ namespace App.Repositories.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_bookings__tutors_tutor_temp_id2");
 
+                    b.Navigation("CurrentDispute");
+
                     b.Navigation("Learner");
 
                     b.Navigation("LessonSnapshot");
@@ -2588,6 +2614,11 @@ namespace App.Repositories.Migrations
                         .HasForeignKey("BookedSlotId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_booked_slots_booking_disputes_dispute_id1");
+
+                    b.HasOne("App.Repositories.Models.Booking", null)
+                        .WithMany("DisputeHistory")
+                        .HasForeignKey("BookingId")
+                        .HasConstraintName("fk_booking_disputes_bookings_booking_id");
 
                     b.HasOne("App.Repositories.Models.User.Learner", "Learner")
                         .WithMany()
@@ -3262,6 +3293,8 @@ namespace App.Repositories.Migrations
                     b.Navigation("BookedSlots");
 
                     b.Navigation("BookingSlotRating");
+
+                    b.Navigation("DisputeHistory");
                 });
 
             modelBuilder.Entity("App.Repositories.Models.Chat.ChatConversation", b =>

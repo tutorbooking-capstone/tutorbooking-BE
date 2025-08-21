@@ -28,16 +28,13 @@ namespace App.Repositories.Models
         public string? LessonSnapshotId { get; set; }
         public string? OriginalOfferId { get; set; }
         public BookingStatus Status { get; set; } = BookingStatus.Confirmed;
-        public string? CurrentDisputeId { get; set; }
-
+        
         public virtual Tutor? Tutor { get; set; }
         public virtual Learner? Learner { get; set; }
         public virtual ICollection<BookedSlot>? BookedSlots { get; set; }
         public virtual BookingSlotRating? BookingSlotRating { get; set; }
         public virtual LessonSnapshot? LessonSnapshot { get; set; }
-        public virtual BookingDispute? CurrentDispute { get; set; }
-        public virtual ICollection<BookingDispute>? DisputeHistory { get; set; }
-
+        
         #region Behaviors
         public Expression<Func<Booking, object>>[] UpdateStatus(BookingStatus newStatus, string updatedBy)
         {
@@ -55,33 +52,32 @@ namespace App.Repositories.Models
             ];
         }
 
-        public Expression<Func<Booking, object>>[] SetCurrentDispute(string disputeId)
-        {
-            if (CurrentDisputeId == disputeId) return Array.Empty<Expression<Func<Booking, object>>>();
+        // public Expression<Func<Booking, object>>[] SetCurrentDispute(string disputeId)
+        // {
+        //     if (CurrentDisputeId == disputeId) return Array.Empty<Expression<Func<Booking, object>>>();
             
-            CurrentDisputeId = disputeId;
+        //     CurrentDisputeId = disputeId;
             
-            return
-            [
-                x => x.CurrentDisputeId!
-            ];
-        }
+        //     return
+        //     [
+        //         x => x.CurrentDisputeId!
+        //     ];
+        // }
         
-        public Expression<Func<Booking, object>>[] ClearCurrentDispute()
-        {
-            if (CurrentDisputeId == null) return Array.Empty<Expression<Func<Booking, object>>>();
+        // public Expression<Func<Booking, object>>[] ClearCurrentDispute()
+        // {
+        //     if (CurrentDisputeId == null) return Array.Empty<Expression<Func<Booking, object>>>();
             
-            CurrentDisputeId = null;
+        //     CurrentDisputeId = null;
             
-            return
-            [
-                x => x.CurrentDisputeId!
-            ];
-        }
+        //     return
+        //     [
+        //         x => x.CurrentDisputeId!
+        //     ];
+        // }
         #endregion
     }
 }
-
 
         // #region Behavior
         // public int TotalOccurrences => (RepeatForWeeks ?? 0) + 1;
