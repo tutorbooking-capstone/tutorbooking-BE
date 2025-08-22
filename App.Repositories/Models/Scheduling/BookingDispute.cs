@@ -64,7 +64,7 @@ namespace App.Repositories.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime ReconciliationEndTime { get; set; } // Thời gian kết thúc hòa giải (24h)
         public DateTime? TutorRespondedAt { get; set; }
-        public DateTime? StaffReviewEndTime { get; set; } // Thời gian kết thúc xem xét (48h)
+        public DateTime? StaffReviewEndTime { get; set; } // Thời gian kết thúc xem xét (24h)
         public DateTime? ResolvedAt { get; set; }
 
         // Thuộc tính navigation

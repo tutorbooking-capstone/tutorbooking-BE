@@ -140,7 +140,7 @@ namespace App.Services.Hangfire
                 {
                     try 
                     {
-                        var bookedSlotUpdateFields = heldFund.BookedSlot.MarkAsCompleted("SYSTEM");
+                        var bookedSlotUpdateFields = heldFund.BookedSlot.ModifySlotStatus("SYSTEM", SlotStatus.Completed);
                         _unitOfWork.GetRepository<BookedSlot>().UpdateFields(heldFund.BookedSlot, bookedSlotUpdateFields);
                     }
                     catch (InvalidOperationException ex)

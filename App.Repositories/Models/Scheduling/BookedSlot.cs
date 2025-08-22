@@ -43,13 +43,13 @@ namespace App.Repositories.Models.Scheduling
         public virtual ICollection<RescheduleRequest> RescheduleRequests { get; set; } = new List<RescheduleRequest>();
 
         #region Behaviors
-        public Expression<Func<BookedSlot, object>>[] MarkAsCompleted(string updatedBy)
+        public Expression<Func<BookedSlot, object>>[] ModifySlotStatus(string updatedBy, SlotStatus status)
         {
             if (Status == SlotStatus.Completed) return Array.Empty<Expression<Func<BookedSlot, object>>>();
             if (Status == SlotStatus.Cancelled || Status == SlotStatus.CancelledDisputed)
                 throw new InvalidOperationException("Cannot complete a slot that has been cancelled.");
 
-            Status = SlotStatus.Completed;
+            Status = status;
             LastUpdatedBy = updatedBy;
             LastUpdatedTime = CoreHelper.SystemTimeNow;
 
@@ -139,6 +139,9 @@ namespace App.Repositories.Models.Scheduling
             
             return newSlot;
         }
+
+        public DateTime GetSlotStartTime => BookedDate + (SlotIndex * TimeSpan.FromMinutes(30));
+        
         #endregion
     }
 }

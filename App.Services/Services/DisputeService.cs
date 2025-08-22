@@ -114,6 +114,12 @@ namespace App.Services.Services
                     ErrorCode.BadRequest,
                     "Slot này chưa đến giai đoạn được khiếu nại.");
 
+            if (DateTime.UtcNow > bookedSlot.GetSlotStartTime.AddDays(1))
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest, 
+                    ErrorCode.BadRequest, 
+                    "Bạn chỉ có thể khiếu nại trong vòng 24 giờ sau khi slot kết thúc");
+
             if (!string.IsNullOrEmpty(bookedSlot.DisputeId))
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest, 
@@ -123,7 +129,7 @@ namespace App.Services.Services
             return bookedSlot;
         }
 
-        private async Task<BookingDispute> GetAndValidateDisputeAsync(string disputeId, bool checkEscalated = false)
+        private async Task<BookingDispute> GetDisputeAsync(string disputeId)
         {
             var dispute = await _unitOfWork.GetRepository<BookingDispute>()
                 .GetQueryable()
@@ -139,14 +145,44 @@ namespace App.Services.Services
                     ErrorCode.NotFound, 
                     "Không tìm thấy thông tin khiếu nại");
                 
-            if (checkEscalated && dispute.Status != DisputeStatus.AwaitingStaffReview)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Trạng thái khiếu nại không hợp lệ");
-                
             return dispute;
         }
+
+        private void DisputeEligibleForEdit(BookingDispute dispute, Role role)
+        {
+            if (dispute.ReconciliationEndTime < DateTime.UtcNow)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Thời gian giải quyết đã kết thúc. Không thể chỉnh sửa khiếu nại");
+            switch (role)
+            {
+                case Role.Learner:
+                    if (dispute.Status != DisputeStatus.PendingReconciliation && dispute.Status != DisputeStatus.AwaitingStaffReview)
+                        throw new ErrorException(
+                            StatusCodes.Status400BadRequest,
+                            ErrorCode.BadRequest,
+                            "Chỉ có thể chỉnh sửa khiếu nại trong giai đoạn hòa giải");
+                    break;
+                case Role.Tutor:
+                    if (dispute.Status != DisputeStatus.PendingReconciliation)
+                        throw new ErrorException(
+                            StatusCodes.Status400BadRequest,
+                            ErrorCode.BadRequest,
+                            "Chỉ có thể chỉnh sửa khiếu nại trong giai đoạn hòa giải");
+                    break;
+                case Role.Staff:
+                case Role.Manager:
+                case Role.Admin:
+                    if (dispute.Status != DisputeStatus.AwaitingStaffReview)
+                        throw new ErrorException(
+                            StatusCodes.Status400BadRequest,
+                            ErrorCode.BadRequest,
+                            "Chỉ có thể chỉnh sửa khiếu nại đang chờ Staff Review");
+                    break;
+            }
+        }
+
 
         private async Task ProcessDisputeResolution(BookingDispute dispute, DisputeResolution resolution)
         {
@@ -389,14 +425,6 @@ namespace App.Services.Services
             var slotUpdateProperties = bookedSlot.MarkAsCancelledDisputed(dispute.Id, learnerId);
             bookedSlotRepo.UpdateFields(bookedSlot, slotUpdateProperties.ToArray());
             
-            // Update booking status to dispute requested
-            var updateProperties = bookedSlot.Booking!.UpdateStatus(BookingStatus.DisputeRequested, learnerId);
-            bookingRepo.UpdateFields(bookedSlot.Booking, updateProperties.ToArray());
-            
-            // Set current dispute on booking
-            //var disputeProperties = bookedSlot.Booking.SetCurrentDispute(dispute.Id);
-            //bookingRepo.UpdateFields(bookedSlot.Booking, disputeProperties.ToArray());
-            
             await _unitOfWork.SaveAsync();
             
             // Send notifications
@@ -408,8 +436,8 @@ namespace App.Services.Services
         public async Task<BookingDisputeResponse> WithdrawDisputeAsync(WithdrawDisputeRequest request)
         {
             var learnerId = await GetAuthenticatedLearnerIdAsync();
-            var dispute = await GetAndValidateDisputeAsync(request.DisputeId);
-            
+            var dispute = await GetDisputeAsync(request.DisputeId);
+
             // Verify learner owns this dispute
             if (dispute.LearnerId != learnerId)
                 throw new ErrorException(
@@ -417,13 +445,8 @@ namespace App.Services.Services
                     ErrorCode.Forbidden, 
                     "Bạn không có quyền rút lại khiếu nại này");
                 
-            // Can only withdraw during reconciliation
-            if (dispute.Status != DisputeStatus.PendingReconciliation)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Không thể rút lại khiếu nại ở trạng thái hiện tại");
-                
+            DisputeEligibleForEdit(dispute, Role.Learner);
+
             // Update dispute
             var updateProperties = dispute.WithdrawDispute();
             _unitOfWork.GetRepository<BookingDispute>().UpdateFields(dispute, updateProperties.ToArray());
@@ -464,7 +487,7 @@ namespace App.Services.Services
         public async Task<DisputeDetailResponse> GetDisputeDetailForLearnerAsync(string disputeId)
         {
             var learnerId = await GetAuthenticatedLearnerIdAsync();
-            var dispute = await GetAndValidateDisputeAsync(disputeId);
+            var dispute = await GetDisputeAsync(disputeId);
             
             // Verify learner owns this dispute
             if (dispute.LearnerId != learnerId)
@@ -528,7 +551,7 @@ namespace App.Services.Services
         public async Task<BookingDisputeResponse> RespondToDisputeAsync(RespondToDisputeRequest request)
         {
             var tutorId = await GetAuthenticatedTutorIdAsync();
-            var dispute = await GetAndValidateDisputeAsync(request.DisputeId);
+            var dispute = await GetDisputeAsync(request.DisputeId);
             
             // Verify tutor owns this dispute
             if (dispute.TutorId != tutorId)
@@ -536,20 +559,8 @@ namespace App.Services.Services
                     StatusCodes.Status403Forbidden, 
                     ErrorCode.Forbidden, 
                     "Bạn không có quyền phản hồi khiếu nại này");
-                
-            // Can only respond during reconciliation
-            if (dispute.Status != DisputeStatus.PendingReconciliation)
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Không thể phản hồi khiếu nại ở trạng thái hiện tại");
-                
-            // Check if reconciliation period expired
-            if (dispute.IsReconciliationExpired())
-                throw new ErrorException(
-                    StatusCodes.Status400BadRequest, 
-                    ErrorCode.BadRequest, 
-                    "Thời gian phản hồi đã hết");
+
+            DisputeEligibleForEdit(dispute, Role.Tutor);
 
             var disputeRepo = _unitOfWork.GetRepository<BookingDispute>();
                 
@@ -692,7 +703,7 @@ namespace App.Services.Services
         public async Task<DisputeDetailResponse> GetDisputeDetailForTutorAsync(string disputeId)
         {
             var tutorId = await GetAuthenticatedTutorIdAsync();
-            var dispute = await GetAndValidateDisputeAsync(disputeId);
+            var dispute = await GetDisputeAsync(disputeId);
             
             // Verify tutor owns this dispute
             if (dispute.TutorId != tutorId)
@@ -720,9 +731,10 @@ namespace App.Services.Services
 
         public async Task<BookingDisputeResponse> ResolveDisputeAsync(ResolveDisputeRequest request)
         {
-            var dispute = await GetAndValidateDisputeAsync(request.DisputeId, checkEscalated: true);
-            EnsureHasManagerialAccess("Bạn không có quyền xử lý khiếu nại này");
-            
+            EnsureHasManagerialAccess("Bạn không có quyền xử lý khiếu nại");
+            var dispute = await GetDisputeAsync(request.DisputeId);
+            DisputeEligibleForEdit(dispute, Role.Tutor);
+
             // Resolve dispute
             var updateProperties = dispute.ResolveByStaff(request.Resolution, request.Notes);
             _unitOfWork.GetRepository<BookingDispute>().UpdateFields(dispute, updateProperties.ToArray());
@@ -758,7 +770,7 @@ namespace App.Services.Services
         public async Task<DisputeDetailResponse> GetDisputeDetailForStaffAsync(string disputeId)
         {
             var userId = GetAuthenticatedUserId();
-            var dispute = await GetAndValidateDisputeAsync(disputeId);
+            var dispute = await GetDisputeAsync(disputeId);
             
             EnsureHasManagerialAccess("Bạn không có quyền xem chi tiết khiếu nại này");
             
@@ -894,7 +906,6 @@ namespace App.Services.Services
             };
         }
         #endregion
-
         public Task<Dictionary<string, object>> GetDisputeMetadataAsync()
         {
             var enumMetadata = EnumHelper.GetEnumMetadata(
