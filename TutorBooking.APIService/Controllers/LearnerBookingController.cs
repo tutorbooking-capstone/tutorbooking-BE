@@ -117,5 +117,16 @@ namespace TutorBooking.APIService.Controllers
                 message: "Đặt lịch thành công!"
             ));
         }
+
+        [HttpPatch("bookings/{bookingId}/cancel")]
+        [AuthorizeRoles(Role.Learner)]
+        public async Task<IActionResult> CancelBooking([FromRoute] string bookingId, [FromQuery] string? reason = null)
+        {
+            var result = await _service.CancelBookingAsync(bookingId, reason);
+            return Ok(new BaseResponseModel<BookingResponse>(
+                data: result,
+                message: "Hủy đặt lịch thành công."
+            ));
+        }
     }
 }

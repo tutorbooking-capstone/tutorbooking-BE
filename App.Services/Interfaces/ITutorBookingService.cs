@@ -13,5 +13,6 @@ namespace App.Services.Interfaces
         Task<TutorBookingOfferResponse> UpdateBookingOfferAsync(string offerId, UpdateTutorBookingOfferRequest request);
         Task DeleteBookingOfferAsync(string offerId);
         Task MarkSlotAsCompletedAsync(string bookedSlotId);
+        Task<BookingResponse> CancelBookingAsync(string bookingId, string? cancellationReason = null);
     }
 }

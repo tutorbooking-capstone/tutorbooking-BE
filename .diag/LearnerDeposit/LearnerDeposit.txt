@@ -1,0 +1,105 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Learner
+    participant Browser
+    participant DepositController
+    participant IDepositService
+    participant DepositService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant DepositRequest
+    participant Payos
+    
+    Learner->>Browser: Submit Create Deposit Request (Amount)
+    Browser->>DepositController: HTTP POST /api/Deposit
+    activate DepositController
+    
+    DepositController->>IDepositService: CreateDepositRequestAsync()
+    activate IDepositService
+    IDepositService->>DepositService: CreateDepositRequestAsync()
+    activate DepositService
+    
+    DepositService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>DepositService: currentUserId()
+    deactivate ICurrentUserProvider
+    
+    DepositService->>IUnitOfWork: GetRepository<DepositRequest>()
+    activate IUnitOfWork
+    IUnitOfWork-->>DepositService: IGenericRepository<DepositRequest>
+    deactivate IUnitOfWork
+    
+    DepositService->>DepositRequest: Create()
+    activate DepositRequest
+    DepositRequest-->>DepositService: new DepositRequest entity
+    deactivate DepositRequest
+    
+    DepositService->>GenericRepository: Insert(depositRequest)
+    activate GenericRepository
+    GenericRepository-->>DepositService: (entity marked for insert)
+    deactivate GenericRepository
+    
+    DepositService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>DepositService: (save complete)
+    deactivate IUnitOfWork
+    
+    DepositService-->>IDepositService: depositRequest
+    deactivate DepositService
+    IDepositService-->>DepositController: depositRequest
+    deactivate IDepositService
+    
+    DepositController->>IDepositService: GeneratePayosPaymentAsync()
+    activate IDepositService
+    IDepositService->>DepositService: GeneratePayosPaymentAsync()
+    activate DepositService
+    
+    DepositService->>IUnitOfWork: GetRepository<DepositRequest>()
+    activate IUnitOfWork
+    IUnitOfWork-->>DepositService: IGenericRepository<DepositRequest>
+    deactivate IUnitOfWork
+    DepositService->>GenericRepository: GetExistByIdAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query DepositRequest
+    activate Database
+    Database-->>GenericRepository: DepositRequest data
+    deactivate Database
+    GenericRepository-->>DepositService: DepositRequest entity
+    deactivate GenericRepository
+    
+    DepositService->>Payos: CreatePaymentOrder()
+    activate Payos
+    Payos-->>DepositService: PayosPaymentResponse (URL, QR Code, Token)
+    deactivate Payos
+    
+    DepositService->>GenericRepository: UpdateFields(depositRequest)
+    activate GenericRepository
+    GenericRepository-->>DepositService: (entity marked for update)
+    deactivate GenericRepository
+    
+    DepositService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>DepositService: (save complete)
+    deactivate IUnitOfWork
+    
+    DepositService-->>IDepositService: payosPaymentResponse
+    deactivate DepositService
+    IDepositService-->>DepositController: payosPaymentResponse
+    deactivate IDepositService
+    
+    DepositController-->>Browser: HTTP 200 OK (DepositRequest, PaymentResponse)
+    deactivate DepositController
+    Browser-->>Learner: Display Payment QR Code/URL

@@ -4,7 +4,6 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -105,6 +104,17 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<object>(
                 data: null,
                 message: "Successfully marked the slot as completed."
+            ));
+        }
+
+        [HttpPatch("bookings/{bookingId}/cancel")]
+        [AuthorizeRoles(Role.Tutor)]
+        public async Task<IActionResult> CancelBooking([FromRoute] string bookingId, [FromQuery] string? reason = null)
+        {
+            var result = await _service.CancelBookingAsync(bookingId, reason);
+            return Ok(new BaseResponseModel<BookingResponse>(
+                data: result,
+                message: "Hủy đặt lịch thành công."
             ));
         }
     }

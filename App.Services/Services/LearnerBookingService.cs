@@ -655,5 +655,143 @@ namespace App.Services.Services
                 totalPrice,
                 null); 
         }
+        public async Task<BookingResponse> CancelBookingAsync(string bookingId, string? cancellationReason = null)
+        {
+            var learnerId = GetAuthenticatedLearnerId();
+            
+            // Get booking with all related data
+            var booking = await _unitOfWork.GetRepository<Booking>()
+                .ExistEntities()
+                .Include(b => b.BookedSlots!).ThenInclude(bs => bs.HeldFund)
+                .Include(b => b.LessonSnapshot)
+                .FirstOrDefaultAsync(b => b.Id == bookingId && b.LearnerId == learnerId);
+                
+            if (booking == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Booking not found or you don't have permission to cancel it.");
+            
+            // Determine booking type (Offer vs Instant)
+            bool isOfferBooking = !string.IsNullOrEmpty(booking.OriginalOfferId);
+            
+            // Get all slots that can be cancelled (Pending status)
+            var slotsToCancel = booking.BookedSlots!
+                .Where(bs => bs.Status == SlotStatus.Pending)
+                .OrderBy(bs => bs.BookedDate)
+                .ThenBy(bs => bs.SlotIndex)
+                .ToList();
+            
+            if (!slotsToCancel.Any())
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "No pending slots to cancel.");
+            
+            var learnerWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == learnerId);
+            
+            if (learnerWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    "Learner wallet not found");
+            
+            var escrowWallet = await GetEscrowWalletAsync();
+            
+            return await _unitOfWork.ExecuteInTransactionAsync(async () => {
+                foreach (var slot in slotsToCancel)
+                {
+                    // Update slot status
+                    var updateFields = slot.MarkAsCancelled(learnerId);
+                    _unitOfWork.GetRepository<BookedSlot>().UpdateFields(slot, updateFields);
+                    
+                    // Process held funds
+                    if (slot.HeldFund != null)
+                    {
+                        decimal tutorAmount = slot.HeldFund.Amount * (1 - 1.0m); // 100% refund to learner
+                        decimal learnerAmount = slot.HeldFund.Amount * 1.0m;
+                        
+                        if (tutorAmount > 0)
+                        {
+                            // Transfer funds to tutor
+                            var tutorTransaction = Transaction.CreatePaymentTransaction(
+                                escrowWallet.Id,
+                                _unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!.Id,
+                                tutorAmount,
+                                slot.Id,
+                                $"Payment for cancelled slot {slot.Id} - {tutorAmount} VND"
+                            );
+                            _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
+                            
+                            var tutorWalletUpdateFields = _unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!.AddBalance(tutorAmount);
+                            _unitOfWork.GetRepository<Wallet>().UpdateFields(_unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!, tutorWalletUpdateFields);
+                            
+                            var escrowUpdateFields = escrowWallet.SubtractBalance(tutorAmount);
+                            _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
+                        }
+                        
+                        if (learnerAmount > 0)
+                        {
+                            // Refund to learner
+                            var learnerTransaction = Transaction.CreatePaymentTransaction(
+                                escrowWallet.Id,
+                                learnerWallet.Id,
+                                learnerAmount,
+                                slot.Id,
+                                $"Refund for cancelled slot {slot.Id} - {learnerAmount} VND"
+                            );
+                            _unitOfWork.GetRepository<Transaction>().Insert(learnerTransaction);
+                            
+                            var learnerWalletUpdateFields = learnerWallet.AddBalance(learnerAmount);
+                            _unitOfWork.GetRepository<Wallet>().UpdateFields(learnerWallet, learnerWalletUpdateFields);
+                            
+                            var escrowUpdateFields2 = escrowWallet.SubtractBalance(learnerAmount);
+                            _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields2);
+                        }
+                        
+                        // Update held fund status
+                        var heldFundUpdateFields = slot.HeldFund.UpdateStatus(HeldFundStatus.RefundedToLearner);
+                        _unitOfWork.GetRepository<HeldFund>().UpdateFields(slot.HeldFund, heldFundUpdateFields);
+                    }
+                }
+                
+                // Update booking status if all slots are cancelled
+                if (!booking.BookedSlots!.Any(bs => bs.Status != SlotStatus.Cancelled && bs.Status != SlotStatus.CancelledDisputed))
+                {
+                    var bookingUpdateFields = booking.UpdateStatus(BookingStatus.Cancelled, learnerId);
+                    _unitOfWork.GetRepository<Booking>().UpdateFields(booking, bookingUpdateFields);
+                }
+                
+                await _unitOfWork.SaveAsync();
+                
+                // Send notification to tutor
+                await _notificationService.SendToUsersAsync(new()
+                {
+                    Content = new()
+                    {
+                        NotificationPriority = ENotificationPriority.Normal,
+                        Title = "PUSH_ON_LEARNER_CANCELLED_BOOKING",
+                        Content = "PUSH_ON_LEARNER_CANCELLED_BOOKING_BODY",
+                        AdditionalData = JsonSerializer.Serialize(new
+                        {
+                            BookingId = booking.Id,
+                            LessonName = booking.LessonSnapshot?.Name,
+                            SenderId = learnerId,
+                            CancellationReason = cancellationReason ?? "No reason provided"
+                        })
+                    },
+                    ReceiverUserIds = [booking.TutorId]
+                });
+                
+                return BookingResponse.FromEntity(
+                    booking, 
+                    booking.LessonSnapshot!, 
+                    booking.BookedSlots!.ToList(),
+                    booking.BookedSlots!.Sum(bs => bs.HeldFund?.Amount ?? 0)
+                );
+            });
+        }
     }
 }
