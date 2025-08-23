@@ -9,7 +9,10 @@ namespace App.Services.Interfaces
         Task<BasePaginatedList<BookingListItemDTO>> GetLearnerBookingsAsync(int page = 1, int pageSize = 10);
         
         // Lấy danh sách booking của tutor (người dạy)
-        Task<BasePaginatedList<BookingListItemDTO>> GetTutorBookingsAsync(int page = 1, int pageSize = 10);
+        Task<BasePaginatedList<BookingListItemDTO>> GetTutorBookingsAsync(
+            int page = 1, 
+            int pageSize = 10, 
+            BookingType bookingType = BookingType.All);
         
         // Lấy chi tiết booking bao gồm các booked slots và held funds
         Task<BookingDetailDTO> GetBookingDetailAsync(string bookingId);

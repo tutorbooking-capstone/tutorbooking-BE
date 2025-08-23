@@ -35,11 +35,15 @@ namespace TutorBooking.APIService.Controllers
         [HttpGet("tutor")]
         public async Task<IActionResult> GetTutorBookings(
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 10)
+            [FromQuery] int pageSize = 10,
+            [FromQuery] BookingType bookingType = BookingType.All)  
         {
-            var bookings = await _bookingService.GetTutorBookingsAsync(page, pageSize);
+            var bookings = await _bookingService.GetTutorBookingsAsync(page, pageSize, bookingType);
+            var bookingTypeMetadata = EnumHelper.GetEnumMetadata(typeof(BookingType));
+            
             return Ok(new BaseResponseModel<BasePaginatedList<BookingListItemDTO>>(
                 data: bookings,
+                additionalData: new { BookingType = bookingTypeMetadata },
                 message: "Danh sách booking của giáo viên"
             ));
         }

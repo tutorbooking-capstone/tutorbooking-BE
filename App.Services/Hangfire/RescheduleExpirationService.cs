@@ -75,6 +75,12 @@ namespace App.Services.Hangfire
             var updateFields = request.MarkExpired();
             if (updateFields.Any())
             {
+                var offeredSlotRepo = _unitOfWork.GetRepository<OfferedSlot>();
+                foreach (var slot in request.OfferedSlots.ToList())
+                {
+                    offeredSlotRepo.Delete(slot);
+                }
+                
                 _unitOfWork.GetRepository<RescheduleRequest>().UpdateFields(request, updateFields);
                 await _unitOfWork.SaveAsync();
                 

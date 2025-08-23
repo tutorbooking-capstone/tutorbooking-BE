@@ -1,5 +1,6 @@
 ﻿using App.Core.Base;
 using App.DTOs.BookingDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -41,9 +42,12 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetRescheduleRequests([FromQuery] int pageIndex = 0, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetRescheduleRequests(
+            [FromQuery] int pageIndex = 0, 
+            [FromQuery] int pageSize = 10,
+            [FromQuery] RescheduleRequestStatus? status = null)
         {
-            var requests = await _service.GetRescheduleRequestsAsync(pageIndex, pageSize);
+            var requests = await _service.GetRescheduleRequestsAsync(pageIndex, pageSize, status);
             var metadata = await GetMetadataAsync();
             
             return Ok(new BaseResponseModel<BasePaginatedList<RescheduleRequestResponse>>(

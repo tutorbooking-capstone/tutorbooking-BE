@@ -1,7 +1,6 @@
 ﻿using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
-using App.Core.Utils;
 using App.DTOs.BookingDTOs;
 using App.DTOs.NotificationDTOs;
 using App.Repositories.Models;
@@ -80,6 +79,15 @@ namespace App.Services.Services
 
             return bookedSlot;
         }
+
+        private void DeleteOfferedSlotsForRequest(RescheduleRequest request)
+        {
+            var offeredSlotRepo = _unitOfWork.GetRepository<OfferedSlot>();
+            foreach (var slot in request.OfferedSlots.ToList())
+            {
+                offeredSlotRepo.Delete(slot);
+            }
+        }
         #endregion
 
         public async Task<RescheduleRequestResponse> CreateRescheduleRequestAsync(CreateRescheduleRequest request)
@@ -153,7 +161,10 @@ namespace App.Services.Services
             return await GetRescheduleRequestByIdAsync(rescheduleRequest.Id);
         }
 
-        public async Task<BasePaginatedList<RescheduleRequestResponse>> GetRescheduleRequestsAsync(int pageIndex = 0, int pageSize = 10)
+        public async Task<BasePaginatedList<RescheduleRequestResponse>> GetRescheduleRequestsAsync(
+            int pageIndex = 0, 
+            int pageSize = 10, 
+            RescheduleRequestStatus? status = null)
         {
             var userId = GetAuthenticatedUserId();
 
@@ -164,8 +175,12 @@ namespace App.Services.Services
                 .Include(r => r.OfferedSlots)
                 .Where(r => r.RequestedByUserId == userId || 
                     (r.BookedSlot != null && r.BookedSlot.Booking != null && 
-                    (r.BookedSlot.Booking.TutorId == userId || r.BookedSlot.Booking.LearnerId == userId)))
-                .OrderByDescending(r => r.CreatedAt);
+                    (r.BookedSlot.Booking.TutorId == userId || r.BookedSlot.Booking.LearnerId == userId)));
+
+            if (status != null)
+                query = query.Where(r => r.Status == status.Value);
+
+            query = query.OrderByDescending(r => r.CreatedAt);
 
             var totalItems = await query.CountAsync();
             var requests = await query
@@ -331,6 +346,10 @@ namespace App.Services.Services
 
             // Update the request status
             var updateFields = request.Reject(note ?? "No reason provided", userId);
+
+            // Xóa offered slots trước khi cập nhật trạng thái
+            DeleteOfferedSlotsForRequest(request);
+            
             _unitOfWork.GetRepository<RescheduleRequest>().UpdateFields(request, updateFields);
             await _unitOfWork.SaveAsync();
 
@@ -382,6 +401,10 @@ namespace App.Services.Services
 
             // Update the request status
             var updateFields = request.Cancel(userId);
+
+            // Xóa offered slots trước khi cập nhật trạng thái
+            DeleteOfferedSlotsForRequest(request);
+            
             _unitOfWork.GetRepository<RescheduleRequest>().UpdateFields(request, updateFields);
             await _unitOfWork.SaveAsync();
 
@@ -408,6 +431,43 @@ namespace App.Services.Services
             }
 
             return await GetRescheduleRequestByIdAsync(requestId);
+        }
+
+        public async Task DeleteRescheduleRequestAsync(string requestId)
+        {
+            var userId = GetAuthenticatedUserId();
+
+            // Lấy thông tin yêu cầu
+            var request = await _unitOfWork.GetRepository<RescheduleRequest>()
+                .ExistEntities()
+                .Include(r => r.OfferedSlots)
+                .FirstOrDefaultAsync(r => r.Id == requestId);
+
+            if (request == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Không tìm thấy yêu cầu thay đổi lịch.");
+
+            // Kiểm tra quyền: chỉ người tạo yêu cầu mới được xóa
+            if (request.RequestedByUserId != userId)
+                throw new ErrorException(
+                    StatusCodes.Status403Forbidden,
+                    ErrorCode.Forbidden,
+                    "Bạn không có quyền xóa yêu cầu này.");
+
+            // Chỉ cho phép xóa yêu cầu đang ở trạng thái Pending
+            if (request.Status != RescheduleRequestStatus.Pending)
+                throw new ErrorException(
+                    StatusCodes.Status400BadRequest,
+                    ErrorCode.BadRequest,
+                    "Chỉ có thể xóa yêu cầu đang chờ phản hồi.");
+
+            // Xóa offered slots trước khi xóa request
+            DeleteOfferedSlotsForRequest(request);
+
+            _unitOfWork.GetRepository<RescheduleRequest>().Delete(request);
+            await _unitOfWork.SaveAsync();
         }
         public async Task<Dictionary<string, object>> GetRescheduleMetadataAsync()
         {

@@ -40,18 +40,35 @@ namespace App.Services.Services
             return await GetPaginatedBookingsAsync(query, page, pageSize);
         }
 
-        public async Task<BasePaginatedList<BookingListItemDTO>> GetTutorBookingsAsync(int page = 1, int pageSize = 10)
+        public async Task<BasePaginatedList<BookingListItemDTO>> GetTutorBookingsAsync(
+            int page = 1, 
+            int pageSize = 10, 
+            BookingType bookingType = BookingType.All)
         {
             var tutorId = GetCurrentUserIdOrThrow();
 
-            var query = _unitOfWork.GetRepository<Booking>()
+            IQueryable<Booking> query = _unitOfWork.GetRepository<Booking>()
                 .ExistEntities()
                 .Where(b => b.TutorId == tutorId)
                 .Include(b => b.Tutor!).ThenInclude(t => t.User)
                 .Include(b => b.Learner!).ThenInclude(l => l.User)
                 .Include(b => b.LessonSnapshot)
-                .Include(b => b.BookedSlots!).ThenInclude(bs => bs.HeldFund)
-                .OrderByDescending(b => b.CreatedTime);
+                .Include(b => b.BookedSlots!).ThenInclude(bs => bs.HeldFund);
+
+            switch (bookingType)
+            {
+                case BookingType.Instant:
+                    query = query.Where(b => b.OriginalOfferId == null);
+                    break;
+                case BookingType.Offer:
+                    query = query.Where(b => b.OriginalOfferId != null);
+                    break;
+                case BookingType.All:
+                default:
+                    break;
+            }
+
+            query = query.OrderByDescending(b => b.CreatedTime);
 
             return await GetPaginatedBookingsAsync(query, page, pageSize);
         }

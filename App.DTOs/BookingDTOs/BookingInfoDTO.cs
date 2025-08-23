@@ -1,9 +1,20 @@
 using App.Repositories.Models;
 using App.Repositories.Models.Scheduling;
 using System.Linq.Expressions;
+using App.Core.Base;
 
 namespace App.DTOs.BookingDTOs
 {
+    public enum BookingType
+    {
+        [EnumDescription("Tất cả")]
+        All = 0,
+        [EnumDescription("Instant Booking")]
+        Instant = 1,
+        [EnumDescription("Offer Booking")]
+        Offer = 2
+    }
+
     public class BookingListItemDTO
     {
         public string Id { get; set; } = string.Empty;

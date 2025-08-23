@@ -1,6 +1,4 @@
 using App.Repositories.Models;
-using App.Repositories.Models.Scheduling;
-using App.Repositories.Models.User;
 using System.Linq.Expressions;
 
 namespace App.DTOs.BookingDTOs
@@ -58,6 +56,7 @@ namespace App.DTOs.BookingDTOs
                     new BookedSlotInfo
                     {
                         Id = r.BookedSlot.Id,
+                        BookingId = r.BookedSlot.BookingId,
                         BookedDate = r.BookedSlot.BookedDate,
                         SlotIndex = r.BookedSlot.SlotIndex,
                         Status = r.BookedSlot.Status.ToString()
@@ -72,9 +71,6 @@ namespace App.DTOs.BookingDTOs
         // Method for in-memory conversion (if needed)
         public static RescheduleRequestResponse FromEntity(RescheduleRequest r)
         {
-            // We can use the projection expression by compiling it, but note: this is for in-memory and might be slow.
-            // Alternatively, we can write the same logic as the expression but in a method.
-            // But since we are using this method only for single objects, it's acceptable to compile.
             var func = Projection.Compile();
             return func(r);
         }
@@ -83,6 +79,7 @@ namespace App.DTOs.BookingDTOs
     public class BookedSlotInfo
     {
         public string Id { get; set; } = string.Empty;
+        public string BookingId { get; set; } = string.Empty;
         public DateTime BookedDate { get; set; }
         public int SlotIndex { get; set; }
         public string Status { get; set; } = string.Empty;
