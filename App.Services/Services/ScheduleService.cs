@@ -371,6 +371,7 @@ namespace App.Services.Services
 
             var utcStartDate = ConvertToUtc(startDate).Date;
             var utcEndDate = ConvertToUtc(endDate).Date;
+            var utcEndDateInclusive = utcEndDate.AddDays(1);  
 
             var patterns = await _unitOfWork.GetRepository<WeeklyAvailabilityPattern>()
                 .ExistEntities()
@@ -395,7 +396,7 @@ namespace App.Services.Services
                 .Where(bs => 
                     bs.Booking!.TutorId == tutorId && 
                     bs.BookedDate >= utcStartDate && 
-                    bs.BookedDate <= utcEndDate &&
+                    bs.BookedDate < utcEndDateInclusive &&  
                     bs.Status == SlotStatus.Pending)
                 .Include(bs => bs.Booking)  
                 .ToListAsync();
@@ -405,7 +406,7 @@ namespace App.Services.Services
                 .ExistEntities()
                 .Where(os => 
                     os.SlotDateTime >= utcStartDate && 
-                    os.SlotDateTime <= utcEndDate)
+                    os.SlotDateTime < utcEndDateInclusive)  
                 .ToListAsync();
 
             var result = new List<DailyScheduleResponse>();
