@@ -59,7 +59,6 @@ namespace App.Repositories.Models
             DateTime newSlotDateTime,
             int newSlotIndex)
         {
-            // Create the request
             var now = CoreHelper.SystemTimeNow.DateTime;
             var request = new RescheduleRequest
             {
@@ -69,10 +68,9 @@ namespace App.Repositories.Models
                 Reason = reason,
                 Status = RescheduleRequestStatus.Pending,
                 CreatedAt = now,
-                ExpiresAt = now.AddHours(24) // Request expires in 24 hours
+                ExpiresAt = now.AddHours(24) 
             };
             
-            // Create the offered slot
             var offeredSlot = new OfferedSlot
             {
                 RescheduleRequestId = request.Id,
@@ -99,8 +97,32 @@ namespace App.Repositories.Models
         }
         
         // Accept a reschedule request
-        //public async Task<BookedSlot> Accept(string offeredSlotId, string updatedBy, IUnitOfWork unitOfWork)
+        public Expression<Func<RescheduleRequest, object>>[] Accept(string offeredSlotId, string updatedBy)
+        {
+            if (Status != RescheduleRequestStatus.Pending)
+                throw new InvalidOperationException("Cannot accept a request that is not pending.");
+                
+            var offeredSlot = OfferedSlots.FirstOrDefault(os => os.Id == offeredSlotId);
+            if (offeredSlot == null)
+                throw new InvalidOperationException("Offered slot not found.");
 
+            Status = RescheduleRequestStatus.Accepted;
+            AcceptedSlotId = offeredSlotId;
+            RespondedAt = CoreHelper.SystemTimeNow.DateTime;
+            
+            LastUpdatedBy = updatedBy;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
+            
+            return new[]
+            {
+                (Expression<Func<RescheduleRequest, object>>)(x => x.Status),
+                x => x.AcceptedSlotId!,
+                x => x.RespondedAt!,
+                x => x.LastUpdatedBy!,
+                x => x.LastUpdatedTime
+            };
+        }
+        
         // Reject a reschedule request
         public Expression<Func<RescheduleRequest, object>>[] Reject(string note, string updatedBy)
         {
@@ -112,7 +134,7 @@ namespace App.Repositories.Models
             RespondedAt = CoreHelper.SystemTimeNow.DateTime;
             
             LastUpdatedBy = updatedBy;
-            LastUpdatedTime = CoreHelper.SystemTimeNow.DateTime;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
             
             return new[]
             {
@@ -150,7 +172,7 @@ namespace App.Repositories.Models
             RespondedAt = CoreHelper.SystemTimeNow.DateTime;
             
             LastUpdatedBy = updatedBy;
-            LastUpdatedTime = CoreHelper.SystemTimeNow.DateTime;
+            LastUpdatedTime = CoreHelper.SystemTimeNow;
             
             return new[]
             {

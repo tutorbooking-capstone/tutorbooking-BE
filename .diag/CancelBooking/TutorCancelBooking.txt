@@ -1,0 +1,190 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant TutorBookingController
+    participant ITutorBookingService
+    participant TutorBookingService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant Booking
+    participant BookedSlot
+    participant HeldFund
+    participant Wallet
+    participant Transaction
+    participant NotificationService
+
+    Tutor->>Browser: Submit Cancel Booking Request
+    Browser->>TutorBookingController: HTTP PATCH /api/tutor-bookings/bookings/{bookingId}/cancel
+    activate TutorBookingController
+    TutorBookingController->>ITutorBookingService: CancelBookingAsync()
+    activate ITutorBookingService
+    ITutorBookingService->>TutorBookingService: CancelBookingAsync()
+    activate TutorBookingService
+
+    TutorBookingService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>TutorBookingService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    TutorBookingService->>IUnitOfWork: GetRepository<Booking>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Booking>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Booking with includes (BookedSlots, HeldFund, LessonSnapshot)
+    activate Database
+    Database-->>GenericRepository: Booking data
+    deactivate Database
+    GenericRepository-->>TutorBookingService: Booking entity
+    deactivate GenericRepository
+
+    TutorBookingService->>IUnitOfWork: GetRepository<Wallet>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Wallet>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Learner Wallet
+    activate Database
+    Database-->>GenericRepository: Wallet data
+    deactivate Database
+    GenericRepository-->>TutorBookingService: Learner Wallet entity
+    deactivate GenericRepository
+
+    TutorBookingService->>TutorBookingService: GetEscrowWalletAsync()
+    activate TutorBookingService
+    TutorBookingService->>IUnitOfWork: GetRepository<Wallet>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Wallet>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Escrow Wallet
+    activate Database
+    Database-->>GenericRepository: Wallet data
+    deactivate Database
+    GenericRepository-->>TutorBookingService: Escrow Wallet entity
+    deactivate GenericRepository
+    TutorBookingService-->>TutorBookingService: Escrow Wallet
+    deactivate TutorBookingService
+
+    TutorBookingService->>IUnitOfWork: ExecuteInTransactionAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: BeginTransaction()
+    activate Database
+    Database-->>IUnitOfWork: (transaction started)
+    deactivate Database
+
+    loop For each slot to cancel
+        TutorBookingService->>BookedSlot: MarkAsCancelled()
+        activate BookedSlot
+        BookedSlot-->>TutorBookingService: (updated fields)
+        deactivate BookedSlot
+        TutorBookingService->>IUnitOfWork: GetRepository<BookedSlot>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorBookingService: IGenericRepository<BookedSlot>
+        deactivate IUnitOfWork
+        TutorBookingService->>GenericRepository: UpdateFields(slot)
+        activate GenericRepository
+        GenericRepository-->>TutorBookingService: (entity marked for update)
+        deactivate GenericRepository
+
+        TutorBookingService->>Transaction: CreatePaymentTransaction() (Refund)
+        activate Transaction
+        Transaction-->>TutorBookingService: new Transaction entity
+        deactivate Transaction
+        TutorBookingService->>IUnitOfWork: GetRepository<Transaction>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorBookingService: IGenericRepository<Transaction>
+        deactivate IUnitOfWork
+        TutorBookingService->>GenericRepository: Insert(learnerTransaction)
+        activate GenericRepository
+        GenericRepository-->>TutorBookingService: (entity marked for insert)
+        deactivate GenericRepository
+
+        TutorBookingService->>Wallet: AddBalance() (Learner)
+        activate Wallet
+        Wallet-->>TutorBookingService: (updated fields)
+        deactivate Wallet
+        TutorBookingService->>IUnitOfWork: GetRepository<Wallet>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorBookingService: IGenericRepository<Wallet>
+        deactivate IUnitOfWork
+        TutorBookingService->>GenericRepository: UpdateFields(learnerWallet)
+        activate GenericRepository
+        GenericRepository-->>TutorBookingService: (entity marked for update)
+        deactivate GenericRepository
+
+        TutorBookingService->>Wallet: SubtractBalance() (Escrow)
+        activate Wallet
+        Wallet-->>TutorBookingService: (updated fields)
+        deactivate Wallet
+        TutorBookingService->>IUnitOfWork: GetRepository<Wallet>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorBookingService: IGenericRepository<Wallet>
+        deactivate IUnitOfWork
+        TutorBookingService->>GenericRepository: UpdateFields(escrowWallet)
+        activate GenericRepository
+        GenericRepository-->>TutorBookingService: (entity marked for update)
+        deactivate GenericRepository
+
+        TutorBookingService->>HeldFund: UpdateStatus()
+        activate HeldFund
+        HeldFund-->>TutorBookingService: (updated fields)
+        deactivate HeldFund
+        TutorBookingService->>IUnitOfWork: GetRepository<HeldFund>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorBookingService: IGenericRepository<HeldFund>
+        deactivate IUnitOfWork
+        TutorBookingService->>GenericRepository: UpdateFields(heldFund)
+        activate GenericRepository
+        GenericRepository-->>TutorBookingService: (entity marked for update)
+        deactivate GenericRepository
+    end
+
+    TutorBookingService->>Booking: UpdateStatus()
+    activate Booking
+    Booking-->>TutorBookingService: (updated fields)
+    deactivate Booking
+    TutorBookingService->>IUnitOfWork: GetRepository<Booking>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorBookingService: IGenericRepository<Booking>
+    deactivate IUnitOfWork
+    TutorBookingService->>GenericRepository: UpdateFields(booking)
+    activate GenericRepository
+    GenericRepository-->>TutorBookingService: (entity marked for update)
+    deactivate GenericRepository
+
+    TutorBookingService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>TutorBookingService: (save complete)
+    deactivate IUnitOfWork
+    IUnitOfWork->>Database: CommitTransaction()
+    activate Database
+    Database-->>IUnitOfWork: (transaction committed)
+    deactivate Database
+    deactivate IUnitOfWork
+
+    TutorBookingService->>NotificationService: SendToUsersAsync()
+    activate NotificationService
+    NotificationService-->>TutorBookingService: (notification sent)
+    deactivate NotificationService
+
+    TutorBookingService-->>ITutorBookingService: BookingResponse
+    deactivate TutorBookingService
+    ITutorBookingService-->>TutorBookingController: BookingResponse
+    deactivate ITutorBookingService
+    TutorBookingController-->>Browser: HTTP 200 OK
+    deactivate TutorBookingController
+    Browser-->>Tutor: Display success message

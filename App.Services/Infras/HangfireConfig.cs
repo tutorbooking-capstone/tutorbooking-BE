@@ -24,6 +24,12 @@ namespace App.Services.Infras
                 "update-completed-slots",
                 service => service.ProcessCompletedSlotsAsync(),
                 "*/5 * * * *");   
+
+            RecurringJob.RemoveIfExists("process-expired-reschedule-requests");
+            RecurringJob.AddOrUpdate<RescheduleExpirationService>(
+                "process-expired-reschedule-requests",
+                service => service.ProcessExpiredRescheduleRequestsAsync(),
+                "*/15 * * * *");   
         }
 
         public static void ScheduleOfferExpirationJob(string offerId, DateTimeOffset expirationTime)
@@ -45,6 +51,13 @@ namespace App.Services.Infras
             BackgroundJob.Schedule<BookedSlotStatusUpdateService>(
                 service => service.ProcessSpecificSlotAsync(slotId),
                 endTime - DateTime.UtcNow);
+        }
+
+        public static void ScheduleRescheduleExpirationJob(string rescheduleRequestId, DateTime expirationTime)
+        {
+            BackgroundJob.Schedule<RescheduleExpirationService>(
+                service => service.HandleExpiredRescheduleRequestAsync(rescheduleRequestId),
+                expirationTime - DateTime.UtcNow);
         }
     }
 }
