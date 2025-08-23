@@ -7,6 +7,7 @@ using App.Repositories.Models.Payment;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
+using App.Services.Interfaces.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -22,6 +23,7 @@ namespace App.Services.Services
         private readonly IWalletService _walletService;
         private readonly ILogger<WithdrawalService> _logger;
         private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
 
         public WithdrawalService(
             IUnitOfWork unitOfWork,
@@ -29,7 +31,8 @@ namespace App.Services.Services
             IFeeService feeService,
             IWalletService walletService,
             ILogger<WithdrawalService> logger,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IEmailService emailService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
@@ -37,6 +40,7 @@ namespace App.Services.Services
             _walletService = walletService;
             _logger = logger;
             _notificationService = notificationService;
+            _emailService = emailService;
         }
 
         #region Private Helpers
@@ -355,6 +359,29 @@ namespace App.Services.Services
                         ReceiverUserIds = [withdrawal.UserId]
                     });
 
+                    // Send email notification
+                    if (!string.IsNullOrEmpty(withdrawal.User!.Email))
+                    {
+                        string greeting = $"Chào {withdrawal.User.FullName},";
+                        string mainMessage = $@"
+                            Yêu cầu rút tiền của bạn (ID: {withdrawal.Id}) đã được xử lý thành công.
+                            <br>Số tiền rút: {FormatCurrency(withdrawal.GrossAmount)} VND
+                            <br>Phí dịch vụ: {FormatCurrency(withdrawal.GrossAmount - withdrawal.NetAmount)} VND
+                            <br>Số tiền thực nhận: {FormatCurrency(withdrawal.NetAmount)} VND
+                            <br>Thời gian xử lý: {FormatVietnamTime(DateTime.UtcNow)}
+                            <br>Xin cảm ơn!";
+
+                        await _emailService.SendEmailAsync(
+                            withdrawal.User.Email,
+                            "Yêu cầu rút tiền đã được xử lý",
+                            greeting,
+                            mainMessage);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("User {UserId} does not have an email for withdrawal request {WithdrawalId}", withdrawal.UserId, withdrawal.Id);
+                    }
+
                     return WithdrawalRequestResponse.FromEntity(withdrawal);
                 }
                 catch (Exception ex)
@@ -384,7 +411,7 @@ namespace App.Services.Services
             var withdrawalRepo = _unitOfWork.GetRepository<WithdrawalRequest>();
             var withdrawal = await withdrawalRepo
                 .ExistEntities()
-                .Include(w => w.User)
+                .Include(w => w.User) 
                 .FirstOrDefaultAsync(w => w.Id == request.WithdrawalId);
 
             if (withdrawal == null)
@@ -471,6 +498,28 @@ namespace App.Services.Services
                         ReceiverUserIds = [withdrawal.UserId]
                     });
 
+                    // Send email notification
+                    if (!string.IsNullOrEmpty(withdrawal.User!.Email))
+                    {
+                        string greeting = $"Chào {withdrawal.User.FullName},";
+                        string mainMessage = $@"
+                            Yêu cầu rút tiền của bạn (ID: {withdrawal.Id}) đã bị từ chối.
+                            <br>Lý do: {request.RejectionReason}
+                            <br>Số tiền: {FormatCurrency(withdrawal.GrossAmount)} VND đã được hoàn lại vào ví của bạn.
+                            <br>Thời gian: {FormatVietnamTime(DateTime.UtcNow)}
+                            <br>Nếu bạn có thắc mắc, vui lòng liên hệ với bộ phận hỗ trợ qua số điện thoại 0707-707-030.";
+
+                        await _emailService.SendEmailAsync(
+                            withdrawal.User.Email,
+                            "Yêu cầu rút tiền bị từ chối",
+                            greeting,
+                            mainMessage);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("User {UserId} does not have an email for withdrawal request {WithdrawalId}", withdrawal.UserId, withdrawal.Id);
+                    }
+
                     return WithdrawalRequestResponse.FromEntity(withdrawal);
                 }
                 catch (Exception ex)
@@ -522,6 +571,19 @@ namespace App.Services.Services
             metadata.Add("TransactionStatus", transactionStatusValues);
 
             return Task.FromResult(metadata);
+        }
+
+        // Add this helper method to convert UTC to UTC+7
+        private string FormatVietnamTime(DateTime utcTime)
+        {
+            return utcTime.AddHours(7).ToString("dd/MM/yyyy HH:mm") + " (UTC+7)";
+        }
+
+        // Add this helper method to format currency
+        private string FormatCurrency(decimal amount)
+        {
+            return amount.ToString("N0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN"))
+                            .Replace(",", " ");
         }
     }
 }
