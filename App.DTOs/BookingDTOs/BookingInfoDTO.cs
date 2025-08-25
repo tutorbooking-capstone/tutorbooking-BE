@@ -15,6 +15,18 @@ namespace App.DTOs.BookingDTOs
         Offer = 2
     }
 
+    // public enum BookingStatus
+    // {
+    //     [EnumDescription("Đã xác nhận")]
+    //     Confirmed = 0,
+    //     [EnumDescription("Đã yêu cầu khiếu nại")]
+    //     DisputeRequested = 1,
+    //     [EnumDescription("Đang tranh chấp")]
+    //     Disputed = 2,
+    //     [EnumDescription("Đã hủy")]
+    //     Cancelled = 3
+    // }
+
     public class BookingListItemDTO
     {
         public string Id { get; set; } = string.Empty;
@@ -29,6 +41,7 @@ namespace App.DTOs.BookingDTOs
         public int SlotCount { get; set; }
         public DateTime CreatedTime { get; set; }
         public DateTime EarliestBookedDate { get; set; }
+        public BookingStatus Status { get; set; }   
         
         public static BookingListItemDTO FromEntity(Booking booking)
         {
@@ -45,7 +58,8 @@ namespace App.DTOs.BookingDTOs
                 TotalPrice = booking.BookedSlots?.Sum(bs => bs.HeldFund?.Amount ?? 0) ?? 0,
                 SlotCount = booking.BookedSlots?.Count ?? 0,
                 CreatedTime = booking.CreatedTime.DateTime,
-                EarliestBookedDate = booking.BookedSlots?.OrderBy(bs => bs.BookedDate).FirstOrDefault()?.BookedDate ?? DateTime.MinValue
+                EarliestBookedDate = booking.BookedSlots?.OrderBy(bs => bs.BookedDate).FirstOrDefault()?.BookedDate ?? DateTime.MinValue,
+                Status = booking.Status  // Add status mapping
             };
         }
         
@@ -63,7 +77,8 @@ namespace App.DTOs.BookingDTOs
                 TotalPrice = b.BookedSlots!.Sum(bs => bs.HeldFund!.Amount),
                 SlotCount = b.BookedSlots!.Count,
                 CreatedTime = b.CreatedTime.DateTime,
-                EarliestBookedDate = b.BookedSlots!.OrderBy(bs => bs.BookedDate).FirstOrDefault()!.BookedDate
+                EarliestBookedDate = b.BookedSlots!.OrderBy(bs => bs.BookedDate).FirstOrDefault()!.BookedDate,
+                Status = b.Status   
             };
     }
     

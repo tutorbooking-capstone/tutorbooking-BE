@@ -1,0 +1,120 @@
+classDiagram
+direction TB
+    class TutorBookingController {
+	    -ITutorBookingService _tutorBookingService
+	    +CreateBookingOffer()
+    }
+
+    class ITutorBookingService {
+	    +CreateBookingOfferAsync()
+    }
+
+    class TutorBookingService {
+	    -IUnitOfWork _unitOfWork
+	    -ICurrentUserProvider _currentUserProvider
+	    +CreateBookingOfferAsync()
+    }
+
+    class IUnitOfWork {
+	    +GetRepository~T~()
+	    +SaveAsync()
+    }
+
+    class UnitOfWork {
+	    -ICurrentUserProvider _currentUser_provider
+	    +GetRepository~T~()
+	    +SaveAsync()
+    }
+
+    class IGenericRepository~T~ {
+	    +ExistEntities()
+	    +AnyAsync()
+	    +FirstOrDefaultAsync()
+	    +Insert()
+	    +Query()
+    }
+
+    class GenericRepository~T~ {
+	    -ICurrentUserProvider _currentUser_provider
+	    +ExistEntities()
+	    +AnyAsync()
+	    +FirstOrDefaultAsync()
+	    +Insert()
+	    +Query()
+    }
+
+    class ICurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class CurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class Learner {
+	    +string Id
+	    +string Name
+    }
+
+    class Lesson {
+	    +string Id
+	    +string Title
+	    +string TutorId
+    }
+
+    class TutorBookingOffer {
+	    +string Id
+	    +string TutorId
+	    +Create()
+    }
+
+    class OfferedSlot {
+	    +string Id
+	    +DateTime StartTime
+	    +DateTime EndTime
+	    +Create()
+    }
+
+    class NotificationService {
+	    +SendToUsersAsync()
+    }
+
+    class HangfireConfig {
+	    +ScheduleOfferExpirationJob()
+    }
+
+    class Database {
+	    +SaveChanges()
+	    +Query()
+    }
+
+	<<interface>> ITutorBookingService
+	<<interface>> IUnitOfWork
+	<<interface>> IGenericRepository
+	<<interface>> ICurrentUserProvider
+	<<entity>> Learner
+	<<entity>> Lesson
+	<<entity>> TutorBookingOffer
+	<<entity>> OfferedSlot
+
+    TutorBookingController ..> ITutorBookingService : Uses
+    ITutorBookingService <|-- TutorBookingService : Implements
+    TutorBookingService ..> IUnitOfWork : Uses
+    TutorBookingService ..> ICurrentUserProvider : Uses
+    TutorBookingService ..> TutorBookingOffer : Creates
+    TutorBookingOffer ..> OfferedSlot : Creates
+    TutorBookingService ..> NotificationService : Uses
+    TutorBookingService ..> HangfireConfig : Uses
+    TutorBookingService ..> Lesson : Operates on
+    TutorBookingService ..> Learner : Operates on
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+    IGenericRepository ..> Database : Direct (Query/Save)
+    IGenericRepository ..> Lesson : Operates on (as T)
+    IGenericRepository ..> Learner : Operates on (as T)
+    IGenericRepository ..> TutorBookingOffer : Operates on (as T)
+    ICurrentUserProvider <|-- CurrentUserProvider : Implements
+

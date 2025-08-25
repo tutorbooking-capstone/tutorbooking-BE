@@ -1,0 +1,82 @@
+classDiagram
+direction TB
+    class LessonController {
+	    -ILessonService _lessonService
+	    +CreateLesson()
+    }
+
+    class ILessonService {
+	    +CreateLessonAsync()
+    }
+
+    class LessonService {
+	    -IUnitOfWork _unitOfWork
+	    -ICurrentUserProvider _currentUserProvider
+	    +CreateLessonAsync()
+	    -CheckTutorExists()
+    }
+
+    class IUnitOfWork {
+	    +GetRepository~T~()
+	    +SaveAsync()
+    }
+
+    class UnitOfWork {
+	    -ICurrentUserProvider _currentUser_provider
+	    +GetRepository~T~()
+	    +SaveAsync()
+    }
+
+    class IGenericRepository~T~ {
+	    +ExistEntities()
+	    +Insert()
+	    +FirstAsync()
+    }
+
+    class GenericRepository~T~ {
+	    -ICurrentUserProvider _currentUser_provider
+	    +ExistEntities()
+	    +Insert()
+	    +FirstAsync()
+    }
+
+    class ICurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class CurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class Lesson {
+	    +string Id
+	    +string Name
+	    +string Description
+	    +string TutorId
+    }
+
+    class Database {
+	    +SaveChanges()
+	    +Query()
+    }
+
+	<<interface>> ILessonService
+	<<interface>> IUnitOfWork
+	<<interface>> IGenericRepository
+	<<interface>> ICurrentUserProvider
+	<<entity>> Lesson
+
+    LessonController ..> ILessonService : Uses
+    ILessonService <|-- LessonService : Implements
+    LessonService ..> IUnitOfWork : Uses
+    LessonService ..> ICurrentUserProvider : Uses
+    LessonService ..> Lesson : Operates on
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+    IGenericRepository ..> Database : Direct (Query/Save)
+    IGenericRepository ..> Lesson : Operates on (as T)
+    ICurrentUserProvider <|-- CurrentUserProvider : Implements
+

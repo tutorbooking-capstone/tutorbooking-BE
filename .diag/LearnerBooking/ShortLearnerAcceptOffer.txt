@@ -1,0 +1,72 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Learner
+    participant Browser
+    participant LearnerBookingController
+    participant ILearnerBookingService
+    participant LearnerBookingService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant Database
+    participant TutorBookingOffer
+    participant LessonSnapshot
+    participant Booking
+    participant BookedSlot
+    participant HeldFund
+    participant Wallet
+    participant Transaction
+    participant NotificationService
+    participant HangfireConfig
+
+    Learner->>Browser: Submit Accept Offer Request
+    Browser->>LearnerBookingController: HTTP POST /api/learner-bookings/accept-offer
+    activate LearnerBookingController
+    LearnerBookingController->>ILearnerBookingService: AcceptTutorOfferAsync()
+    activate ILearnerBookingService
+    ILearnerBookingService->>LearnerBookingService: AcceptTutorOfferAsync()
+    activate LearnerBookingService
+
+    LearnerBookingService->>ICurrentUserProvider: GetCurrentUserId()
+    ICurrentUserProvider-->>LearnerBookingService: currentUserId()
+
+    LearnerBookingService->>IUnitOfWork: Load Offer + Existing Slots + Wallet
+    IUnitOfWork->>Database: Query multiple entities
+    Database-->>IUnitOfWork: Data loaded
+
+    LearnerBookingService->>TutorBookingOffer: Validate (IsExpired?)
+    TutorBookingOffer-->>LearnerBookingService: result
+
+    LearnerBookingService->>IUnitOfWork: ExecuteInTransactionAsync()
+    IUnitOfWork->>Database: BeginTransaction()
+
+    LearnerBookingService->>LessonSnapshot: CreateFromLesson()
+    LearnerBookingService->>Booking: Create()
+    LearnerBookingService->>Wallet: Get Escrow Wallet
+
+    loop For each offered slot
+        LearnerBookingService->>HeldFund: CreateForBooking()
+        LearnerBookingService->>BookedSlot: Create()
+        LearnerBookingService->>HangfireConfig: ScheduleSlotStatusUpdateJob()
+    end
+
+    LearnerBookingService->>Transaction: CreatePaymentTransaction()
+    LearnerBookingService->>Wallet: SubtractBalance (Learner)
+    LearnerBookingService->>Wallet: AddBalance (Escrow)
+    LearnerBookingService->>TutorBookingOffer: Delete()
+
+    LearnerBookingService->>IUnitOfWork: SaveAsync + Commit
+    IUnitOfWork->>Database: Persist changes
+
+    loop For each held fund
+        LearnerBookingService->>HangfireConfig: ScheduleHeldFundReleaseJob()
+    end
+
+    LearnerBookingService->>NotificationService: SendToUsersAsync()
+
+    LearnerBookingService-->>ILearnerBookingService: BookingResponse
+    ILearnerBookingService-->>LearnerBookingController: BookingResponse
+    LearnerBookingController-->>Browser: HTTP 200 OK
+    Browser-->>Learner: Display success message

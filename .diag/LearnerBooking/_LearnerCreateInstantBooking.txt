@@ -1,0 +1,196 @@
+classDiagram
+direction TB
+    class LearnerBookingController {
+	    -ILearnerBookingService _learnerBookingService
+	    +CreateInstantBooking()
+    }
+
+    class ILearnerBookingService {
+	    +CreateInstantBookingAsync()
+    }
+
+    class LearnerBookingService {
+	    -IUnitOfWork _unitOfWork
+	    -ICurrentUserProvider _currentUserProvider
+	    +CreateInstantBookingAsync()
+	    +ValidateInstantBookingConditionsAsync()
+	    +CreateBookingAsync()
+	    +GetEscrowWalletAsync()
+    }
+
+    class IUnitOfWork {
+	    +GetRepository~T~()
+	    +SaveAsync()
+	    +ExecuteInTransactionAsync()
+    }
+
+    class UnitOfWork {
+	    -ICurrentUserProvider _currentUser_provider
+	    +GetRepository~T~()
+	    +SaveAsync()
+	    +ExecuteInTransactionAsync()
+    }
+
+    class IGenericRepository~T~ {
+	    +ExistEntities()
+	    +AnyAsync()
+	    +FirstOrDefaultAsync()
+	    +ToListAsync()
+	    +CountAsync()
+	    +Insert()
+	    +InsertRange()
+	    +UpdateFields()
+	    +Query()
+    }
+
+    class GenericRepository~T~ {
+	    -ICurrentUserProvider _currentUser_provider
+	    +ExistEntities()
+	    +AnyAsync()
+	    +FirstOrDefaultAsync()
+	    +ToListAsync()
+	    +CountAsync()
+	    +Insert()
+	    +InsertRange()
+	    +UpdateFields()
+	    +Query()
+    }
+
+    class ICurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class CurrentUserProvider {
+	    +GetCurrentUserId()
+    }
+
+    class Tutor {
+	    +string Id
+	    +string Name
+    }
+
+    class Lesson {
+	    +string Id
+	    +string Title
+	    +string TutorId
+    }
+
+    class BookingConfig {
+	    +string Id
+	    +string TutorId
+	    +string ConfigData
+    }
+
+    class BookedSlot {
+	    +string Id
+	    +DateTime StartTime
+	    +DateTime EndTime
+	    +string BookingId
+    }
+
+    class LessonSnapshot {
+	    +string Id
+	    +string LessonId
+	    +string Title
+    }
+
+    class Booking {
+	    +string Id
+	    +string LessonSnapshotId
+	    +string LearnerId
+    }
+
+    class Wallet {
+	    +string Id
+	    +decimal Balance
+	    +string OwnerId
+    }
+
+    class HeldFund {
+	    +string Id
+	    +decimal Amount
+	    +string WalletId
+    }
+
+    class Transaction {
+	    +string Id
+	    +decimal Amount
+	    +string WalletId
+    }
+
+    class NotificationEntity {
+	    +string Id
+	    +string Message
+    }
+
+    class AppUserNotification {
+	    +string Id
+	    +string AppUserId
+	    +string NotificationId
+    }
+
+    class NotificationService {
+	    +SendToUsersAsync()
+    }
+
+    class Hangfire {
+	    +ScheduleSlotStatusUpdateJob()
+	    +ScheduleHeldFundReleaseJob()
+    }
+
+    class Database {
+	    +SaveChanges()
+	    +Query()
+	    +Insert()
+    }
+
+	<<interface>> ILearnerBookingService
+	<<interface>> IUnitOfWork
+	<<interface>> IGenericRepository
+	<<interface>> ICurrentUserProvider
+	<<entity>> Tutor
+	<<entity>> Lesson
+	<<entity>> BookingConfig
+	<<entity>> BookedSlot
+	<<entity>> LessonSnapshot
+	<<entity>> Booking
+	<<entity>> Wallet
+	<<entity>> HeldFund
+	<<entity>> Transaction
+	<<entity>> NotificationEntity
+	<<entity>> AppUserNotification
+
+    LearnerBookingController ..> ILearnerBookingService : Uses
+    ILearnerBookingService <|-- LearnerBookingService : Implements
+    LearnerBookingService ..> IUnitOfWork : Uses
+    LearnerBookingService ..> ICurrentUserProvider : Uses
+    LearnerBookingService ..> Booking : Creates
+    LearnerBookingService ..> BookedSlot : Creates
+    LearnerBookingService ..> LessonSnapshot : Creates
+    LearnerBookingService ..> HeldFund : Creates
+    LearnerBookingService ..> Transaction : Creates
+    LearnerBookingService ..> NotificationService : Uses
+    LearnerBookingService ..> Hangfire : Uses
+    LearnerBookingService ..> Wallet : Operates on
+    LearnerBookingService ..> BookingConfig : Operates on
+    LearnerBookingService ..> Tutor : Operates on
+    LearnerBookingService ..> Lesson : Operates on
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+    IGenericRepository ..> Database : Direct (Query/Save)
+    IGenericRepository ..> Tutor : Operates on (as T)
+    IGenericRepository ..> Lesson : Operates on (as T)
+    IGenericRepository ..> BookingConfig : Operates on (as T)
+    IGenericRepository ..> BookedSlot : Operates on (as T)
+    IGenericRepository ..> Wallet : Operates on (as T)
+    IGenericRepository ..> LessonSnapshot : Operates on (as T)
+    IGenericRepository ..> Booking : Operates on (as T)
+    IGenericRepository ..> HeldFund : Operates on (as T)
+    IGenericRepository ..> Transaction : Operates on (as T)
+    IGenericRepository ..> NotificationEntity : Operates on (as T)
+    IGenericRepository ..> AppUserNotification : Operates on (as T)
+    ICurrentUserProvider <|-- CurrentUserProvider : Implements
+

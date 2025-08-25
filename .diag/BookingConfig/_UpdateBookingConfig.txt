@@ -1,0 +1,90 @@
+---
+layout: dagre
+---
+classDiagram
+    direction TB
+
+    class TutorController {
+        -ITutorService _tutorService
+        +UpdateBookingConfig()
+    }
+
+    class ITutorService {
+        +UpdateBookingConfigAsync()
+    }
+
+    class TutorService {
+        -IUnitOfWork _unitOfWork
+        -ICurrentUserProvider _currentUserProvider
+        +UpdateBookingConfigAsync()
+    }
+
+    class IUnitOfWork {
+        +GetRepository~T~()
+        +SaveAsync()
+    }
+
+    class UnitOfWork {
+        -ICurrentUserProvider _currentUser_provider
+        +GetRepository~T~()
+        +SaveAsync()
+    }
+
+    class IGenericRepository~T~ {
+        +ExistEntities()
+        +FirstOrDefaultAsync()
+        +UpdateFields()
+    }
+
+    class GenericRepository~T~ {
+        -ICurrentUserProvider _currentUser_provider
+        +ExistEntities()
+        +FirstOrDefaultAsync()
+        +UpdateFields()
+    }
+
+    class ICurrentUserProvider {
+        +GetCurrentUserId()
+    }
+
+    class CurrentUserProvider {
+        +GetCurrentUserId()
+    }
+
+    class Tutor {
+        +string Id
+        +string Name
+    }
+
+    class BookingConfig {
+        +string TutorId
+        +bool AllowInstantBooking
+        +int MaxConcurrentBookings
+        +Update()
+    }
+
+    class Database {
+        +SaveChanges()
+        +Query()
+    }
+
+    <<interface>> ITutorService
+    <<interface>> IUnitOfWork
+    <<interface>> IGenericRepository
+    <<interface>> ICurrentUserProvider
+    <<entity>> Tutor
+    <<entity>> BookingConfig
+
+    TutorController ..> ITutorService : Uses
+    ITutorService <|-- TutorService : Implements
+    TutorService ..> IUnitOfWork : Uses
+    TutorService ..> ICurrentUserProvider : Uses
+    TutorService ..> BookingConfig : Operates on
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+    IGenericRepository ..> Database : Direct (Query/Save)
+    IGenericRepository ..> BookingConfig : Operates on (as T)
+    ICurrentUserProvider <|-- CurrentUserProvider : Implements

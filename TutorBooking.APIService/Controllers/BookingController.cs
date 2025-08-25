@@ -1,5 +1,6 @@
 using App.Core.Base;
 using App.DTOs.BookingDTOs;
+using App.Repositories.Models;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -26,8 +27,11 @@ namespace TutorBooking.APIService.Controllers
             [FromQuery] int pageSize = 10)
         {
             var bookings = await _bookingService.GetLearnerBookingsAsync(page, pageSize);
+            var bookingStatusMetadata = EnumHelper.GetEnumMetadata(typeof(BookingStatus));
+            
             return Ok(new BaseResponseModel<BasePaginatedList<BookingListItemDTO>>(
                 data: bookings,
+                additionalData: new { BookingStatus = bookingStatusMetadata },
                 message: "Danh sách booking của học viên"
             ));
         }
@@ -40,10 +44,14 @@ namespace TutorBooking.APIService.Controllers
         {
             var bookings = await _bookingService.GetTutorBookingsAsync(page, pageSize, bookingType);
             var bookingTypeMetadata = EnumHelper.GetEnumMetadata(typeof(BookingType));
+            var bookingStatusMetadata = EnumHelper.GetEnumMetadata(typeof(BookingStatus));
             
             return Ok(new BaseResponseModel<BasePaginatedList<BookingListItemDTO>>(
                 data: bookings,
-                additionalData: new { BookingType = bookingTypeMetadata },
+                additionalData: new { 
+                    BookingType = bookingTypeMetadata, 
+                    BookingStatus = bookingStatusMetadata 
+                },
                 message: "Danh sách booking của giáo viên"
             ));
         }
