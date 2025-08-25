@@ -3,6 +3,7 @@ using App.DTOs.PaymentDTOs;
 using App.Repositories.Models.Payment;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace TutorBooking.APIService.Controllers
@@ -33,6 +34,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("{feeCode}")]
+        [AllowAnonymous]   
         public async Task<IActionResult> GetFeeByCode(string feeCode)
         {
             var feeInfo = await _feeService.GetFeeInfoByCodeAsync(feeCode);
