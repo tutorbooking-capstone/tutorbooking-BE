@@ -1,0 +1,121 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant ScheduleController
+    participant IScheduleService
+    participant ScheduleService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant WeeklyAvailabilityPattern
+    participant BookedSlot
+    participant OfferedSlot
+
+    Tutor->>Browser: Submit Delete Weekly Pattern Request
+    Browser->>ScheduleController: HTTP DELETE /api/schedule/weekly-pattern/{patternId}
+    activate ScheduleController
+    ScheduleController->>IScheduleService: DeleteWeeklyPatternAsync()
+    activate IScheduleService
+    IScheduleService->>ScheduleService: DeleteWeeklyPatternAsync()
+    activate ScheduleService
+
+    ScheduleService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>ScheduleService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query pattern by ID
+    activate Database
+    Database-->>GenericRepository: Pattern data
+    deactivate Database
+    GenericRepository-->>ScheduleService: Pattern entity
+    deactivate GenericRepository
+
+    ScheduleService->>ScheduleService: GetBlockedSlotsForPatternAsync()
+    activate ScheduleService
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query pattern for blocked slots
+    activate Database
+    Database-->>GenericRepository: Pattern data
+    deactivate Database
+    GenericRepository-->>ScheduleService: Pattern entity
+    deactivate GenericRepository
+
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().Where().OrderBy().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query next pattern
+    activate Database
+    Database-->>GenericRepository: Next Pattern data
+    deactivate Database
+    GenericRepository-->>ScheduleService: Next Pattern entity
+    deactivate GenericRepository
+
+    ScheduleService->>IUnitOfWork: GetRepository<BookedSlot>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<BookedSlot>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().Where().ToListAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query pending booked slots
+    activate Database
+    Database-->>GenericRepository: Booked slots data
+    deactivate Database
+    GenericRepository-->>ScheduleService: Booked slots
+    deactivate GenericRepository
+
+    ScheduleService->>IUnitOfWork: GetRepository<OfferedSlot>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<OfferedSlot>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().Where().ToListAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query offered slots
+    activate Database
+    Database-->>GenericRepository: Offered slots data
+    deactivate Database
+    GenericRepository-->>ScheduleService: Offered slots
+    deactivate GenericRepository
+    ScheduleService-->>ScheduleService: blockedSlots
+    deactivate ScheduleService
+
+    ScheduleService->>GenericRepository: Delete(patternToDelete)
+    activate GenericRepository
+    GenericRepository-->>ScheduleService: (entity marked for delete)
+    deactivate GenericRepository
+
+    ScheduleService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>ScheduleService: (save complete)
+    deactivate IUnitOfWork
+
+    ScheduleService-->>IScheduleService: (completion)
+    deactivate ScheduleService
+    IScheduleService-->>ScheduleController: (completion)
+    deactivate IScheduleService
+    ScheduleController-->>Browser: HTTP 200 OK
+    deactivate ScheduleController
+    Browser-->>Tutor: Display success message

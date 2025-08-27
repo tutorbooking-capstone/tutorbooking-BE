@@ -1,0 +1,118 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant DocumentController
+    participant IDocumentService
+    participant DocumentService
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant ICloudinaryProvider
+    participant Cloudinary
+    participant Document
+    participant FileUpload
+    participant DocumentFileUpload
+
+    Tutor->>Browser: Submit Application Request
+    Browser->>DocumentController: HTTP POST /api/Document/upload
+    activate DocumentController
+    DocumentController->>IDocumentService: UploadDocumentAsync()
+    activate IDocumentService
+    IDocumentService->>DocumentService: UploadDocumentAsync()
+    activate DocumentService
+
+    DocumentService->>IUnitOfWork: ExecuteInTransactionAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: BeginTransaction()
+    activate Database
+    Database-->>IUnitOfWork: (transaction started)
+    deactivate Database
+
+    DocumentService->>Document: ToDocumentEntity()
+    activate Document
+    Document-->>DocumentService: document entity
+    deactivate Document
+
+    DocumentService->>IUnitOfWork: GetRepository<Document>()
+    activate IUnitOfWork
+    IUnitOfWork-->>DocumentService: IGenericRepository<Document>
+    deactivate IUnitOfWork
+    DocumentService->>GenericRepository: Insert(document)
+    activate GenericRepository
+    GenericRepository-->>DocumentService: (entity marked for insert)
+    deactivate GenericRepository
+
+    DocumentService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>DocumentService: (save complete)
+    deactivate IUnitOfWork
+
+    loop For each file in request.Files
+        DocumentService->>ICloudinaryProvider: UploadDocumentAsync()
+        activate ICloudinaryProvider
+        ICloudinaryProvider->>Cloudinary: Upload File
+        activate Cloudinary
+        Cloudinary-->>ICloudinaryProvider: cloudinaryUrl
+        deactivate Cloudinary
+        ICloudinaryProvider-->>DocumentService: cloudinaryUrl
+        deactivate ICloudinaryProvider
+
+        DocumentService->>FileUpload: ToFileUploadEntity()
+        activate FileUpload
+        FileUpload-->>DocumentService: fileUpload entity
+        deactivate FileUpload
+
+        DocumentService->>DocumentFileUpload: ToDocumentFileUploadEntity()
+        activate DocumentFileUpload
+        DocumentFileUpload-->>DocumentService: documentFileUpload entity
+        deactivate DocumentFileUpload
+    end
+
+    DocumentService->>IUnitOfWork: GetRepository<FileUpload>()
+    activate IUnitOfWork
+    IUnitOfWork-->>DocumentService: IGenericRepository<FileUpload>
+    deactivate IUnitOfWork
+    DocumentService->>GenericRepository: InsertRange(fileUploads)
+    activate GenericRepository
+    GenericRepository-->>DocumentService: (entities marked for insert)
+    deactivate GenericRepository
+
+    DocumentService->>IUnitOfWork: GetRepository<DocumentFileUpload>()
+    activate IUnitOfWork
+    IUnitOfWork-->>DocumentService: IGenericRepository<DocumentFileUpload>
+    deactivate IUnitOfWork
+    DocumentService->>GenericRepository: InsertRange(documentFileUploads)
+    activate GenericRepository
+    GenericRepository-->>DocumentService: (entities marked for insert)
+    deactivate GenericRepository
+
+    DocumentService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>DocumentService: (save complete)
+    deactivate IUnitOfWork
+
+    IUnitOfWork->>Database: CommitTransaction()
+    activate Database
+    Database-->>IUnitOfWork: (transaction committed)
+    deactivate Database
+    deactivate IUnitOfWork
+
+    DocumentService-->>IDocumentService: DocumentResponse
+    deactivate DocumentService
+    IDocumentService-->>DocumentController: DocumentResponse
+    deactivate IDocumentService
+    DocumentController-->>Browser: HTTP 200 OK
+    deactivate DocumentController
+    Browser-->>Tutor: Display success message
