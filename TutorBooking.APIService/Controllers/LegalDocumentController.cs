@@ -43,7 +43,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> CreateAsync([FromBody] LegalDocumentCreateRequest request)
         {
             var response = await _legalDocumentService.CreateAsync(request);
@@ -51,7 +51,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPut]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> UpdateAsync([FromBody] LegalDocumentUpdateRequest request)
         {
             var response = await _legalDocumentService.UpdateAsync(request);
@@ -59,7 +59,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpDelete("{id}")]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> DeleteAsync(string id)
         {
             await _legalDocumentService.DeleteAsync(id);
@@ -75,7 +75,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("version")]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> CreateVersionAsync(LegalDocumentVersionCreateRequest request)
         {
             var response = await _legalDocumentService.CreateVersionAsync(request);
@@ -83,7 +83,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPut("version")]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> UpdateVersionAsync([FromBody] LegalDocumentVersionUpdateRequest request)
         {
             var response = await _legalDocumentService.UpdateVersionAsync(request);
@@ -91,7 +91,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpDelete("version/{id}")]
-        [AuthorizeRoles(Role.Manager)]
+        [AuthorizeRoles(Role.Manager, Role.Admin)]
         public async Task<IActionResult> DeleteVersionAsync(string id)
         {
             await _legalDocumentService.DeleteVersionAsync(id);
