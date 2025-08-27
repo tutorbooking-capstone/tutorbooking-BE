@@ -462,6 +462,7 @@ namespace App.Services.Services
             
             // Determine the end date for this pattern
             var endDate = nextPattern?.AppliedFrom ?? DateTime.MaxValue;
+            var endDateInclusive = endDate.AddDays(1); 
             
             // Get all pending booked slots in the date range
             var bookedSlots = await _unitOfWork.GetRepository<BookedSlot>()
@@ -469,7 +470,7 @@ namespace App.Services.Services
                 .Where(bs => 
                     bs.Booking!.TutorId == pattern.TutorId && 
                     bs.BookedDate >= pattern.AppliedFrom && 
-                    bs.BookedDate < endDate &&
+                    bs.BookedDate < endDateInclusive &&  
                     bs.Status == SlotStatus.Pending)
                 .ToListAsync();
             
@@ -478,7 +479,7 @@ namespace App.Services.Services
                 .ExistEntities()
                 .Where(os => 
                     os.SlotDateTime >= pattern.AppliedFrom && 
-                    os.SlotDateTime < endDate)
+                    os.SlotDateTime < endDateInclusive)   
                 .ToListAsync();
             
             // Create a list of blocked slots
