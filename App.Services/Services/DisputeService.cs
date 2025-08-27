@@ -733,7 +733,7 @@ namespace App.Services.Services
         {
             EnsureHasManagerialAccess("Bạn không có quyền xử lý khiếu nại");
             var dispute = await GetDisputeAsync(request.DisputeId);
-            DisputeEligibleForEdit(dispute, Role.Tutor);
+            DisputeEligibleForEdit(dispute, Role.Staff);
 
             // Resolve dispute
             var updateProperties = dispute.ResolveByStaff(request.Resolution, request.Notes);
