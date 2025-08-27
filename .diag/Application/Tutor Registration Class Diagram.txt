@@ -1,0 +1,151 @@
+---
+layout: dagre
+---
+classDiagram
+    direction TB
+
+    class TutorApplicationController {
+        -ITutorApplicationService _service
+        +CreateApplication()
+        +RequestVerification()
+        +GetMetadata()
+    }
+
+    class TutorApplicationStaffController {
+        -ITutorApplicationStaffService _tutorApplicationStaffService
+        -PushNotificationEventHandler _notificationEventHandler
+        +GetAllPendingApplications()
+        +GetApplications()
+        +GetApplicationById()
+        +CreateApplicationRevision()
+        +GetMetadata()
+    }
+
+    class DocumentController {
+        -IDocumentService _documentService
+        +UploadDocuments()
+        +UpdateDocumentVisibility()
+        +DeleteDocument()
+        +GetDocumentsByTutorId()
+    }
+
+    class ITutorApplicationService {
+        +CreateTutorApplicationAsync()
+        +RequestVerificationAsync()
+        +GetApplicationMetadataAsync()
+    }
+
+    class TutorApplicationService {
+        -IUnitOfWork _unitOfWork
+        +CreateTutorApplicationAsync()
+        +RequestVerificationAsync()
+        +GetApplicationMetadataAsync()
+    }
+
+    class ITutorApplicationStaffService {
+        +CreateApplicationRevisionAsync()
+        +GetAllPendingTutorApplicationsAsync()
+        +GetTutorApplicationByIdAsync()
+        +GetApplicationMetadataAsync()
+        +GetAllTutorApplicationsAsync()
+    }
+
+    class TutorApplicationStaffService {
+        -IUnitOfWork _unitOfWork
+        -IUserService _userService
+        -INotificationService _notificationService
+        +CreateApplicationRevisionAsync()
+        +GetAllPendingTutorApplicationsAsync()
+        +GetTutorApplicationByIdAsync()
+        +GetApplicationMetadataAsync()
+        +GetAllTutorApplicationsAsync()
+        -UpdateApplicationStatusAsync()
+        -UpdateTutorVerificationStatusAsync()
+    }
+
+    class IDocumentService {
+        +UploadDocumentAsync()
+        +UpdateDocumentVisibilityAsync()
+        +DeleteDocumentAsync()
+        +GetDocumentsByTutorIdAsync()
+    }
+
+    class DocumentService {
+        -IUnitOfWork _unitOfWork
+        -ICloudinaryProvider _cloudinaryProvider
+        +UploadDocumentAsync()
+        +UpdateDocumentVisibilityAsync()
+        +DeleteDocumentAsync()
+        +GetDocumentsByTutorIdAsync()
+        -GetDocumentByIdAsync()
+    }
+
+    class IUnitOfWork {
+        +GetRepository~T~()
+        +SaveAsync()
+        +ExecuteInTransactionAsync()
+        +ExecuteWithConnectionReuseAsync()
+    }
+
+    class UnitOfWork {
+        -AppDbContext _dbContext
+        -ICurrentUserProvider _currentUserProvider
+        +GetRepository~T~()
+        +SaveAsync()
+        +ExecuteInTransactionAsync()
+        +ExecuteWithConnectionReuseAsync()
+    }
+
+    class IGenericRepository~T~ {
+        +Insert(T)
+        +Update(T)
+        +Delete(T)
+        +ExistEntities()
+        +UpdateFields(T)
+    }
+
+    class GenericRepository~T~ {
+        -DbSet~T~ _dbSet
+        -ICurrentUserProvider _currentUserProvider
+        +Insert(T)
+        +Update(T)
+        +Delete(T)
+        +ExistEntities()
+        +UpdateFields(T)
+    }
+
+    class ICurrentUserProvider {
+        +GetCurrentUserId()
+    }
+
+    class Database {
+        --
+    }
+
+    <<interface>> ITutorApplicationService
+    <<interface>> ITutorApplicationStaffService
+    <<interface>> IDocumentService
+    <<interface>> IUnitOfWork
+    <<interface>> IGenericRepository
+    <<interface>> ICurrentUserProvider
+    <<database>> Database
+
+    TutorApplicationController ..> ITutorApplicationService : Uses
+    TutorApplicationStaffController ..> ITutorApplicationStaffService : Uses
+    DocumentController ..> IDocumentService : Uses
+
+    ITutorApplicationService <|-- TutorApplicationService : Implements
+    ITutorApplicationStaffService <|-- TutorApplicationStaffService : Implements
+    IDocumentService <|-- DocumentService : Implements
+
+    TutorApplicationService ..> IUnitOfWork : Uses
+    TutorApplicationStaffService ..> IUnitOfWork : Uses
+    DocumentService ..> IUnitOfWork : Uses
+
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    IGenericRepository ..> Database : Operates on (as T)

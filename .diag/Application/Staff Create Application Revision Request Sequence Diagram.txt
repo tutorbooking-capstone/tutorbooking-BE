@@ -1,0 +1,102 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Staff
+    participant Browser
+    participant TutorApplicationStaffController
+    participant ITutorApplicationStaffService
+    participant TutorApplicationStaffService
+    participant IUserService
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant ApplicationRevision
+    participant TutorApplication
+    participant NotificationService
+
+    Staff->>Browser: Submit Application Revision Request
+    Browser->>TutorApplicationStaffController: HTTP POST /api/TutorApplicationStaff/review
+    activate TutorApplicationStaffController
+    TutorApplicationStaffController->>ITutorApplicationStaffService: CreateApplicationRevisionAsync()
+    activate ITutorApplicationStaffService
+    ITutorApplicationStaffService->>TutorApplicationStaffService: CreateApplicationRevisionAsync()
+    activate TutorApplicationStaffService
+
+    TutorApplicationStaffService->>IUnitOfWork: GetRepository<TutorApplication>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorApplicationStaffService: IGenericRepository<TutorApplication>
+    deactivate IUnitOfWork
+    TutorApplicationStaffService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query TutorApplication
+    activate Database
+    Database-->>GenericRepository: TutorApplication data
+    deactivate Database
+    GenericRepository-->>TutorApplicationStaffService: TutorApplication entity
+    deactivate GenericRepository
+
+    TutorApplicationStaffService->>IUserService: GetCurrentUserId()
+    activate IUserService
+    IUserService-->>TutorApplicationStaffService: currentUserId()
+    deactivate IUserService
+
+    TutorApplicationStaffService->>ApplicationRevision: ToEntity()
+    activate ApplicationRevision
+    ApplicationRevision-->>TutorApplicationStaffService: ApplicationRevision entity
+    deactivate ApplicationRevision
+
+    TutorApplicationStaffService->>IUnitOfWork: GetRepository<ApplicationRevision>()
+    activate IUnitOfWork
+    IUnitOfWork-->>TutorApplicationStaffService: IGenericRepository<ApplicationRevision>
+    deactivate IUnitOfWork
+    TutorApplicationStaffService->>GenericRepository: Insert(entity)
+    activate GenericRepository
+    GenericRepository-->>TutorApplicationStaffService: (entity marked for insert)
+    deactivate GenericRepository
+
+    alt Action is RequestRevision
+        TutorApplicationStaffService->>TutorApplicationStaffService: UpdateApplicationStatusAsync()
+        activate TutorApplicationStaffService
+        TutorApplicationStaffService->>IUnitOfWork: GetRepository<TutorApplication>()
+        activate IUnitOfWork
+        IUnitOfWork-->>TutorApplicationStaffService: IGenericRepository<TutorApplication>
+        deactivate IUnitOfWork
+        TutorApplicationStaffService->>GenericRepository: ExistEntities().FirstOrDefaultAsync()
+        activate GenericRepository
+        GenericRepository->>Database: Query TutorApplication
+        activate Database
+        Database-->>GenericRepository: TutorApplication data
+        deactivate Database
+        GenericRepository-->>TutorApplicationStaffService: TutorApplication entity
+        deactivate GenericRepository
+        TutorApplicationStaffService->>GenericRepository: UpdateFields()
+        activate GenericRepository
+        GenericRepository-->>TutorApplicationStaffService: (entity marked for update)
+        deactivate GenericRepository
+        TutorApplicationStaffService-->>TutorApplicationStaffService: (status updated)
+        deactivate TutorApplicationStaffService
+    end
+
+    TutorApplicationStaffService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>TutorApplicationStaffService: (save complete)
+    deactivate IUnitOfWork
+
+    TutorApplicationStaffService->>NotificationService: SendToUsersAsync()
+    activate NotificationService
+    NotificationService-->>TutorApplicationStaffService: (notification sent)
+    deactivate NotificationService
+
+    TutorApplicationStaffService-->>ITutorApplicationStaffService: RevisionResponse
+    deactivate TutorApplicationStaffService
+    ITutorApplicationStaffService-->>TutorApplicationStaffController: RevisionResponse
+    deactivate ITutorApplicationStaffService
+    TutorApplicationStaffController-->>Browser: HTTP 200 OK
+    deactivate TutorApplicationStaffController
+    Browser-->>Staff: Display success message

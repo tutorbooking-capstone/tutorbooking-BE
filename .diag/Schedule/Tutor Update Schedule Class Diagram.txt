@@ -1,0 +1,96 @@
+---
+config:
+  theme: mc
+---
+sequenceDiagram
+    participant Tutor
+    participant Browser
+    participant ScheduleController
+    participant IScheduleService
+    participant ScheduleService
+    participant ICurrentUserProvider
+    participant IUnitOfWork
+    participant GenericRepository
+    participant Database
+    participant WeeklyAvailabilityPattern
+    participant AvailabilitySlot
+
+    Tutor->>Browser: Submit Create Weekly Pattern Request
+    Browser->>ScheduleController: HTTP POST /api/schedule/weekly-pattern/create
+    activate ScheduleController
+    ScheduleController->>IScheduleService: CreateWeeklyPatternAsync()
+    activate IScheduleService
+    IScheduleService->>ScheduleService: CreateWeeklyPatternAsync()
+    activate ScheduleService
+
+    ScheduleService->>ICurrentUserProvider: GetCurrentUserId()
+    activate ICurrentUserProvider
+    ICurrentUserProvider-->>ScheduleService: currentUserId()
+    deactivate ICurrentUserProvider
+
+    ScheduleService->>ScheduleService: ConvertToUtc()
+    activate ScheduleService
+    ScheduleService-->>ScheduleService: UTC Date
+    deactivate ScheduleService
+
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().AnyAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query for existing pattern
+    activate Database
+    Database-->>GenericRepository: Exists result
+    deactivate Database
+    GenericRepository-->>ScheduleService: (check complete)
+    deactivate GenericRepository
+
+    ScheduleService->>AvailabilitySlot: Create() for each slot
+    activate AvailabilitySlot
+    AvailabilitySlot-->>ScheduleService: AvailabilitySlot entity
+    deactivate AvailabilitySlot
+
+    ScheduleService->>WeeklyAvailabilityPattern: Create()
+    activate WeeklyAvailabilityPattern
+    WeeklyAvailabilityPattern-->>ScheduleService: new WeeklyAvailabilityPattern entity
+    deactivate WeeklyAvailabilityPattern
+
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: Insert(newPattern)
+    activate GenericRepository
+    GenericRepository-->>ScheduleService: (entity marked for insert)
+    deactivate GenericRepository
+
+    ScheduleService->>IUnitOfWork: SaveAsync()
+    activate IUnitOfWork
+    IUnitOfWork->>Database: SaveChanges()
+    activate Database
+    Database-->>IUnitOfWork: (data persisted)
+    deactivate Database
+    IUnitOfWork-->>ScheduleService: (save complete)
+    deactivate IUnitOfWork
+
+    ScheduleService->>IUnitOfWork: GetRepository<WeeklyAvailabilityPattern>()
+    activate IUnitOfWork
+    IUnitOfWork-->>ScheduleService: IGenericRepository<WeeklyAvailabilityPattern>
+    deactivate IUnitOfWork
+    ScheduleService->>GenericRepository: ExistEntities().Where().Select().FirstAsync()
+    activate GenericRepository
+    GenericRepository->>Database: Query Created Pattern
+    activate Database
+    Database-->>GenericRepository: Created Pattern data
+    deactivate Database
+    GenericRepository-->>ScheduleService: createdPattern entity
+    deactivate GenericRepository
+
+    ScheduleService-->>IScheduleService: WeeklyPatternResponse
+    deactivate ScheduleService
+    IScheduleService-->>ScheduleController: WeeklyPatternResponse
+    deactivate IScheduleService
+    ScheduleController-->>Browser: HTTP 200 OK
+    deactivate ScheduleController
+    Browser-->>Tutor: Display success message

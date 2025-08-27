@@ -8,7 +8,6 @@ namespace App.Services.Interfaces
         Task<WeeklyPatternResponse> UpdateWeeklyPatternAsync(UpdateWeeklyPatternRequest request);
         Task<List<WeeklyPatternResponse>> GetAllWeeklyPatternsAsync(string tutorId);
         Task<List<DailyAvailabilityPatternDTO>> GetWeekAvailabilityAsync(string tutorId, DateTime startDate);
-        Task DeleteWeeklyPatternAsync(string patternId);
         
 
 
@@ -21,5 +20,6 @@ namespace App.Services.Interfaces
         Task<WeeklyPatternResponse> EditWeeklyPatternAsync(string patternId, List<SlotRequest> newSlots);
         Task<bool> CanDeleteWeeklyPatternAsync(string patternId);
         Task<Dictionary<string, object>> GetScheduleMetadataAsync();
+        Task DeleteWeeklyPatternAsync(string patternId);
     }
 }

@@ -1,0 +1,110 @@
+---
+layout: dagre
+---
+classDiagram
+    direction TB
+
+    class ScheduleController {
+        -IScheduleService _scheduleService
+        +CreateWeeklyPattern()
+        +GetWeeklyPatternDetail()
+        +GetWeeklyPatternsWithDates()
+        +GetMetadata()
+        +GetBlockedSlots()
+        +EditWeeklyPattern()
+        +DeleteWeeklyPattern()
+        +GetTutorSchedule()
+    }
+
+    class IScheduleService {
+        +CreateWeeklyPatternAsync()
+        +GetWeeklyPatternDetailAsync()
+        +GetWeeklyPatternsWithDatesAsync()
+        +GetScheduleMetadataAsync()
+        +GetBlockedSlotsForPatternAsync()
+        +EditWeeklyPatternAsync()
+        +DeleteWeeklyPatternAsync()
+        +GetTutorScheduleAsync()
+    }
+
+    class ScheduleService {
+        -IUnitOfWork _unitOfWork
+        -ICurrentUserProvider _currentUserProvider
+        +CreateWeeklyPatternAsync()
+        +GetWeeklyPatternDetailAsync()
+        +GetWeeklyPatternsWithDatesAsync()
+        +GetScheduleMetadataAsync()
+        +GetTutorScheduleAsync()
+        +GetBlockedSlotsForPatternAsync()
+        +EditWeeklyPatternAsync()
+        +CanDeleteWeeklyPatternAsync()
+        +DeleteWeeklyPatternAsync()
+        -ConvertToUtc()
+    }
+
+    class IUnitOfWork {
+        +GetRepository~T~()
+        +SaveAsync()
+        +ExecuteInTransactionAsync()
+        +ExecuteWithConnectionReuseAsync()
+    }
+
+    class UnitOfWork {
+        -AppDbContext _dbContext
+        -ICurrentUserProvider _currentUserProvider
+        +GetRepository~T~()
+        +SaveAsync()
+        +BeginTransactionAsync()
+        +CommitTransactionAsync()
+        +RollBackAsync()
+        +ExecuteInTransactionAsync()
+        +ExecuteWithConnectionReuseAsync()
+        +GetUserRolesAsync()
+    }
+
+    class IGenericRepository~T~ {
+        +Insert(T)
+        +Update(T)
+        +Delete(T)
+        +ExistEntities()
+        +UpdateFields(T)
+    }
+
+    class GenericRepository~T~ {
+        -DbSet~T~ _dbSet
+        -ICurrentUserProvider _currentUserProvider
+        +Insert(T)
+        +Update(T)
+        +Delete(T)
+        +ExistEntities()
+        +UpdateFields(T)
+    }
+
+    class ICurrentUserProvider {
+        +GetCurrentUserId()
+    }
+
+    class Database {
+        --
+    }
+
+    <<interface>> IScheduleService
+    <<interface>> IUnitOfWork
+    <<interface>> IGenericRepository
+    <<interface>> ICurrentUserProvider
+    <<database>> Database
+
+    ScheduleController ..> IScheduleService : Uses
+    IScheduleService <|-- ScheduleService : Implements
+    ScheduleService ..> IUnitOfWork : Uses
+    ScheduleService ..> ICurrentUserProvider : Uses
+
+    IUnitOfWork <|-- UnitOfWork : Implements
+    UnitOfWork ..> ICurrentUserProvider : Uses
+    UnitOfWork ..> IGenericRepository : Uses (via GetRepository)
+
+    IGenericRepository <|-- GenericRepository : Implements
+    GenericRepository ..> ICurrentUserProvider : Uses
+    IGenericRepository ..> Database : Operates on (as T)
+
+    ICurrentUserProvider <|-- CurrentUserProvider : Implements
