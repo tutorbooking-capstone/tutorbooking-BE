@@ -630,36 +630,19 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-        public async Task<Dictionary<string, List<TutorCardDTO>>> GetRecommendedTutorCardsAsync()
+        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync(string languageCode)
         {
-            var response = await _unitOfWork.GetRepository<TutorLanguage>()
+            var response = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
-                .GroupBy(tl => tl.LanguageCode)
-                .Select(g => new {
-                    LanguageCode = g.Key,
-                    Count = g.Count(),
-                    Tutors = g.Select(tl => tl.Tutor)
-                        .Where(t => t.User.DeletedTime == null
-                            && t.VerificationStatus == VerificationStatus.Verified)
-                        .AsQueryable()
-                        .OrderByDescending(BookingSlotRating.RatingSortExpression)
-                        .Take(7)
-                        .Select(TutorCardDTO.SimpleProjection)
-                        .ToList()
-                })
-                .OrderByDescending(g => g.Count)
-                .Take(6)
+                .Where(e => e.Languages.Any(l => l.LanguageCode == languageCode)
+                    && e.User.DeletedTime == null
+                    && e.VerificationStatus == VerificationStatus.Verified)
+                .OrderByDescending(BookingSlotRating.RatingSortExpression)
+                .Take(7)
+                .Select(TutorCardDTO.SimpleProjection)
                 .ToListAsync();
-
-            return response.ToDictionary(
-                item => item.LanguageCode,
-                item => item.Tutors
-            );
+            return response;
         }
-
-
-
-
 
         public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
             string[]? languageCodes,
