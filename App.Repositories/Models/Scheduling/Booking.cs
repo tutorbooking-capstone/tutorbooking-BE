@@ -16,7 +16,9 @@ namespace App.Repositories.Models
         [EnumDescription("Đang tranh chấp")]
         Disputed = 2,
         [EnumDescription("Đã hủy")]
-        Cancelled = 3
+        Cancelled = 3,
+        [EnumDescription("Hoàn thành")]
+        Complete = 4
     }
 
     public class Booking : BaseEntity
