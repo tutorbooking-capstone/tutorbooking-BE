@@ -77,7 +77,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
             TeachingMethod = t.TeachingMethod,
             ProfileImageUrl = t.User == null ? string.Empty : t.User.ProfilePictureUrl ?? string.Empty,
             IntroductionVideoUrl = t.IntroductionVideos
-                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Active)
                                                 .Select(iv => iv.Url)
                                                 .FirstOrDefault() ?? string.Empty,
             //VerificationStatus = t.Languages.Any(),

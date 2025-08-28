@@ -60,7 +60,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                                                                 }))
                                                 .ToList(),
             IntroductionVideoUrl = t.IntroductionVideos
-                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Active)
                                                 .Select(iv => iv.Url)
                                                 .FirstOrDefault() ?? string.Empty,
             Hashtags = t.Hashtags
@@ -99,7 +99,7 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
                                     })
                                     .ToList(),
             IntroductionVideoUrl = t.IntroductionVideos
-                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Approved)
+                                                .Where(iv => iv.Status == TutorIntroductionVideoStatus.Active)
                                                 .Select(iv => iv.Url)
                                                 .FirstOrDefault() ?? string.Empty
         };

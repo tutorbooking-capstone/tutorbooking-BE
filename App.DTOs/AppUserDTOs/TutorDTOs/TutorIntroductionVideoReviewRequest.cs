@@ -1,4 +1,5 @@
 ﻿using App.Repositories.Models;
+using FluentValidation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +14,16 @@ namespace App.DTOs.AppUserDTOs.TutorDTOs
         public TutorIntroductionVideoStatus Status{ get; set; }
     }
 
-    public static class TutorIntroductionVideoApprovalRequestExtensions
+    public class TutorIntroductionVideoReviewRequestValidator : AbstractValidator<TutorIntroductionVideoReviewRequest>
     {
-        public static void Review(this TutorIntroductionVideo entity, ref TutorIntroductionVideoReviewRequest request)
+        public TutorIntroductionVideoReviewRequestValidator()
         {
-            entity.Status = request.Status;
+            RuleFor(x => x.Id)
+                .NotEmpty().WithMessage("Id is required.");
+            RuleFor(x => x.Status)
+                .Must(x => x == TutorIntroductionVideoStatus.Active 
+                || x == TutorIntroductionVideoStatus.Inactive 
+                || x == TutorIntroductionVideoStatus.Rejected).WithMessage("Invalid status value.");
         }
     }
 }

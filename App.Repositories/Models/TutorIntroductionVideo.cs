@@ -18,8 +18,9 @@ namespace App.Repositories.Models
 
     public enum TutorIntroductionVideoStatus
     {
-        Pending,
-        Approved,
-        Rejected
+        Pending = 0,
+        Active = 1,
+        Rejected = 2,
+        Inactive = 3
     }
 }

@@ -11,8 +11,8 @@ namespace App.DTOs.LegalDocumentDTOs.VersionDTOs
         public string Content { get; set; } = string.Empty;
         public string ContentType { get; set; } = string.Empty;
         public int AcceptanceCount { get; set; } = 0;
-        public DateTimeOffset CreatedTime { get; set; } = DateTime.MinValue;
-        public DateTimeOffset LastUpdatedTime { get; set; } = DateTime.MinValue;
+        public DateTimeOffset CreatedTime { get; set; }
+        public DateTimeOffset LastUpdatedTime { get; set; } 
     }
 
     public static class LegalDocumentVersionResponseExtensions
