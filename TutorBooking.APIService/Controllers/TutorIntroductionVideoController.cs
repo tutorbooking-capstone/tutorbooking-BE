@@ -20,15 +20,23 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost]
-        [Authorize] //TODO: add role-based authorization
+        [AuthorizeRoles(Role.Learner, Role.Tutor)]
         public async Task<IActionResult> CreateTutorIntroductionVideo([FromBody] TutorIntroductionVideoRequest request)
         {
             var video = await _tutorIntroductionVideoService.CreateAsync(request);
             return Ok(new BaseResponseModel<TutorIntroductionVideoResponse>(video, "SUCCESS"));
         }
 
+        [HttpPatch("set-active")]
+        [AuthorizeRoles(Role.Learner, Role.Tutor)]
+        public async Task<IActionResult> SetActiveTutorIntroductionVideo([FromBody]TutorIntroductionVideoStatusUpdateRequest request)
+        {
+            await _tutorIntroductionVideoService.UpdateStatusAsync(request);
+            return Ok(new BaseResponseModel<object>(null, "SUCCESS"));
+        }
+
         [HttpDelete("{id}")]
-        [Authorize]
+        [AuthorizeRoles(Role.Learner, Role.Tutor)]
         public async Task<IActionResult> DeleteTutorIntroductionVideo(string id)
         {
             await _tutorIntroductionVideoService.DeleteAsync(id);
@@ -67,7 +75,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpPost("review")]
-        [Authorize]
+        [AuthorizeRoles(Role.Staff)]
         public async Task<IActionResult> ReviewTutorIntroductionVideo([FromBody] TutorIntroductionVideoReviewRequest request)
         {
             var video = await _tutorIntroductionVideoService.ReviewAsync(request);

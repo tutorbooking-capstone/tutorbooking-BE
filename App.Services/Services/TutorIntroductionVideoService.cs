@@ -22,33 +22,7 @@ namespace App.Services.Services
             _userService = userService;
         }
 
-        public async Task<TutorIntroductionVideoResponse> CreateAsync(TutorIntroductionVideoRequest request)
-        {
-            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
-            {
-                var entity = request.ToEntity();
-                entity.TutorUserId = _userService.GetCurrentUserId();
-
-                _unitOfWork.GetRepository<TutorIntroductionVideo>().Insert(entity);
-                await _unitOfWork.SaveAsync();
-
-                #region delete other pending entities
-                var pendingEntities = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
-                    .ExistEntities()
-                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Pending) && !e.Id.Equals(entity.Id))
-                    .ToArrayAsync();
-                if (pendingEntities.Length > 0)
-                {
-                    _unitOfWork.GetRepository<TutorIntroductionVideo>().DeleteRange(pendingEntities);
-                    await _unitOfWork.SaveAsync();
-                }
-                #endregion
-
-                return entity.ToResponse();
-            });
-            return response;
-        }
-
+        
 
         public async Task<BasePaginatedList<TutorIntroductionVideoResponse>> GetAsync(TutorIntroductionVideoStatus? status, string? userId,int page = 1, int size = 10)
         {
@@ -95,6 +69,8 @@ namespace App.Services.Services
             return await GetAsync(status, _userService.GetCurrentUserId(), page, size);
         }
 
+
+        #region Staff
         public async Task<TutorIntroductionVideoResponse> ReviewAsync(TutorIntroductionVideoReviewRequest request)
         {
             var entity = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
@@ -105,26 +81,88 @@ namespace App.Services.Services
                     (int)StatusCode.NotFound,
                     ErrorCode.NotFound,
                     "NOT_FOUND");
-            entity.Review(ref request);
+            entity.Status = request.Status;
             _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(entity);
             await _unitOfWork.SaveAsync();
 
-            // If the status is approved, reject all other approved videos
-            if (entity.Status == TutorIntroductionVideoStatus.Approved)
+            // If the status is active, inactive all other active videos
+            if (entity.Status == TutorIntroductionVideoStatus.Active)
             {
                 var approvedEntities = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
                     .ExistEntities()
-                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Approved) && !e.Id.Equals(entity.Id))
-                    .ToArrayAsync();
-                if (approvedEntities.Length > 0)
+                    .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Active) 
+                    && !e.Id.Equals(entity.Id)
+                    && e.TutorUserId.Equals(entity.TutorUserId))
+                    .ToListAsync();
+                if (approvedEntities.Count > 0)
+                {
                     foreach (var approvedEntity in approvedEntities)
                     {
-                        approvedEntity.Status = TutorIntroductionVideoStatus.Rejected;
+                        approvedEntity.Status = TutorIntroductionVideoStatus.Inactive;
                         _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(approvedEntity);
                     }
+                    await _unitOfWork.SaveAsync();
+                }
             }
-            await _unitOfWork.SaveAsync();
             return entity.ToResponse();
+        }
+        #endregion
+
+        #region Tutor   
+        public async Task<TutorIntroductionVideoResponse> CreateAsync(TutorIntroductionVideoRequest request)
+        {
+            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var entity = request.ToEntity();
+                entity.TutorUserId = _userService.GetCurrentUserId();
+
+                _unitOfWork.GetRepository<TutorIntroductionVideo>().Insert(entity);
+                await _unitOfWork.SaveAsync();
+
+                return entity.ToResponse();
+            });
+            return response;
+        }
+
+        public async Task UpdateStatusAsync(TutorIntroductionVideoStatusUpdateRequest request)
+        {
+            var response = await _unitOfWork.ExecuteWithConnectionReuseAsync(async () =>
+            {
+                var currentUserId = _userService.GetCurrentUserId();
+                var entity = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(e => e.Id.Equals(request.Id) && e.TutorUserId.Equals(currentUserId));
+                if (entity == null)
+                    throw new ErrorException(
+                        (int)StatusCode.NotFound,
+                        ErrorCode.NotFound,
+                        "NOT_FOUND");
+
+                entity.Status = request.Status;
+                _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(entity);
+                await _unitOfWork.SaveAsync();
+
+                // If the status is active, inactive all other active videos
+                if (entity.Status == TutorIntroductionVideoStatus.Active)
+                {
+                    var approvedEntities = await _unitOfWork.GetRepository<TutorIntroductionVideo>()
+                        .ExistEntities()
+                        .Where(e => e.Status.Equals(TutorIntroductionVideoStatus.Active)
+                        && !e.Id.Equals(entity.Id)
+                        && e.TutorUserId.Equals(entity.TutorUserId))
+                        .ToListAsync();
+                    if (approvedEntities.Count > 0)
+                    {
+                        foreach (var approvedEntity in approvedEntities)
+                        {
+                            approvedEntity.Status = TutorIntroductionVideoStatus.Inactive;
+                            _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(approvedEntity);
+                        }
+                        await _unitOfWork.SaveAsync();
+                    }
+                }
+                return true;
+            });
         }
 
         public async Task DeleteAsync(string id)
@@ -140,5 +178,6 @@ namespace App.Services.Services
             _unitOfWork.GetRepository<TutorIntroductionVideo>().Delete(entity);
             await _unitOfWork.SaveAsync();
         }
+        #endregion
     }
 }
