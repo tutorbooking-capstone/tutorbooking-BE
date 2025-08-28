@@ -630,13 +630,16 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync(string languageCode)
+        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync(string? languageCode)
         {
+
+            var predicate = PredicateBuilder.New<Tutor>(t => t.VerificationStatus == VerificationStatus.Verified);
+            if (!languageCode.IsNullOrWhiteSpace())
+                predicate.And(t => t.Languages.Any(l => l.LanguageCode == languageCode));
+
             var response = await _unitOfWork.GetRepository<Tutor>()
                 .ExistEntities()
-                .Where(e => e.Languages.Any(l => l.LanguageCode == languageCode)
-                    && e.User.DeletedTime == null
-                    && e.VerificationStatus == VerificationStatus.Verified)
+                .Where(predicate)
                 .OrderByDescending(BookingSlotRating.RatingSortExpression)
                 .Take(7)
                 .Select(TutorCardDTO.SimpleProjection)

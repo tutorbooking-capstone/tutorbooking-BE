@@ -111,7 +111,7 @@ namespace TutorBooking.APIService.Controllers
 
         [HttpGet("recommended-tutors")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTutorCardList(string languageCode)
+        public async Task<IActionResult> GetTutorCardList(string? languageCode)
         {
             var tutorCards = await _tutorService.GetRecommendedTutorCardsAsync(languageCode);
             return Ok(new BaseResponseModel<object>(
