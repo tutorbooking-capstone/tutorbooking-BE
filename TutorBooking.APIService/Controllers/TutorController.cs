@@ -114,7 +114,7 @@ namespace TutorBooking.APIService.Controllers
         public async Task<IActionResult> GetTutorCardList()
         {
             var tutorCards = await _tutorService.GetRecommendedTutorCardsAsync();
-            return Ok(new BaseResponseModel<List<TutorCardDTO>>(
+            return Ok(new BaseResponseModel<object>(
                 data: tutorCards,
                 message: "Danh sách gia sư."
             ));

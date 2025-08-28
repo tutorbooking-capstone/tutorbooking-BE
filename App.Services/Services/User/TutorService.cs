@@ -630,31 +630,38 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync()
+        public async Task<Dictionary<string, List<TutorCardDTO>>> GetRecommendedTutorCardsAsync()
         {
             var response = await _unitOfWork.GetRepository<TutorLanguage>()
                 .ExistEntities()
                 .GroupBy(tl => tl.LanguageCode)
-                .Select(g => new { 
-                    LanguageCode = g.Key, 
+                .Select(g => new {
+                    LanguageCode = g.Key,
                     Count = g.Count(),
                     Tutors = g.Select(tl => tl.Tutor)
-                        .Where(t => t.User.DeletedTime == null 
+                        .Where(t => t.User.DeletedTime == null
                             && t.VerificationStatus == VerificationStatus.Verified)
                         .AsQueryable()
                         .OrderByDescending(BookingSlotRating.RatingSortExpression)
-                        .Take(6)
+                        .Take(7)
                         .Select(TutorCardDTO.SimpleProjection)
                         .ToList()
                 })
                 .OrderByDescending(g => g.Count)
-                .Take(7)
+                .Take(6)
                 .ToListAsync();
 
-            return response.SelectMany(t => t.Tutors).ToList();
+            return response.ToDictionary(
+                item => item.LanguageCode,
+                item => item.Tutors
+            );
         }
 
-		public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
+
+
+
+
+        public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
             string[]? languageCodes,
             string? primaryLanguageCode,
             DayInWeek[]? daysInWeek,
@@ -806,5 +813,7 @@ namespace App.Services.Services.User
                 await _unitOfWork.SaveAsync();
             }
         }
+
+
     }
 }
