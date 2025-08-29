@@ -32,8 +32,7 @@ namespace App.Services.Services
                 throw new ErrorException((int)StatusCode.NotFound, ErrorCode.NotFound, "TUTOR_APPLICATION_NOT_FOUND");
             if (tutorApplication.Status == ApplicationStatus.Verified)
                 throw new ErrorException((int)StatusCode.ServerError, ErrorCode.ServerError, "TUTOR_APPLICATION_ALREADY_VERIFIED");
-            tutorApplication.Status = (tutorApplication.Status == ApplicationStatus.RevisionRequested) ? 
-                ApplicationStatus.PendingReverification : ApplicationStatus.PendingVerification;
+            tutorApplication.Status = ApplicationStatus.PendingVerification;
             _unitOfWork.GetRepository<TutorApplication>().Update(tutorApplication);
             await _unitOfWork.SaveAsync();
         }
