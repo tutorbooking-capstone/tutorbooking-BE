@@ -26,7 +26,7 @@ namespace App.Services.Services
 
         public async Task<BasePaginatedList<TutorIntroductionVideoResponse>> GetAsync(TutorIntroductionVideoStatus? status, string? userId,int page = 1, int size = 10)
         {
-            var predicate = PredicateBuilder.New<TutorIntroductionVideo>(e => e.Status == TutorIntroductionVideoStatus.Pending);
+            var predicate = PredicateBuilder.New<TutorIntroductionVideo>();
             if (status != null)
                 predicate = predicate.And(e => e.Status == status);
             if (userId != null)
@@ -137,6 +137,12 @@ namespace App.Services.Services
                         (int)StatusCode.NotFound,
                         ErrorCode.NotFound,
                         "NOT_FOUND");
+                if (entity.Status == TutorIntroductionVideoStatus.Pending
+                    || entity.Status == TutorIntroductionVideoStatus.Rejected)
+                    throw new ErrorException(
+                        (int)StatusCode.BadRequest,
+                        ErrorCode.BadRequest,
+                        "CANNOT_UPDATE_WHEN_STATUS_IS_PENDING_OR_REJECTED");
 
                 entity.Status = request.Status;
                 _unitOfWork.GetRepository<TutorIntroductionVideo>().Update(entity);

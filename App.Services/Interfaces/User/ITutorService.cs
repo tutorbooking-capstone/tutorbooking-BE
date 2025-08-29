@@ -32,7 +32,7 @@ namespace App.Services.Interfaces.User
             string? tutorName,
             int page = 1,
             int size = 20);
-        Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync();
+        Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync(string? languageCode);
 
         Task<BookingConfigDTO> GetBookingConfigAsync(string tutorId);
         Task UpdateBookingConfigAsync(UpdateBookingConfigRequest request);

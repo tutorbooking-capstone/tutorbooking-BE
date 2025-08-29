@@ -630,31 +630,24 @@ namespace App.Services.Services.User
                 .ToList();
         }
 
-        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync()
+        public async Task<List<TutorCardDTO>> GetRecommendedTutorCardsAsync(string? languageCode)
         {
-            var response = await _unitOfWork.GetRepository<TutorLanguage>()
-                .ExistEntities()
-                .GroupBy(tl => tl.LanguageCode)
-                .Select(g => new { 
-                    LanguageCode = g.Key, 
-                    Count = g.Count(),
-                    Tutors = g.Select(tl => tl.Tutor)
-                        .Where(t => t.User.DeletedTime == null 
-                            && t.VerificationStatus == VerificationStatus.Verified)
-                        .AsQueryable()
-                        .OrderByDescending(BookingSlotRating.RatingSortExpression)
-                        .Take(6)
-                        .Select(TutorCardDTO.SimpleProjection)
-                        .ToList()
-                })
-                .OrderByDescending(g => g.Count)
-                .Take(7)
-                .ToListAsync();
 
-            return response.SelectMany(t => t.Tutors).ToList();
+            var predicate = PredicateBuilder.New<Tutor>(t => t.VerificationStatus == VerificationStatus.Verified);
+            if (!languageCode.IsNullOrWhiteSpace())
+                predicate.And(t => t.Languages.Any(l => l.LanguageCode == languageCode));
+
+            var response = await _unitOfWork.GetRepository<Tutor>()
+                .ExistEntities()
+                .Where(predicate)
+                .OrderByDescending(BookingSlotRating.RatingSortExpression)
+                .Take(7)
+                .Select(TutorCardDTO.SimpleProjection)
+                .ToListAsync();
+            return response;
         }
 
-		public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
+        public async Task<BasePaginatedList<TutorCardDTO>> GetTutorCardsPagingAsync(
             string[]? languageCodes,
             string? primaryLanguageCode,
             DayInWeek[]? daysInWeek,
@@ -806,5 +799,7 @@ namespace App.Services.Services.User
                 await _unitOfWork.SaveAsync();
             }
         }
+
+
     }
 }
