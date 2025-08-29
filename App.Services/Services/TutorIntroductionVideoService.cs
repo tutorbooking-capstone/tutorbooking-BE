@@ -26,7 +26,7 @@ namespace App.Services.Services
 
         public async Task<BasePaginatedList<TutorIntroductionVideoResponse>> GetAsync(TutorIntroductionVideoStatus? status, string? userId,int page = 1, int size = 10)
         {
-            var predicate = PredicateBuilder.New<TutorIntroductionVideo>(e => e.Status == TutorIntroductionVideoStatus.Pending);
+            var predicate = PredicateBuilder.New<TutorIntroductionVideo>();
             if (status != null)
                 predicate = predicate.And(e => e.Status == status);
             if (userId != null)
