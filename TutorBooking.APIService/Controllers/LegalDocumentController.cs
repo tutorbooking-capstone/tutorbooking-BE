@@ -19,7 +19,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllAsync(string? category, int page = 1, int size = 10)
         {
             var response = await _legalDocumentService.GetAllAsync(category, page, size);
@@ -27,7 +27,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetByIdAsync(string id)
         {
             var response = await _legalDocumentService.GetByIdAsync(id);
@@ -35,7 +35,7 @@ namespace TutorBooking.APIService.Controllers
         }
 
         [HttpGet("all-categories")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAllCategoriesAsync()
         {
             var response = await _legalDocumentService.GetAllCategoriesAsync();
