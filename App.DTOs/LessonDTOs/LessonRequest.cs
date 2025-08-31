@@ -13,7 +13,7 @@ namespace App.DTOs.LessonDTOs
         public string Prerequisites { get; set; } = string.Empty;
 
         public string LanguageCode { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
+        //public string Category { get; set; } = string.Empty;
         
         public decimal Price { get; set; }
         //public string Currency { get; set; } = "VND";
@@ -30,7 +30,7 @@ namespace App.DTOs.LessonDTOs
         public string? Prerequisites { get; set; }
 
         public string? LanguageCode { get; set; }
-        public string? Category { get; set; }
+        //public string? Category { get; set; }
         
         public decimal? Price { get; set; }
         public string? Currency { get; set; }
@@ -64,9 +64,9 @@ namespace App.DTOs.LessonDTOs
                 .NotEmpty().WithMessage("Mã ngôn ngữ không được để trống")
                 .Length(2, 5).WithMessage("Mã ngôn ngữ phải có từ 2 đến 5 ký tự");
                 
-            RuleFor(x => x.Category)
-                .NotEmpty().WithMessage("Danh mục không được để trống")
-                .MaximumLength(50).WithMessage("Danh mục không được vượt quá 50 ký tự");
+            //RuleFor(x => x.Category)
+            //    .NotEmpty().WithMessage("Danh mục không được để trống")
+            //    .MaximumLength(50).WithMessage("Danh mục không được vượt quá 50 ký tự");
                 
             RuleFor(x => x.Price)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá phải lớn hơn hoặc bằng 0");
@@ -108,9 +108,9 @@ namespace App.DTOs.LessonDTOs
                 .Length(2, 5).WithMessage("Mã ngôn ngữ phải có từ 2 đến 5 ký tự")
                 .When(x => x.LanguageCode != null);
                 
-            RuleFor(x => x.Category)
-                .MaximumLength(50).WithMessage("Danh mục không được vượt quá 50 ký tự")
-                .When(x => x.Category != null);
+            //RuleFor(x => x.Category)
+            //    .MaximumLength(50).WithMessage("Danh mục không được vượt quá 50 ký tự")
+            //    .When(x => x.Category != null);
                 
             RuleFor(x => x.Price)
                 .GreaterThanOrEqualTo(0).WithMessage("Giá phải lớn hơn hoặc bằng 0")
@@ -141,7 +141,7 @@ namespace App.DTOs.LessonDTOs
                 TargetAudience = request.TargetAudience,
                 Prerequisites = request.Prerequisites,
                 LanguageCode = request.LanguageCode,
-                Category = request.Category,
+                //Category = request.Category,
                 Price = request.Price,
                 //Currency = request.Currency,
             };
@@ -155,7 +155,7 @@ namespace App.DTOs.LessonDTOs
             lesson.TargetAudience = request.TargetAudience ?? lesson.TargetAudience;
             lesson.Prerequisites = request.Prerequisites ?? lesson.Prerequisites;
             lesson.LanguageCode = request.LanguageCode ?? lesson.LanguageCode;
-            lesson.Category = request.Category ?? lesson.Category;
+            //lesson.Category = request.Category ?? lesson.Category;
             lesson.Price = request.Price ?? lesson.Price;
             //lesson.Currency = request.Currency ?? lesson.Currency;
         }
