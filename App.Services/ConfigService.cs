@@ -40,6 +40,7 @@ namespace App.Services
             #region Another Services
             //services.AddScoped<ISeedService, SeedService>();
             services.AddScoped<IScheduleService, ScheduleService>();
+            services.AddScoped<IRescheduleService, RescheduleService>();
             services.AddScoped<ILearnerBookingService, LearnerBookingService>();
             services.AddScoped<ITutorBookingService, TutorBookingService>();
             services.AddScoped<IBookingService, BookingService>();

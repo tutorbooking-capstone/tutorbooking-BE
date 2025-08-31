@@ -3,6 +3,7 @@ using App.Core.Constants;
 using App.Core.Provider;
 using App.DTOs.BookingDTOs;
 using App.Repositories.Models;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
@@ -37,6 +38,12 @@ namespace App.Services.Services
                 .Include(b => b.BookedSlots!).ThenInclude(bs => bs.HeldFund)
                 .OrderByDescending(b => b.CreatedTime);
 
+            var bookings = await query.ToListAsync();
+            foreach (var booking in bookings)
+            {
+                await UpdateBookingStatusIfLastSlotCompleted(booking.Id);
+            }
+
             return await GetPaginatedBookingsAsync(query, page, pageSize);
         }
 
@@ -70,6 +77,12 @@ namespace App.Services.Services
 
             query = query.OrderByDescending(b => b.CreatedTime);
 
+            var bookings = await query.ToListAsync();
+            foreach (var booking in bookings)
+            {
+                await UpdateBookingStatusIfLastSlotCompleted(booking.Id);
+            }
+
             return await GetPaginatedBookingsAsync(query, page, pageSize);
         }
 
@@ -91,6 +104,8 @@ namespace App.Services.Services
                     StatusCodes.Status404NotFound,
                     ErrorCode.NotFound,
                     "Booking not found or you don't have permission to view it.");
+
+            await UpdateBookingStatusIfLastSlotCompleted(bookingId);
 
             return BookingDetailDTO.FromEntity(booking);
         }
@@ -118,6 +133,8 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Booking not found or you don't have permission to view it.");
 
+            await UpdateBookingStatusIfLastSlotCompleted(bookingId);
+
             return BookingDetailDTO.FromEntity(booking);
         }
 
@@ -138,7 +155,42 @@ namespace App.Services.Services
                 .Include(b => b.BookedSlots!).ThenInclude(bs => bs.HeldFund)
                 .OrderByDescending(b => b.CreatedTime);
 
+            var bookings = await query.ToListAsync();
+            foreach (var booking in bookings)
+            {
+                await UpdateBookingStatusIfLastSlotCompleted(booking.Id);
+            }
+
             return await GetPaginatedBookingsAsync(query, page, pageSize);
+        }
+
+        private async Task<bool> UpdateBookingStatusIfLastSlotCompleted(string bookingId)
+        {
+            var booking = await _unitOfWork.GetRepository<Booking>()
+                .ExistEntities()
+                .Include(b => b.BookedSlots)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+                
+            if (booking == null || booking.BookedSlots == null || !booking.BookedSlots.Any())
+                return false;
+                
+            var lastBookedSlot = booking.BookedSlots
+                .OrderByDescending(bs => bs.BookedDate)
+                .ThenByDescending(bs => bs.SlotIndex)
+                .FirstOrDefault();
+                
+            if (lastBookedSlot == null)
+                return false;
+                
+            if (lastBookedSlot.Status != SlotStatus.Pending && lastBookedSlot.Status != SlotStatus.AwaitingPayout)
+            {
+                var propertiesToUpdate = booking.UpdateStatus(BookingStatus.Complete, GetCurrentUserIdOrThrow());
+                _unitOfWork.GetRepository<Booking>().UpdateFields(booking, propertiesToUpdate);
+                await _unitOfWork.SaveAsync();
+                return true;
+            }
+                
+            return false;
         }
 
         #region Private Helpers

@@ -570,11 +570,11 @@ namespace App.Services.Services
             
             // Get booking and escalate
             var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
-            if (bookedSlot?.Booking != null)
-            {
-                var updateBookingProperties = bookedSlot.Booking.UpdateStatus(BookingStatus.Disputed, tutorId);
-                _unitOfWork.GetRepository<Booking>().UpdateFields(bookedSlot.Booking, updateBookingProperties.ToArray());
-            }
+            // if (bookedSlot?.Booking != null)
+            // {
+            //     var updateBookingProperties = bookedSlot.Booking.UpdateStatus(BookingStatus.Disputed, tutorId);
+            //     _unitOfWork.GetRepository<Booking>().UpdateFields(bookedSlot.Booking, updateBookingProperties.ToArray());
+            // }
             
             // Escalate to staff review
             var staffId = await GetSystemStaffIdAsync();
