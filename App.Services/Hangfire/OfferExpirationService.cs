@@ -73,7 +73,7 @@ namespace App.Services.Hangfire
             slotRepo.DeleteRange(offer.OfferedSlots);
 
             await _unitOfWork.SaveAsync();
-            await SendExpirationNotificationsAsync(offer);
+            //await SendExpirationNotificationsAsync(offer);
         }
 
         private async Task SendExpirationNotificationsAsync(TutorBookingOffer offer)
