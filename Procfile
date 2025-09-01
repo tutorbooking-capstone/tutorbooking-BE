@@ -1,0 +1,1 @@
+web: cd $HOME/TutorBooking.APIService/bin/publish && ./TutorBooking.APIService

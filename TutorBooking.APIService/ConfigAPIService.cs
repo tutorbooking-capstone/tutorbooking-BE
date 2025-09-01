@@ -212,15 +212,17 @@ namespace TutorBooking.APIService
 
 		public static IServiceCollection ConfigureSignalR(this IServiceCollection services)
 		{
-			// Add SignalR with optional configuration
+			// Add SignalR with optimized configuration for Heroku
 			services.AddSignalR(options =>
 			{
 				options.EnableDetailedErrors = true;
-				options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
-				options.ClientTimeoutInterval = TimeSpan.FromMinutes(60);
-				options.KeepAliveInterval = TimeSpan.FromMinutes(30);
-                options.StatefulReconnectBufferSize = 1000;
-                options.HandshakeTimeout = TimeSpan.FromMinutes(5);
+				options.MaximumReceiveMessageSize = 64 * 1024; // Giảm xuống để giảm memory usage
+				options.ClientTimeoutInterval = TimeSpan.FromSeconds(30); // Giảm timeout
+				options.KeepAliveInterval = TimeSpan.FromSeconds(15); // Giảm keepalive
+				options.HandshakeTimeout = TimeSpan.FromSeconds(15); // Giảm handshake timeout
+				
+				// Kích thước buffer nhỏ hơn để phù hợp với Heroku
+				options.StreamBufferCapacity = 8; // Mặc định là 10
 			});
 			return services;
 		}

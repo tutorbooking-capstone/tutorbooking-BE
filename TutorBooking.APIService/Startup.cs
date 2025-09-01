@@ -51,7 +51,8 @@ namespace TutorBooking.APIService
                         .WithOrigins(
                             "http://localhost:5173", // Local development
                             "https://localhost:5173", // Local development with HTTPS
-                            "https://ngoai-ngu-ngay.vercel.app" // Deployed frontend
+                            "https://ngoai-ngu-ngay.vercel.app", // Deployed frontend
+                            "https://tutorbooking-dev-065fe6ad4a6a.herokuapp.com" // Heroku
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader()
@@ -77,10 +78,38 @@ namespace TutorBooking.APIService
             #endregion
 
             #region Firebase
-            FirebaseApp.Create(new AppOptions
+            try
             {
-                Credential = GoogleCredential.FromFile("ngoaingungay-firebase-adminsdk-fbsvc-0855eb8d07.json"),
-            });
+                string credentialPath;
+                if (File.Exists("ngoaingungay-firebase-adminsdk-fbsvc-0855eb8d07.json"))
+                {
+                    credentialPath = "ngoaingungay-firebase-adminsdk-fbsvc-0855eb8d07.json";
+                }
+                else
+                {
+                    var firebaseCredJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
+                    if (!string.IsNullOrEmpty(firebaseCredJson))
+                    {
+                        credentialPath = Path.Combine(Path.GetTempPath(), "firebase-credentials.json");
+                        File.WriteAllText(credentialPath, firebaseCredJson);
+                    }
+                    else
+                    {
+                        throw new FileNotFoundException("Firebase credentials file not found and FIREBASE_CREDENTIALS environment variable is not set.");
+                    }
+                }
+                
+                FirebaseApp.Create(new AppOptions
+                {
+                    Credential = GoogleCredential.FromFile(credentialPath),
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log lỗi nhưng không làm crash ứng dụng
+                var logger = services.BuildServiceProvider().GetService<ILogger<Startup>>();
+                logger?.LogError(ex, "Error initializing Firebase. Some features may not work properly.");
+            }
             #endregion
 
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
@@ -122,7 +151,16 @@ namespace TutorBooking.APIService
             HangfireConfig.ConfigureRecurringJobs();
             #endregion
 
-            app.UseHttpsRedirection();
+            if (env.IsDevelopment())
+            {
+                app.UseHttpsRedirection(); // Chỉ dùng HTTPS Redirection trong Development
+            }
+            else 
+            {
+                // Trong Production, không dùng HTTPS Redirection vì Heroku đã xử lý
+                // Heroku sẽ tự xử lý SSL termination
+            }
+
             app.UseRouting();
             app.UseCors("AllowFrontend");
 
