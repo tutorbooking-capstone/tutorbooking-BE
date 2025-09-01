@@ -20,7 +20,6 @@ namespace App.Services.Services
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ICurrentUserProvider _currentUserProvider;
-        private readonly IBackgroundJobClient _backgroundJobClient;
         private readonly INotificationService _notificationService;
 
         private const int MIN_HOURS_BEFORE_BOOKING = 24;
@@ -29,12 +28,10 @@ namespace App.Services.Services
         public LearnerBookingService(
             IUnitOfWork unitOfWork,
             ICurrentUserProvider currentUserProvider,
-            IBackgroundJobClient backgroundJobClient,
             INotificationService notificationService)
         {
             _unitOfWork = unitOfWork;
             _currentUserProvider = currentUserProvider;
-            _backgroundJobClient = backgroundJobClient;
             _notificationService = notificationService;
         }
 

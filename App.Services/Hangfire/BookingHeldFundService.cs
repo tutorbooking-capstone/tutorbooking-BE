@@ -1,5 +1,6 @@
 ﻿using App.Repositories.Models;
 using App.Repositories.Models.Notifications;
+using App.Repositories.Models.Payment;
 using App.Repositories.Models.Scheduling;
 using App.Repositories.UoW;
 using App.Services.Interfaces;
@@ -13,15 +14,18 @@ namespace App.Services.Hangfire
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly INotificationService _notificationService;
+        private readonly IFeeService _feeService;   
         private readonly ILogger<BookingHeldFundService> _logger;
 
         public BookingHeldFundService(
             IUnitOfWork unitOfWork,
             INotificationService notificationService,
+            IFeeService feeService,   
             ILogger<BookingHeldFundService> logger)
         {
             _unitOfWork = unitOfWork;
             _notificationService = notificationService;
+            _feeService = feeService;  
             _logger = logger;
         }
 
@@ -104,38 +108,58 @@ namespace App.Services.Hangfire
             var escrowWallet = await _unitOfWork.GetRepository<Wallet>()
                 .ExistEntities()
                 .FirstOrDefaultAsync(w => w.Type == WalletType.Escrow);
+                
+            var systemWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.Type == WalletType.System);
 
-            if (tutorWallet == null || escrowWallet == null)
+            if (tutorWallet == null || escrowWallet == null || systemWallet == null)
             {
                 _logger.LogError("Cannot process held fund {HeldFundId} - wallets not found", heldFund.Id);
                 return;
             }
 
+            var feeConfig = await _feeService.GetActiveFeeByCodeAsync(FeeCodes.COMMISSION_FEE);
+            var commissionFee = feeConfig.CalculateFee(heldFund.Amount);
+            var tutorAmount = heldFund.Amount - commissionFee;
+
             await _unitOfWork.ExecuteInTransactionAsync(async () =>
             {
-                // Create transaction
-                var transaction = Transaction.CreatePaymentTransaction(
+                var tutorTransaction = Transaction.CreatePaymentTransaction(
                     escrowWallet.Id,
                     tutorWallet.Id,
-                    heldFund.Amount,
+                    tutorAmount,
                     booking.Id,
-                    $"Payment release from escrow for booking slot {heldFund.BookedSlot.Id}"
+                    $"Payment release from escrow for booking slot {heldFund.BookedSlot.Id} (after {feeConfig.Value * 100}% commission fee: {commissionFee})"
                 );
                 
-                _unitOfWork.GetRepository<Transaction>().Insert(transaction);
+                _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
                 
-                // Update wallet balances
+                var feeTransaction = new Transaction
+                {
+                    SourceWalletId = escrowWallet.Id,
+                    TargetWalletId = systemWallet.Id,
+                    Amount = commissionFee,
+                    Type = TransactionType.Fee,
+                    Status = TransactionStatus.Success,
+                    ReferenceId = heldFund.Id,
+                    Description = $"Commission fee ({feeConfig.Value * 100}%) for booking slot {heldFund.BookedSlot.Id}"
+                };
+                
+                _unitOfWork.GetRepository<Transaction>().Insert(feeTransaction);
+                
                 var escrowUpdateFields = escrowWallet.SubtractBalance(heldFund.Amount);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
                 
-                var tutorUpdateFields = tutorWallet.AddBalance(heldFund.Amount);
+                var systemUpdateFields = systemWallet.AddBalance(commissionFee);
+                _unitOfWork.GetRepository<Wallet>().UpdateFields(systemWallet, systemUpdateFields);
+                
+                var tutorUpdateFields = tutorWallet.AddBalance(tutorAmount);
                 _unitOfWork.GetRepository<Wallet>().UpdateFields(tutorWallet, tutorUpdateFields);
                 
-                // Update held fund status
                 var heldFundUpdateFields = heldFund.UpdateStatus(HeldFundStatus.ReleasedToTutor);
                 _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, heldFundUpdateFields);
                 
-                //Vẫn update các Slot
                 if (heldFund.BookedSlot.Status == SlotStatus.AwaitingPayout || heldFund.BookedSlot.Status == SlotStatus.Pending)
                 {
                     try 
@@ -162,7 +186,9 @@ namespace App.Services.Hangfire
                         AdditionalData = JsonSerializer.Serialize(new
                         {
                             BookedSlotId = heldFund.BookedSlot.Id,
-                            Amount = heldFund.Amount
+                            Amount = tutorAmount,
+                            CommissionFee = commissionFee,
+                            TotalAmount = heldFund.Amount
                         })
                     },
                     ReceiverUserIds = [tutorId]
