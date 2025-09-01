@@ -273,7 +273,9 @@ namespace App.Services.Services
                         ErrorCode.BadRequest,
                         "No offered slot found in the reschedule request.");
 
-                // Create a new booked slot with the new time
+                request.BookedSlot!.HeldFundId = null;
+                _unitOfWork.GetRepository<BookedSlot>().UpdateFields(request.BookedSlot, [x => x.HeldFundId!]);
+
                 var newSlot = new BookedSlot
                 {
                     BookingId = booking.Id,
