@@ -273,6 +273,8 @@ namespace App.Services.Services
                         ErrorCode.BadRequest,
                         "No offered slot found in the reschedule request.");
 
+                var oldHeldFundId = request.BookedSlot!.HeldFundId;
+
                 request.BookedSlot!.HeldFundId = null;
                 _unitOfWork.GetRepository<BookedSlot>().UpdateFields(request.BookedSlot, [x => x.HeldFundId!]);
 
@@ -282,7 +284,7 @@ namespace App.Services.Services
                     BookedDate = offeredSlot.SlotDateTime,
                     SlotIndex = offeredSlot.SlotIndex,
                     Status = SlotStatus.Pending,
-                    HeldFundId = request.BookedSlot!.HeldFundId,
+                    HeldFundId = oldHeldFundId,  
                     CreatedBy = userId,
                     LastUpdatedBy = userId,
                 };
