@@ -10,7 +10,7 @@ namespace App.DTOs.BookingDTOs
         public string RequestedByUserId { get; set; } = string.Empty;
         public string Initiator { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public int Status { get; set; }
         public string? ResponseNote { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime ExpiresAt { get; set; }
@@ -30,7 +30,7 @@ namespace App.DTOs.BookingDTOs
                 RequestedByUserId = r.RequestedByUserId,
                 Initiator = r.Initiator.ToString(),
                 Reason = r.Reason,
-                Status = r.Status.ToString(),
+                Status = (int)r.Status,
                 ResponseNote = r.ResponseNote,
                 CreatedAt = r.CreatedAt,
                 ExpiresAt = r.ExpiresAt,
