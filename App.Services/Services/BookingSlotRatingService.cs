@@ -43,10 +43,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_RATING_RECEIVED",
-                    Content = "PUSH_ON_TUTOR_RATING_RECEIVED_BODY",
+                    Title = "Bạn đã nhận được đánh giá",
+                    Content = $"Đánh giá trung bình: {(entity.Attitude + entity.TeachingQuality + entity.Commitment) / 3}",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "TutorReceivedRating",
                         Id = entity.Id,
                         BookingId = entity.BookingId,
                         AverageRating = (entity.Attitude + entity.TeachingQuality + entity.Commitment)/3,

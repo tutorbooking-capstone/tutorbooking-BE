@@ -181,10 +181,11 @@ namespace App.Services.Hangfire
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_PAYMENT_RELEASED",
-                        Content = "PUSH_ON_PAYMENT_RELEASED_BODY",
+                        Title = "Thanh toán buổi học",
+                        Content = $"Bạn đã nhận được {heldFund.Amount} từ việc hoàn thành buổi học.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = "TutorReceivedHeldFund",
                             BookedSlotId = heldFund.BookedSlot.Id,
                             Amount = tutorAmount,
                             CommissionFee = commissionFee,

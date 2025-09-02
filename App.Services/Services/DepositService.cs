@@ -313,10 +313,11 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "PUSH_ON_DEPOSIT_SUCCESS",
-                            Content = "PUSH_ON_DEPOSIT_SUCCESS_BODY",
+                            Title = "Nạp ví thành công",
+                            Content = $"Bạn đã nhận được {depositRequest.Amount} từ việc nạp ví.",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
+                                Type = "DepositSuccess",
                                 DepositRequestId = depositRequest.Id,
                                 Amount = depositRequest.Amount,
                                 Status = depositRequest.Status.ToString(),
@@ -346,10 +347,11 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "PUSH_ON_DEPOSIT_FAILED",
-                            Content = "PUSH_ON_DEPOSIT_FAILED_BODY",
+                            Title = "Nạp ví thất bại",
+                            Content = $"Nạp ví của bạn với số tiền {depositRequest.Amount} đã thất bại.",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
+                                Type = "DepositFailed",
                                 DepositRequestId = depositRequest.Id,
                                 Amount = depositRequest.Amount,
                                 Status = depositRequest.Status.ToString(),

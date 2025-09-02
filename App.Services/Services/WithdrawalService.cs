@@ -348,8 +348,8 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "PUSH_ON_WITHDRAWAL_REQUEST_APPROVED",
-                            Content = "PUSH_ON_WITHDRAWAL_REQUEST_APPROVED_BODY",
+                            Title = "Yêu cầu rút tiền được duyệt.",
+                            Content = $"Yêu cầu rút {withdrawal.GrossAmount} đã được duyệt.",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
                                 WithdrawalId = withdrawal.Id,
@@ -487,8 +487,8 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                            Title = "PUSH_ON_WITHDRAWAL_REQUEST_REJECTED",
-                            Content = "PUSH_ON_WITHDRAWAL_REQUEST_REJECTED_BODY",
+                            Title = "Yêu cầu rút tiền bị từ chối.",
+                            Content = $"Yêu cầu rút {withdrawal.GrossAmount} đã bị từ chối.",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
                                 WithdrawalId = withdrawal.Id,

@@ -244,7 +244,7 @@ namespace App.Services.Services
                     Content = "Bạn và gia sư có 24 giờ để trao đổi và giải quyết khiếu nại.",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
-                        Type = "Dispute",
+                        Type = "DisputeCreated",
                         ReferenceId = dispute.Id,
                         ReferenceType = "BookingDispute"
                     })
@@ -262,7 +262,7 @@ namespace App.Services.Services
                     Content = "Bạn cần phản hồi trong vòng 24 giờ. Nếu không phản hồi, hệ thống sẽ xử lý theo hướng có lợi cho học viên.",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
-                        Type = "Dispute",
+                        Type = "DisputeReceived",
                         ReferenceId = dispute.Id,
                         ReferenceType = "BookingDispute"
                     })
@@ -299,7 +299,7 @@ namespace App.Services.Services
                     break;
                     
                 case DisputeResolution.StaffDraw:
-                    tutorMessage = $"Nhân viên hệ thống đã xử lý khiếu nại {dispute.CaseNumber} và xác định đây là hòa. Bạn không bị trừ uy tín, học viên sẽ được hoàn tiền.";
+                    tutorMessage = $"Nhân viên hệ thống đã xử lý khiếu nại {dispute.CaseNumber} và xác định đây là hòa. Học viên sẽ được hoàn tiền.";
                     learnerMessage = $"Nhân viên hệ thống đã xử lý khiếu nại {dispute.CaseNumber} và xác định đây là hòa. Bạn sẽ được hoàn lại toàn bộ tiền.";
                     staffMessage = $"Đã xử lý khiếu nại {dispute.CaseNumber} với kết quả hòa.";
                     break;

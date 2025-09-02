@@ -163,10 +163,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = Repositories.Models.Notifications.ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_APPLICATION_REVIEWED",
-                    Content = "PUSH_ON_TUTOR_APPLICATION_REVIEWED_BODY",
+                    Title = "Đơn đăng ký đã được xem xét",
+                    Content = "Vui lòng vào hồ sơ cá nhân của bạn để xem kết quả",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "TutorApplicationReviewed",
                         Id = entity.Id,
                         RevisionAction = entity.Action.ToString(),
                     })
