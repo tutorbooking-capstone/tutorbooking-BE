@@ -34,7 +34,7 @@ namespace App.Services.Hangfire
                 var expiredOffers = await _unitOfWork.GetRepository<TutorBookingOffer>()
                     .ExistEntities()
                     .Where(o => !o.IsRejected && !o.IsExpired)  
-                    .Where(o => (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod) < DateTimeOffset.UtcNow)
+                    .Where(o => (o.UpdatedAt ?? o.CreatedAt) < DateTimeOffset.UtcNow - o.ExpirationPeriod) 
                     .Include(o => o.OfferedSlots)
                     .ToListAsync();
 
