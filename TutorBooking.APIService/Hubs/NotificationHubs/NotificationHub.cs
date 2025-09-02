@@ -12,6 +12,17 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         private readonly INotificationService _notificationService;
         private readonly ILogger<NotificationHub> _logger;
 
+        // Thêm các biến static để quản lý rate limiting và concurrent requests
+        private static readonly SemaphoreSlim _markAsReadSemaphore = new SemaphoreSlim(15, 15);
+        private static readonly SemaphoreSlim _markAllAsReadSemaphore = new SemaphoreSlim(5, 5);
+        private static readonly Dictionary<string, DateTime> _lastOperationTime = new Dictionary<string, DateTime>();
+        private static readonly object _lockObj = new object();
+        
+        // Thêm counter để theo dõi số lượng connections
+        private static int _connectionCount = 0;
+        private static readonly object _connectionLock = new object();
+        private const int MAX_CONNECTIONS = 300; // Notification hub có thể có nhiều connections hơn
+
         public NotificationHub(
             INotificationService notificationService, 
             ILogger<NotificationHub> logger)
@@ -22,6 +33,18 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
 
         public override async Task OnConnectedAsync()
         {
+            // Giới hạn số lượng connections
+            lock (_connectionLock)
+            {
+                _connectionCount++;
+                if (_connectionCount > MAX_CONNECTIONS)
+                {
+                    _logger.LogWarning("Connection limit reached: {ConnectionCount} connections", _connectionCount);
+                    Context.Abort();
+                    return;
+                }
+            }
+
             var userId = GetUserId();
             _logger.LogInformation("User {UserId} connected to NotificationHub", userId);
 
@@ -36,6 +59,11 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
+            lock (_connectionLock)
+            {
+                _connectionCount--;
+            }
+
             var userId = GetUserId();
             _logger.LogInformation("User {UserId} disconnected from NotificationHub", userId);
             await base.OnDisconnectedAsync(exception);
@@ -47,9 +75,48 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
             {
                 ArgumentException.ThrowIfNullOrWhiteSpace(notificationId);
 
+                // Rate limiting
                 var userId = GetUserId();
-                await _notificationService.MarkAsReadAsync(notificationId, userId);
-                await Clients.Caller.MarkAsReadResult(200, "SUCCESS");
+                bool canProceed = true;
+                
+                lock (_lockObj)
+                {
+                    if (_lastOperationTime.TryGetValue(userId, out var lastTime))
+                    {
+                        if ((DateTime.UtcNow - lastTime).TotalMilliseconds < 300) // 300ms cooldown
+                        {
+                            canProceed = false;
+                        }
+                    }
+                    
+                    if (canProceed)
+                    {
+                        _lastOperationTime[userId] = DateTime.UtcNow;
+                    }
+                }
+                
+                if (!canProceed)
+                {
+                    await Clients.Caller.MarkAsReadResult(429, "Rate limit exceeded");
+                    return;
+                }
+
+                // Semaphore để giới hạn concurrent requests với timeout
+                if (!await _markAsReadSemaphore.WaitAsync(TimeSpan.FromSeconds(3)))
+                {
+                    await Clients.Caller.MarkAsReadResult(503, "Server is busy, please try again later");
+                    return;
+                }
+
+                try
+                {
+                    await _notificationService.MarkAsReadAsync(notificationId, userId);
+                    await Clients.Caller.MarkAsReadResult(200, "SUCCESS");
+                }
+                finally
+                {
+                    _markAsReadSemaphore.Release();
+                }
             }
             catch (Exception ex)
             {
@@ -61,9 +128,48 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         {
             try
             {
+                // Rate limiting
                 var userId = GetUserId();
-                await _notificationService.MarkAllAsReadAsync(userId);
-                await Clients.Caller.MarkAllAsReadResult(200, "SUCCESS");
+                bool canProceed = true;
+                
+                lock (_lockObj)
+                {
+                    if (_lastOperationTime.TryGetValue(userId, out var lastTime))
+                    {
+                        if ((DateTime.UtcNow - lastTime).TotalMilliseconds < 1000) // 1s cooldown (thao tác nặng)
+                        {
+                            canProceed = false;
+                        }
+                    }
+                    
+                    if (canProceed)
+                    {
+                        _lastOperationTime[userId] = DateTime.UtcNow;
+                    }
+                }
+                
+                if (!canProceed)
+                {
+                    await Clients.Caller.MarkAllAsReadResult(429, "Rate limit exceeded");
+                    return;
+                }
+
+                // Semaphore để giới hạn concurrent requests với timeout
+                if (!await _markAllAsReadSemaphore.WaitAsync(TimeSpan.FromSeconds(5)))
+                {
+                    await Clients.Caller.MarkAllAsReadResult(503, "Server is busy, please try again later");
+                    return;
+                }
+
+                try
+                {
+                    await _notificationService.MarkAllAsReadAsync(userId);
+                    await Clients.Caller.MarkAllAsReadResult(200, "SUCCESS");
+                }
+                finally
+                {
+                    _markAllAsReadSemaphore.Release();
+                }
             }
             catch (Exception ex)
             {

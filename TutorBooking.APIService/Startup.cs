@@ -18,6 +18,28 @@ namespace TutorBooking.APIService
     public class Startup
     {
         public IConfiguration Configuration { get; }
+        
+        // Thêm biến để theo dõi memory usage
+        private static readonly Timer _memoryMonitorTimer;
+        private const int MEMORY_CHECK_INTERVAL_MS = 60000; // 1 phút
+        private const int MEMORY_THRESHOLD_MB = 450; // 450MB (90% của 512MB Heroku dyno)
+        
+        static Startup()
+        {
+            // Khởi tạo timer để theo dõi memory usage
+            _memoryMonitorTimer = new Timer(MonitorMemoryUsage, null, MEMORY_CHECK_INTERVAL_MS, MEMORY_CHECK_INTERVAL_MS);
+        }
+        
+        private static void MonitorMemoryUsage(object state)
+        {
+            var currentMemory = GC.GetTotalMemory(false) / (1024 * 1024); // MB
+            if (currentMemory > MEMORY_THRESHOLD_MB)
+            {
+                // Log và force GC khi memory usage cao
+                Console.WriteLine($"[MEMORY WARNING] High memory usage detected: {currentMemory}MB - forcing GC");
+                GC.Collect(2, GCCollectionMode.Forced, true, true);
+            }
+        }
 
         public Startup(IConfiguration configuration)
         {
@@ -70,9 +92,7 @@ namespace TutorBooking.APIService
             {
                 // Cho phép chuyển hướng
                 AllowAutoRedirect = true,
-                // Tăng số lượng chuyển hướng tối đa
-                MaxAutomaticRedirections = 10,
-                // Cấu hình SSL/TLS
+                MaxAutomaticRedirections = 5, // Giảm từ 10 xuống 5
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
             });
             #endregion
@@ -90,8 +110,13 @@ namespace TutorBooking.APIService
                     var firebaseCredJson = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
                     if (!string.IsNullOrEmpty(firebaseCredJson))
                     {
-                        credentialPath = Path.Combine(Path.GetTempPath(), "firebase-credentials.json");
+                        credentialPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".json");
                         File.WriteAllText(credentialPath, firebaseCredJson);
+                        
+                        // Đăng ký cleanup khi app shutdown
+                        AppDomain.CurrentDomain.ProcessExit += (s, e) => {
+                            if (File.Exists(credentialPath)) File.Delete(credentialPath);
+                        };
                     }
                     else
                     {
@@ -99,25 +124,51 @@ namespace TutorBooking.APIService
                     }
                 }
                 
-                FirebaseApp.Create(new AppOptions
+                if (FirebaseApp.DefaultInstance == null)
                 {
-                    Credential = GoogleCredential.FromFile(credentialPath),
-                });
+                    FirebaseApp.Create(new AppOptions
+                    {
+                        Credential = GoogleCredential.FromFile(credentialPath),
+                    });
+                }
             }
             catch (Exception ex)
             {
                 // Log lỗi nhưng không làm crash ứng dụng
-                var logger = services.BuildServiceProvider().GetService<ILogger<Startup>>();
+                ILogger<Startup> logger;
+                try {
+                    logger = services.BuildServiceProvider(validateScopes: true).GetService<ILogger<Startup>>();
+                } catch {
+                    logger = null;
+                }
                 logger?.LogError(ex, "Error initializing Firebase. Some features may not work properly.");
             }
             #endregion
 
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
-
         }
-        //testd sadf
+
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            // Thêm middleware giám sát memory
+            app.Use(async (context, next) =>
+            {
+                // Check memory usage mỗi 100 requests
+                if (Random.Shared.Next(100) == 0)
+                {
+                    var currentMemory = GC.GetTotalMemory(false) / (1024 * 1024); // MB
+                    var logger = context.RequestServices.GetService<ILogger<Startup>>();
+                    
+                    if (currentMemory > MEMORY_THRESHOLD_MB)
+                    {
+                        logger?.LogWarning("Memory usage high: {MemoryMB}MB - forcing GC", currentMemory);
+                        GC.Collect(2, GCCollectionMode.Forced, true);
+                    }
+                }
+                
+                await next();
+            });
+
             // Middleware handle logging, better for debug engineering :>>>
             app.UseMiddleware<RequestLogSeparatorMiddleware>();
 
@@ -129,7 +180,6 @@ namespace TutorBooking.APIService
                 {
                     if (context.Request.Path == "/")
                     {
-
                         context.Response.Redirect("/profiler/results");
                         return;
                     }
@@ -138,7 +188,8 @@ namespace TutorBooking.APIService
             }
 
             #region 3rd Party Libraries
-            app.UseMiniProfiler();
+            if (env.IsDevelopment())
+                app.UseMiniProfiler();
 
             app.UseSwagger();
             app.UseSwaggerUI();
@@ -146,7 +197,7 @@ namespace TutorBooking.APIService
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
                 Authorization = env.IsDevelopment() ? Array.Empty<IDashboardAuthorizationFilter>() : new[] { new HangfireAuthorizationFilter() },
-                IsReadOnlyFunc = (context) => false
+                IsReadOnlyFunc = (context) => true
             });
             HangfireConfig.ConfigureRecurringJobs();
             #endregion
@@ -170,30 +221,37 @@ namespace TutorBooking.APIService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
-				endpoints.MapHub<ChatHub>("/chathub", options =>
-				{
-					options.Transports =
-						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
-						Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+                endpoints.MapHub<ChatHub>("/chathub", options =>
+                {
+                    options.Transports =
+                        Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+                        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
 
-					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
-					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
-					options.AllowStatefulReconnects = true;
+                    options.ApplicationMaxBufferSize = 32 * 1024; // Giảm từ 64KB xuống 32KB
+                    options.TransportMaxBufferSize = 32 * 1024;   // Giảm từ 64KB xuống 32KB
+                    options.AllowStatefulReconnects = false;
+                    
+                    // Thêm giới hạn thời gian
+                    // Thiết lập thời gian chờ tối đa cho Long Polling là 7 giây
+                    // Điều này giúp giảm tải cho server bằng cách giới hạn thời gian mỗi request long polling có thể giữ connection mở
+                    // Sau 7 giây, request sẽ tự động kết thúc và client cần gửi request mới để tiếp tục nhận dữ liệu
+                    options.LongPolling.PollTimeout = TimeSpan.FromSeconds(7);
                 });
 
-				endpoints.MapHub<NotificationHub>("/notification-hub", options =>
-				{
-					options.Transports =
-						Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
-						Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
+                endpoints.MapHub<NotificationHub>("/notification-hub", options =>
+                {
+                    options.Transports =
+                        Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets |
+                        Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling;
 
-					options.ApplicationMaxBufferSize = 64 * 1024; // 64KB
-					options.TransportMaxBufferSize = 64 * 1024;   // 64KB
-                    options.AllowStatefulReconnects = true;
+                    options.ApplicationMaxBufferSize = 32 * 1024; // Giảm từ 64KB xuống 32KB
+                    options.TransportMaxBufferSize = 32 * 1024;   // Giảm từ 64KB xuống 32KB
+                    options.AllowStatefulReconnects = false;
+                    
+                    // Thêm giới hạn thời gian
+                    options.LongPolling.PollTimeout = TimeSpan.FromSeconds(7);
                 });
-			});
-
+            });
         }
     }
-
 }
