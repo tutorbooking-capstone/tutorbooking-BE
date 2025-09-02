@@ -111,10 +111,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST",
-                    Content = "PUSH_ON_TUTOR_RECEIVED_TIME_SLOT_REQUEST_BODY",
+                    Title = "Nhận được yêu cầu đặt lịch",
+                    Content = $"Một học viên đã gửi yêu cầu đặt lịch cho ngày. {request.ExpectedStartDate:dd/MM/yyyy}",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "TimeSlotRequestReceived",
                         ExpectedStartDate = request.ExpectedStartDate,
                         LessonId = request.LessonId,
                         SenderId = learnerId,
@@ -495,12 +496,16 @@ namespace App.Services.Services
                 }
 
                 string notificationTitle = offer != null 
-                    ? "PUSH_ON_LEARNER_ACCEPT_OFFER" 
-                    : "PUSH_ON_LEARNER_INSTANT_BOOK";
-                    
+                    ? "Offer đã được chấp nhận" 
+                    : "Bạn có một buổi dạy mới";
+
                 string notificationContent = offer != null 
-                    ? "PUSH_ON_LEARNER_ACCEPT_OFFER_BODY" 
-                    : "PUSH_ON_LEARNER_INSTANT_BOOK_BODY";
+                    ? "Một học viên đã chấp nhận offer của bạn." 
+                    : "Một học viên đã đặt lịch học với bạn";
+
+                string notificationType = offer != null 
+                    ? "OfferAccepted" 
+                    : "InstantBookingReceived";
 
                 await _notificationService.SendToUsersAsync(new()
                 {
@@ -511,6 +516,7 @@ namespace App.Services.Services
                         Content = notificationContent,
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = notificationType,
                             Id = booking.Id,
                             LessonName = lessonSnapshot.Name,
                             SenderId = learnerId,
@@ -769,10 +775,11 @@ namespace App.Services.Services
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_LEARNER_CANCELLED_BOOKING",
-                        Content = "PUSH_ON_LEARNER_CANCELLED_BOOKING_BODY",
+                        Title = "Đặt lịch đã bị huỷ",
+                        Content = "Một học viên đã huỷ đặt lịch với bạn.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = "BookingCancelled",
                             BookingId = booking.Id,
                             LessonName = booking.LessonSnapshot?.Name,
                             SenderId = learnerId,

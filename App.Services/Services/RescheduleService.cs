@@ -144,10 +144,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_RESCHEDULE_REQUEST",
-                    Content = "PUSH_ON_RESCHEDULE_REQUEST_BODY",
+                    Title = "Gia sư yêu cầu đổi lịch",
+                    Content = "Một gia sư đã yêu cầu đổi lịch học.",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "LearnerReceivedRescheduleRequest",
                         SenderId = userId,
                         RescheduleRequestId = rescheduleRequest.Id,
                         BookedSlotId = bookedSlot.Id,
@@ -307,10 +308,11 @@ namespace App.Services.Services
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_RESCHEDULE_ACCEPTED",
-                        Content = "PUSH_ON_RESCHEDULE_ACCEPTED_BODY",
+                        Title = "Yêu cầu đổi lịch được chấp nhận",
+                        Content = "Một học viên đã chấp nhận yêu cầu đổi lịch học của bạn.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = "TutorRescheduleRequestAccepted",
                             RescheduleRequestId = request.Id,
                             BookedSlotId = newSlot.Id,
                             BookingId = booking.Id
@@ -363,10 +365,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_RESCHEDULE_REJECTED",
-                    Content = "PUSH_ON_RESCHEDULE_REJECTED_BODY",
+                    Title = "Yêu cầu đổi lịch bị từ chối",
+                    Content = "Một học viên đã từ chối yêu cầu đổi lịch học của bạn.",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "TutorRescheduleRequestRejected",
                         RescheduleRequestId = request.Id,
                         BookedSlotId = request.BookedSlotId,
                         BookingId = booking.Id,
@@ -421,10 +424,11 @@ namespace App.Services.Services
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_RESCHEDULE_CANCELLED",
-                        Content = "PUSH_ON_RESCHEDULE_CANCELLED_BODY",
+                        Title = "Yêu cầu đổi lịch bị huỷ",
+                        Content = "Một gia sư đã huỷ yêu cầu đổi lịch học của bạn.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = "TutorRescheduleRequestCancelled",
                             RescheduleRequestId = request.Id,
                             BookedSlotId = request.BookedSlotId,
                             BookingId = request.BookedSlot?.BookingId

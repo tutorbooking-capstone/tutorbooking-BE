@@ -1,4 +1,4 @@
-using App.Core.Base;
+﻿using App.Core.Base;
 using App.Core.Constants;
 using App.Core.Provider;
 using App.Core.Utils;
@@ -144,10 +144,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_CREATED_OFFER",
-                    Content = "PUSH_ON_TUTOR_CREATED_OFFER_BODY",
+                    Title = "Bạn có đề xuất mới",
+                    Content = "Một gia sư đã tạo đề xuất mới cho bạn",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "NewBookingOfferReceived",
                         SenderId = tutorId,
                         OfferId = createdOffer.Id,
                         LessonId = createdOffer.LessonId
@@ -207,10 +208,11 @@ namespace App.Services.Services
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_TUTOR_UPDATED_OFFER",
-                    Content = "PUSH_ON_TUTOR_UPDATED_OFFER_BODY",
+                    Title = "Nhận được cập nhật đề xuất",
+                    Content = "Một gia sư đã cập nhật lại đề xuất buổi học cho bạn",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
+                        Type = "BookingOfferUpdateReceived",
                         SenderId = tutorId,
                         OfferId = offer.Id,
                         LessonId = offer.LessonId,
@@ -320,10 +322,11 @@ namespace App.Services.Services
                         Content = new()
                         {
                             NotificationPriority = ENotificationPriority.Normal,
-                            Title = "PUSH_ON_BOOKED SLOT COMPLETED",
-                            Content = "PUSH_ON_BOOKED_SLOT COMPLETED_BODY",
+                            Title = "Buổi học đã hoàn thành",
+                            Content = $"Buổi học {bookedSlot.GetSlotStartTime:hh:mm dd/MM/yyyy} đã hoàn thành.",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
+                                Type = "BookedSlotCompleted",
                                 SenderId = tutorId,
                                 BookedSlotId = bookedSlotId
                             }),
@@ -442,10 +445,11 @@ namespace App.Services.Services
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_TUTOR_CANCELLED_BOOKING",
-                        Content = "PUSH_ON_TUTOR_CANCELLED_BOOKING_BODY",
+                        Title = "Lịch học đã bị huỷ",
+                        Content = "Một gia sư đã huỷ lịch học của bạn.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
+                            Type = "TutorCancelledBooking",
                             BookingId = booking.Id,
                             LessonName = booking.LessonSnapshot?.Name,
                             SenderId = tutorId,

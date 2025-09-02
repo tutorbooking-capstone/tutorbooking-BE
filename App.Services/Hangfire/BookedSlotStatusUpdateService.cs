@@ -104,6 +104,7 @@ namespace App.Services.Hangfire
 
             var notificationData = new
             {
+                Type = "SlotCompleted",
                 BookedSlotId = slot.Id,
                 BookingId = slot.BookingId,
                 BookedDate = slot.BookedDate,
@@ -115,8 +116,8 @@ namespace App.Services.Hangfire
                 Content = new()
                 {
                     NotificationPriority = ENotificationPriority.Normal,
-                    Title = "PUSH_ON_SLOT_AUTO_COMPLETED",
-                    Content = "PUSH_ON_SLOT_AUTO_COMPLETED_BODY",
+                    Title = $"Slot đã hoàn thành",
+                    Content = $"Slot {slot.GetSlotStartTime:hh/mm/ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
                     AdditionalData = JsonSerializer.Serialize(notificationData)
                 },
                 ReceiverUserIds = [slot.Booking.TutorId]
@@ -129,8 +130,8 @@ namespace App.Services.Hangfire
                     Content = new()
                     {
                         NotificationPriority = ENotificationPriority.Normal,
-                        Title = "PUSH_ON_SLOT_AUTO_COMPLETED",
-                        Content = "PUSH_ON_SLOT_AUTO_COMPLETED_LEARNER_BODY",
+                        Title = $"Slot đã hoàn thành",
+                        Content = $"Slot {slot.GetSlotStartTime:hh/mm/ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
                         AdditionalData = JsonSerializer.Serialize(notificationData)
                     },
                     ReceiverUserIds = [slot.Booking.LearnerId]

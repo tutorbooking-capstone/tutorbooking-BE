@@ -1,4 +1,4 @@
-using App.DTOs.NotificationDTOs;
+﻿using App.DTOs.NotificationDTOs;
 using App.Repositories.Models;
 using App.Repositories.Models.Notifications;
 using App.Repositories.UoW;
@@ -96,10 +96,11 @@ namespace App.Services.Hangfire
                         Content = new()
                         {
                             NotificationPriority = ENotificationPriority.Normal,
-                            Title = "PUSH_ON_RESCHEDULE_EXPIRED",
-                            Content = "PUSH_ON_RESCHEDULE_EXPIRED_BODY",
+                            Title = "Yêu cầu đổi lịch từ người học hết hạn",
+                            Content = $"Yêu cầu đổi lịch của slot {request.BookedSlot?.GetSlotStartTime:hh:mm:ss dd/MM/yyyy} đã hết hạn",
                             AdditionalData = JsonSerializer.Serialize(new
                             {
+                                Type = "RescheduleRequestExpired",
                                 RescheduleRequestId = request.Id,
                                 BookedSlotId = request.BookedSlotId,
                                 BookingId = booking.Id
@@ -116,10 +117,11 @@ namespace App.Services.Hangfire
                             Content = new()
                             {
                                 NotificationPriority = ENotificationPriority.Normal,
-                                Title = "PUSH_ON_RESCHEDULE_EXPIRED",
-                                Content = "PUSH_ON_RESCHEDULE_EXPIRED_BODY",
+                                Title = "Yêu cầu đổi lịch hết hạn",
+                                Content = $"Yêu cầu đổi lịch của slot {request.BookedSlot?.GetSlotStartTime:hh:mm:ss dd/MM/yyyy} đã hết hạn",
                                 AdditionalData = JsonSerializer.Serialize(new
                                 {
+                                    Type = "RescheduleRequestExpired",
                                     RescheduleRequestId = request.Id,
                                     BookedSlotId = request.BookedSlotId,
                                     BookingId = booking.Id
