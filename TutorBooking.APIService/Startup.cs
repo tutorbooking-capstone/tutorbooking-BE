@@ -152,14 +152,12 @@ namespace TutorBooking.APIService
             #endregion
 
             if (env.IsDevelopment())
-            {
                 app.UseHttpsRedirection(); // Chỉ dùng HTTPS Redirection trong Development
-            }
-            else 
-            {
-                // Trong Production, không dùng HTTPS Redirection vì Heroku đã xử lý
-                // Heroku sẽ tự xử lý SSL termination
-            }
+            // else 
+            // {
+            //     // Trong Production, không dùng HTTPS Redirection vì Heroku đã xử lý
+            //     // Heroku sẽ tự xử lý SSL termination
+            // }
 
             app.UseRouting();
             app.UseCors("AllowFrontend");

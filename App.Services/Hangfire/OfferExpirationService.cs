@@ -33,8 +33,8 @@ namespace App.Services.Hangfire
 
                 var expiredOffers = await _unitOfWork.GetRepository<TutorBookingOffer>()
                     .ExistEntities()
-                    .Where(o => !o.IsRejected)
-                    .Where(o => (o.UpdatedAt ?? o.CreatedAt).AddMinutes(o.ExpirationPeriod.TotalMinutes) < DateTime.UtcNow)
+                    .Where(o => !o.IsRejected && !o.IsExpired)  
+                    .Where(o => (o.UpdatedAt ?? o.CreatedAt).Add(o.ExpirationPeriod) < DateTimeOffset.UtcNow)
                     .Include(o => o.OfferedSlots)
                     .ToListAsync();
 
@@ -52,7 +52,7 @@ namespace App.Services.Hangfire
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xử lý offer hết hạn");
+                _logger.LogError(ex, "Error processing expired offers");
             }
         }
 
@@ -61,17 +61,21 @@ namespace App.Services.Hangfire
             var offer = await _unitOfWork.GetRepository<TutorBookingOffer>()
                 .ExistEntities()
                 .Include(o => o.OfferedSlots)
-                .Include(o => o.Tutor)
-                .Include(o => o.Learner)
+                // .Include(o => o.Tutor)
+                // .Include(o => o.Learner)
                 .FirstOrDefaultAsync(o => o.Id == offerId);
 
-            if (offer == null || offer.IsRejected) return;
-            var isExpired = DateTime.UtcNow > (offer.UpdatedAt ?? offer.CreatedAt).Add(offer.ExpirationPeriod);
-            if (!isExpired) return;
+            if (offer == null || offer.IsRejected || offer.IsExpired) return; // Thêm kiểm tra IsExpired
+            
+            if (!offer.IsExpired)
+                return;
 
             var slotRepo = _unitOfWork.GetRepository<OfferedSlot>();
             slotRepo.DeleteRange(offer.OfferedSlots);
-
+            
+            var expiredFields = offer.MarkAsExpired();
+            _unitOfWork.GetRepository<TutorBookingOffer>().UpdateFields(offer, expiredFields);
+            
             await _unitOfWork.SaveAsync();
             //await SendExpirationNotificationsAsync(offer);
         }
