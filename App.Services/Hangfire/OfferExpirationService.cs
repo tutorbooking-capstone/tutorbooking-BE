@@ -73,6 +73,17 @@ namespace App.Services.Hangfire
             //await SendExpirationNotificationsAsync(offer);
         }
 
+        public async Task HandleExpiredOfferByIdAsync(string offerId)
+        {
+            var offer = await _unitOfWork.GetRepository<TutorBookingOffer>()
+                .ExistEntities()
+                .Include(o => o.OfferedSlots)
+                .FirstOrDefaultAsync(o => o.Id == offerId);
+
+            if (offer != null)
+                await HandleExpiredOfferAsync(offer);
+        }
+
         private async Task SendExpirationNotificationsAsync(TutorBookingOffer offer)
         {
             await _notificationService.SendToUsersAsync(new SendNotificationToUsersRequest

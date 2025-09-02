@@ -35,7 +35,7 @@ namespace App.Services.Infras
         public static void ScheduleOfferExpirationJob(string offerId, DateTimeOffset expirationTime)
         {
             BackgroundJob.Schedule<OfferExpirationService>(
-                service => service.HandleExpiredOfferAsync(offerId),
+                service => service.HandleExpiredOfferByIdAsync(offerId),
                 expirationTime);
         }
 
