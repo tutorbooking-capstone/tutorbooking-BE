@@ -471,7 +471,7 @@ namespace App.Services.Services
                     escrowWallet.Id,
                     totalPrice,
                     booking.Id,
-                    $"Payment for booking {booking.Id} with {slots.Count} slots held in escrow"
+                    $"Thanh toán cho booking: {booking.Id} với {slots.Count} slot được giữ trong ví ký quỹ"
                 );
                 
                 _unitOfWork.GetRepository<Transaction>().Insert(transaction);
@@ -702,6 +702,30 @@ namespace App.Services.Services
                     "Learner wallet not found");
             
             var escrowWallet = await GetEscrowWalletAsync();
+            var tutorWallet = await _unitOfWork.GetRepository<Wallet>()
+                .ExistEntities()
+                .FirstOrDefaultAsync(w => w.UserId == booking.TutorId);
+                
+            if (tutorWallet == null)
+                throw new ErrorException(
+                    StatusCodes.Status500InternalServerError,
+                    ErrorCode.ServerError,
+                    "Tutor wallet not found");
+            
+            // Get completed slots to determine trial period for Offer Booking
+            var completedSlotsCount = booking.BookedSlots!
+                .Count(bs => bs.Status == SlotStatus.Completed || bs.Status == SlotStatus.AwaitingPayout);
+            
+            // Get first slot to check 24-hour policy
+            var firstPendingSlot = slotsToCancel.OrderBy(s => s.BookedDate).ThenBy(s => s.SlotIndex).FirstOrDefault();
+            var now = DateTime.UtcNow;
+            bool isWithin24Hours = false;
+            
+            if (firstPendingSlot != null)
+            {
+                var firstSlotStartTime = CalculateSlotStartTime(firstPendingSlot.BookedDate, firstPendingSlot.SlotIndex);
+                isWithin24Hours = (firstSlotStartTime - now).TotalHours <= 24;
+            }
             
             return await _unitOfWork.ExecuteInTransactionAsync(async () => {
                 foreach (var slot in slotsToCancel)
@@ -713,23 +737,69 @@ namespace App.Services.Services
                     // Process held funds
                     if (slot.HeldFund != null)
                     {
-                        decimal tutorAmount = slot.HeldFund.Amount * (1 - 1.0m); // 100% refund to learner
-                        decimal learnerAmount = slot.HeldFund.Amount * 1.0m;
+                        decimal tutorPercentage = 0;
+                        decimal learnerPercentage = 1.0m;
+                        
+                        if (isOfferBooking)
+                        {
+                            if (completedSlotsCount == 0 && !isWithin24Hours)
+                            {
+                                // Offer Booking cancelled 24+ hours before first slot: 100% refund to learner
+                                tutorPercentage = 0;
+                                learnerPercentage = 1.0m;
+                            }
+                            else if (completedSlotsCount == 0 && isWithin24Hours)
+                            {
+                                // Offer Booking cancelled within 24 hours before first slot: 97% refund to learner
+                                tutorPercentage = 0.03m;
+                                learnerPercentage = 0.97m;
+                            }
+                            else if (completedSlotsCount > 0 && completedSlotsCount < 3)
+                            {
+                                // Offer Booking trial period (slots 1-3): 90% refund for remaining slots
+                                tutorPercentage = 0.1m;
+                                learnerPercentage = 0.9m;
+                            }
+                            else
+                            {
+                                // Offer Booking after trial (slot 4+): no refund
+                                tutorPercentage = 1.0m;
+                                learnerPercentage = 0;
+                            }
+                        }
+                        else // Instant Booking
+                        {
+                            if (!isWithin24Hours && completedSlotsCount == 0)
+                            {
+                                // Instant Booking cancelled 24+ hours before first slot: 10% refund to learner
+                                tutorPercentage = 0.9m;
+                                learnerPercentage = 0.1m;
+                            }
+                            else
+                            {
+                                // Instant Booking cancelled within 24 hours or after first slot: no refund
+                                tutorPercentage = 1.0m;
+                                learnerPercentage = 0;
+                            }
+                        }
+                        
+                        decimal tutorAmount = slot.HeldFund.Amount * tutorPercentage;
+                        decimal learnerAmount = slot.HeldFund.Amount * learnerPercentage;
                         
                         if (tutorAmount > 0)
                         {
                             // Transfer funds to tutor
                             var tutorTransaction = Transaction.CreatePaymentTransaction(
                                 escrowWallet.Id,
-                                _unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!.Id,
+                                tutorWallet.Id,
                                 tutorAmount,
                                 slot.Id,
-                                $"Payment for cancelled slot {slot.Id} - {tutorAmount} VND"
+                                $"Thanh toán cho gia sư do huỷ slot {slot.Id}"
                             );
                             _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
                             
-                            var tutorWalletUpdateFields = _unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!.AddBalance(tutorAmount);
-                            _unitOfWork.GetRepository<Wallet>().UpdateFields(_unitOfWork.GetRepository<Wallet>().ExistEntities().FirstOrDefault(w => w.UserId == booking.TutorId)!, tutorWalletUpdateFields);
+                            var tutorWalletUpdateFields = tutorWallet.AddBalance(tutorAmount);
+                            _unitOfWork.GetRepository<Wallet>().UpdateFields(tutorWallet, tutorWalletUpdateFields);
                             
                             var escrowUpdateFields = escrowWallet.SubtractBalance(tutorAmount);
                             _unitOfWork.GetRepository<Wallet>().UpdateFields(escrowWallet, escrowUpdateFields);
@@ -743,7 +813,7 @@ namespace App.Services.Services
                                 learnerWallet.Id,
                                 learnerAmount,
                                 slot.Id,
-                                $"Refund for cancelled slot {slot.Id} - {learnerAmount} VND"
+                                $"Hoàn tiền cho học viên do huỷ slot {slot.Id}"
                             );
                             _unitOfWork.GetRepository<Transaction>().Insert(learnerTransaction);
                             
@@ -755,7 +825,11 @@ namespace App.Services.Services
                         }
                         
                         // Update held fund status
-                        var heldFundUpdateFields = slot.HeldFund.UpdateStatus(HeldFundStatus.RefundedToLearner);
+                        HeldFundStatus newStatus = learnerAmount > 0 ? 
+                            (tutorAmount > 0 ? HeldFundStatus.Disputed : HeldFundStatus.RefundedToLearner) : 
+                            HeldFundStatus.ReleasedToTutor;
+                        
+                        var heldFundUpdateFields = slot.HeldFund.UpdateStatus(newStatus);
                         _unitOfWork.GetRepository<HeldFund>().UpdateFields(slot.HeldFund, heldFundUpdateFields);
                     }
                 }

@@ -130,7 +130,7 @@ namespace App.Services.Hangfire
                     tutorWallet.Id,
                     tutorAmount,
                     booking.Id,
-                    $"Payment release from escrow for booking slot {heldFund.BookedSlot.Id} (after {feeConfig.Value * 100}% commission fee: {commissionFee})"
+                    $"Thanh toán từ ví ký quỹ cho buổi học {heldFund.BookedSlot.Id} (sau khi trừ phí hoa hồng {feeConfig.Value * 100}%: {commissionFee} VND)"
                 );
                 
                 _unitOfWork.GetRepository<Transaction>().Insert(tutorTransaction);
@@ -143,7 +143,7 @@ namespace App.Services.Hangfire
                     Type = TransactionType.Fee,
                     Status = TransactionStatus.Success,
                     ReferenceId = heldFund.Id,
-                    Description = $"Commission fee ({feeConfig.Value * 100}%) for booking slot {heldFund.BookedSlot.Id}"
+                    Description = $"Phí hoa hồng ({feeConfig.Value * 100}%) cho buổi học {heldFund.BookedSlot.Id}"
                 };
                 
                 _unitOfWork.GetRepository<Transaction>().Insert(feeTransaction);
