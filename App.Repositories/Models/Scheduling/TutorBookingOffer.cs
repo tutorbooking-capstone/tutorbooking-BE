@@ -46,11 +46,13 @@ namespace App.Repositories.Models
             if (IsRejected) return Array.Empty<Expression<Func<TutorBookingOffer, object>>>();
             
             IsRejected = true;
+            IsExpired = true;
             UpdatedAt = DateTime.UtcNow;
             
             return
             [
                 x => x.IsRejected,
+                x => x.IsExpired,
                 x => x.UpdatedAt!
             ];
         }
