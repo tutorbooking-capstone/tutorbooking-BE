@@ -30,7 +30,7 @@ namespace TutorBooking.APIService
             _memoryMonitorTimer = new Timer(MonitorMemoryUsage, null, MEMORY_CHECK_INTERVAL_MS, MEMORY_CHECK_INTERVAL_MS);
         }
         
-        private static void MonitorMemoryUsage(object state)
+        private static void MonitorMemoryUsage(object? state)
         {
             var currentMemory = GC.GetTotalMemory(false) / (1024 * 1024); // MB
             if (currentMemory > MEMORY_THRESHOLD_MB)
@@ -135,13 +135,7 @@ namespace TutorBooking.APIService
             catch (Exception ex)
             {
                 // Log lỗi nhưng không làm crash ứng dụng
-                ILogger<Startup> logger;
-                try {
-                    logger = services.BuildServiceProvider(validateScopes: true).GetService<ILogger<Startup>>();
-                } catch {
-                    logger = null;
-                }
-                logger?.LogError(ex, "Error initializing Firebase. Some features may not work properly.");
+                Console.WriteLine($"Error initializing Firebase: {ex.Message}. Some features may not work properly.");
             }
             #endregion
 

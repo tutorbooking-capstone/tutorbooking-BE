@@ -1,6 +1,7 @@
 using App.Core.Base;
 using App.DTOs.BookingDTOs;
 using App.Repositories.Models;
+using App.Repositories.Models.Scheduling;
 using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -89,6 +90,84 @@ namespace TutorBooking.APIService.Controllers
             return Ok(new BaseResponseModel<BasePaginatedList<BookingListItemDTO>>(
                 data: bookings,
                 message: "Tất cả booking"
+            ));
+        }
+
+        [HttpGet("metadata")]
+        [AllowAnonymous]
+        public IActionResult GetBookingMetadata()
+        {
+            var bookingStatusMetadata = EnumHelper.GetEnumMetadata(typeof(BookingStatus));
+            var slotStatusMetadata = EnumHelper.GetEnumMetadata(typeof(SlotStatus));
+            var heldFundStatusMetadata = EnumHelper.GetEnumMetadata(typeof(HeldFundStatus));
+            var heldFundTypeMetadata = EnumHelper.GetEnumMetadata(typeof(HeldFundType));
+            var bookingTypeMetadata = EnumHelper.GetEnumMetadata(typeof(BookingType));
+            
+            return Ok(new BaseResponseModel<object>(
+                data: new
+                {
+                    BookingStatus = bookingStatusMetadata,
+                    SlotStatus = slotStatusMetadata,
+                    HeldFundStatus = heldFundStatusMetadata,
+                    HeldFundType = heldFundTypeMetadata,
+                    BookingType = bookingTypeMetadata
+                },
+                message: "Booking metadata"
+            ));
+        }
+
+        [HttpGet("metadata/booking-status")]
+        [AllowAnonymous]
+        public IActionResult GetBookingStatusMetadata()
+        {
+            var metadata = EnumHelper.GetEnumMetadata(typeof(BookingStatus));
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Booking status metadata"
+            ));
+        }
+
+        [HttpGet("metadata/slot-status")]
+        [AllowAnonymous]
+        public IActionResult GetSlotStatusMetadata()
+        {
+            var metadata = EnumHelper.GetEnumMetadata(typeof(SlotStatus));
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Slot status metadata"
+            ));
+        }
+
+        [HttpGet("metadata/held-fund-status")]
+        [AllowAnonymous]
+        public IActionResult GetHeldFundStatusMetadata()
+        {
+            var metadata = EnumHelper.GetEnumMetadata(typeof(HeldFundStatus));
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Held fund status metadata"
+            ));
+        }
+
+        [HttpGet("metadata/held-fund-type")]
+        [AllowAnonymous]
+        public IActionResult GetHeldFundTypeMetadata()
+        {
+            var metadata = EnumHelper.GetEnumMetadata(typeof(HeldFundType));
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Held fund type metadata"
+            ));
+        }
+
+        [HttpGet("metadata/booking-type")]
+        [AllowAnonymous]
+        public IActionResult GetBookingTypeMetadata()
+        {
+            var metadata = EnumHelper.GetEnumMetadata(typeof(BookingType));
+            return Ok(new BaseResponseModel<object>(
+                data: metadata,
+                message: "Booking type metadata"
             ));
         }
     }

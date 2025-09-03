@@ -414,7 +414,7 @@ namespace App.Services.Services
                             learnerWallet.Id,
                             refundAmount,
                             slot.Id,
-                            $"Full refund for tutor-cancelled slot {slot.Id} - {refundAmount} VND"
+                            $"Hoàn tiền đầy đủ do gia sư huỷ lịch học"
                         );
                         _unitOfWork.GetRepository<Transaction>().Insert(learnerTransaction);
                         

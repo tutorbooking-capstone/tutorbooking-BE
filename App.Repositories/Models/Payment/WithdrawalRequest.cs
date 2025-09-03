@@ -18,9 +18,9 @@ namespace App.Repositories.Models
     {
         public string UserId { get; set; } = string.Empty;
         public string BankAccountId { get; set; } = string.Empty;
-        public string BankAccountInfo { get; set; } = "{}"; // JSON format for storing bank details
+        public string BankAccountInfo { get; set; } = "{}"; 
         public decimal GrossAmount { get; set; }
-        public string Fees { get; set; } = "{}"; // Định dạng JSON
+        public string Fees { get; set; } = "{}"; 
         public decimal NetAmount { get; set; }
         public WithdrawalRequestStatus Status { get; set; } = WithdrawalRequestStatus.Pending;
         public DateTime? CompletedAt { get; set; }

@@ -192,6 +192,9 @@ namespace App.Services.Services
             if (booking == null || booking.BookedSlots == null || !booking.BookedSlots.Any())
                 return false;
                 
+            if (booking.Status == BookingStatus.Cancelled)
+                return false;
+                
             var lastBookedSlot = booking.BookedSlots
                 .OrderByDescending(bs => bs.BookedDate)
                 .ThenByDescending(bs => bs.SlotIndex)
