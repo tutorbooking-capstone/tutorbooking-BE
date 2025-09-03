@@ -11,13 +11,11 @@ namespace TutorBooking.APIService.Controllers
 	[ApiController]
 	public class ChatController : ControllerBase
 	{
-		private IHubContext<ChatHub, IChatClient> _hubContext;
 		private IChatService _chatService;
 
-		public ChatController(IChatService chatService, IHubContext<ChatHub, IChatClient> hubContext)
+		public ChatController(IChatService chatService)
 		{
 			_chatService = chatService;
-			_hubContext = hubContext;
 		}
 
 		[HttpGet("conversations")]

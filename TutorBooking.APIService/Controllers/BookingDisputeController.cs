@@ -4,6 +4,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -13,10 +14,12 @@ namespace TutorBooking.APIService.Controllers
     public class BookingDisputeController : ControllerBase
     {
         private readonly IDisputeService _disputeService;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public BookingDisputeController(IDisputeService disputeService)
+        public BookingDisputeController(IDisputeService disputeService, PushNotificationEventHandler notificationEventHandler)
         {
             _disputeService = disputeService;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         private async Task<Dictionary<string, object>> GetMetadataAsync() => 

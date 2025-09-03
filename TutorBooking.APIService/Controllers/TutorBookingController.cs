@@ -4,6 +4,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -13,10 +14,12 @@ namespace TutorBooking.APIService.Controllers
     public class TutorBookingController : ControllerBase
     {
         private readonly ITutorBookingService _service;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
-        public TutorBookingController(ITutorBookingService service)
+        public TutorBookingController(ITutorBookingService service, PushNotificationEventHandler notificationEventHandler)
         {
             _service = service;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpGet("time-slots")]
