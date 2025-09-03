@@ -22,5 +22,6 @@ namespace App.Services.Interfaces
         
         // Admin/Staff có thể xem tất cả booking
         Task<BasePaginatedList<BookingListItemDTO>> GetAllBookingsAsync(int page = 1, int pageSize = 10);
+        Task<BookingDetailDTO> GetBookingBySlotIdAsync(string slotId);
     }
 }
