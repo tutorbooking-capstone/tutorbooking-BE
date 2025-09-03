@@ -31,12 +31,12 @@ namespace App.Services.Hangfire
             {
                 _logger.LogInformation("Processing expired reschedule requests");
 
-                var now = DateTime.UtcNow;
+                var now = DateTimeOffset.UtcNow; 
 
                 var expiredRequests = await _unitOfWork.GetRepository<RescheduleRequest>()
                     .ExistEntities()
-                    .Where(r => r.Status == RescheduleRequestStatus.Pending && 
-                                r.ExpiresAt < now)
+                    .Where(r => r.Status == RescheduleRequestStatus.Pending)
+                    .Where(r => r.ExpiresAt < now) 
                     .Include(r => r.BookedSlot)
                     .ThenInclude(bs => bs!.Booking)
                     .ToListAsync();

@@ -255,7 +255,7 @@ namespace App.Services.Services
                     ErrorCode.BadRequest, 
                     "The lesson associated with this offer no longer exists");
 
-            if (offer.IsExpired())
+            if (offer.IsExpired)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
@@ -549,7 +549,7 @@ namespace App.Services.Services
                     ErrorCode.NotFound,
                     "Offer not found or you don't have permission to reject it.");
 
-            if (offer.IsExpired())
+            if (offer.IsExpired)
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,

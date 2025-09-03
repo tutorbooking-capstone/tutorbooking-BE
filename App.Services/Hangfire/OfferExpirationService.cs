@@ -33,8 +33,8 @@ namespace App.Services.Hangfire
 
                 var expiredOffers = await _unitOfWork.GetRepository<TutorBookingOffer>()
                     .ExistEntities()
-                    .Where(o => !o.IsRejected)
-                    .Where(o => (o.UpdatedAt ?? o.CreatedAt).AddMinutes(o.ExpirationPeriod.TotalMinutes) < DateTime.UtcNow)
+                    .Where(o => !o.IsRejected && !o.IsExpired)  
+                    .Where(o => (o.UpdatedAt ?? o.CreatedAt) < DateTimeOffset.UtcNow - o.ExpirationPeriod)
                     .Include(o => o.OfferedSlots)
                     .ToListAsync();
 
@@ -42,7 +42,7 @@ namespace App.Services.Hangfire
                 {
                     try
                     {
-                        await HandleExpiredOfferAsync(offer.Id);
+                        await HandleExpiredOfferAsync(offer);
                     }
                     catch (Exception ex)
                     {
@@ -52,28 +52,36 @@ namespace App.Services.Hangfire
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi xử lý offer hết hạn");
+                _logger.LogError(ex, "Error processing expired offers");
             }
         }
 
-        public async Task HandleExpiredOfferAsync(string offerId)
+        public async Task HandleExpiredOfferAsync(TutorBookingOffer offer)
+        {
+            if (offer == null || offer.IsRejected || offer.IsExpired) return;
+            
+            // if (!offer.IsExpired)
+            //     return;
+
+            var slotRepo = _unitOfWork.GetRepository<OfferedSlot>();
+            slotRepo.DeleteRange(offer.OfferedSlots);
+            
+            var expiredFields = offer.MarkAsExpired();
+            _unitOfWork.GetRepository<TutorBookingOffer>().UpdateFields(offer, expiredFields);
+            
+            await _unitOfWork.SaveAsync();
+            //await SendExpirationNotificationsAsync(offer);
+        }
+
+        public async Task HandleExpiredOfferByIdAsync(string offerId)
         {
             var offer = await _unitOfWork.GetRepository<TutorBookingOffer>()
                 .ExistEntities()
                 .Include(o => o.OfferedSlots)
-                .Include(o => o.Tutor)
-                .Include(o => o.Learner)
                 .FirstOrDefaultAsync(o => o.Id == offerId);
 
-            if (offer == null || offer.IsRejected) return;
-            var isExpired = DateTime.UtcNow > (offer.UpdatedAt ?? offer.CreatedAt).Add(offer.ExpirationPeriod);
-            if (!isExpired) return;
-
-            var slotRepo = _unitOfWork.GetRepository<OfferedSlot>();
-            slotRepo.DeleteRange(offer.OfferedSlots);
-
-            await _unitOfWork.SaveAsync();
-            //await SendExpirationNotificationsAsync(offer);
+            if (offer != null)
+                await HandleExpiredOfferAsync(offer);
         }
 
         private async Task SendExpirationNotificationsAsync(TutorBookingOffer offer)
@@ -111,5 +119,4 @@ namespace App.Services.Hangfire
             });
         }
     }
-
 }

@@ -22,7 +22,7 @@ namespace TutorBooking.APIService
             services.AddAuthenJwt(configuration);
             services.ConfigSwagger();
             services.ConfigureValidation();
-			services.ConfigureSignalR();
+            services.ConfigureSignalR(configuration);
             services.ConfigureControllers();
             services.ConfigureEventHandlers();
 
@@ -71,38 +71,42 @@ namespace TutorBooking.APIService
                     {
                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
                         logger.LogError(context.Exception, "[AUTH FAILED] Authentication failed for request path {Path}", context.Request.Path);
-                        Console.WriteLine($"\n\n\n[Authentication failed]\n {context.Exception.Message}\n\n\n");
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = context =>
                     {
                         var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Startup>>();
-                        var claims = context.Principal?.Claims.Select(c => $"{c.Type}: {c.Value}") ?? Enumerable.Empty<string>();
-                        var roles = context.Principal?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? Enumerable.Empty<string>();
                         var userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "N/A";
 
                         logger.LogInformation("[TOKEN VALIDATED] User ID: {UserId}, Path: {Path}", userId, context.Request.Path);
-                        logger.LogDebug("[TOKEN VALIDATED] Claims: [{Claims}]", string.Join(", ", claims));
-                        logger.LogDebug("[TOKEN VALIDATED] Roles found in token: [{Roles}]", string.Join(", ", roles));
+                        
+                        // Không log claims chi tiết trong production để giảm memory usage
+                        if (context.HttpContext.RequestServices.GetService<IWebHostEnvironment>()?.IsDevelopment() == true)
+                        {
+                            var claims = context.Principal?.Claims.Select(c => $"{c.Type}: {c.Value}") ?? Enumerable.Empty<string>();
+                            var roles = context.Principal?.FindAll(ClaimTypes.Role).Select(c => c.Value) ?? Enumerable.Empty<string>();
+                            logger.LogDebug("[TOKEN VALIDATED] Claims: [{Claims}]", string.Join(", ", claims));
+                            logger.LogDebug("[TOKEN VALIDATED] Roles found in token: [{Roles}]", string.Join(", ", roles));
+                        }
 
                         return Task.CompletedTask;
                     },
-					OnMessageReceived = context =>
-					{
-						var authHeader = context.Request.Headers.Authorization.ToString();
+                    OnMessageReceived = context =>
+                    {
+                        var authHeader = context.Request.Headers.Authorization.ToString();
 
-						if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-						{
-							context.Token = authHeader.Substring("Bearer ".Length).Trim();
-						}
-						else if (context.Request.Query.TryGetValue("access_token", out var token))
-						{
-							context.Token = token;
-						}
+                        if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Token = authHeader.Substring("Bearer ".Length).Trim();
+                        }
+                        else if (context.Request.Query.TryGetValue("access_token", out var token))
+                        {
+                            context.Token = token;
+                        }
                             
-						return Task.CompletedTask;
-					}
-				};
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             return services;
@@ -164,7 +168,7 @@ namespace TutorBooking.APIService
                 .AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                    options.JsonSerializerOptions.WriteIndented = true;
+                    options.JsonSerializerOptions.WriteIndented = false;
                 });
 
             return services;
@@ -204,28 +208,34 @@ namespace TutorBooking.APIService
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                options.JsonSerializerOptions.WriteIndented = true;
+                options.JsonSerializerOptions.WriteIndented = false;
             });
 
             return services;
         }
 
-		public static IServiceCollection ConfigureSignalR(this IServiceCollection services)
-		{
-			// Add SignalR with optimized configuration for Heroku
-			services.AddSignalR(options =>
-			{
-				options.EnableDetailedErrors = true;
-				options.MaximumReceiveMessageSize = 64 * 1024; // Giảm xuống để giảm memory usage
-				options.ClientTimeoutInterval = TimeSpan.FromSeconds(30); // Giảm timeout
-				options.KeepAliveInterval = TimeSpan.FromSeconds(15); // Giảm keepalive
-				options.HandshakeTimeout = TimeSpan.FromSeconds(15); // Giảm handshake timeout
-				
-				// Kích thước buffer nhỏ hơn để phù hợp với Heroku
-				options.StreamBufferCapacity = 8; // Mặc định là 10
-			});
-			return services;
-		}
+        public static IServiceCollection ConfigureSignalR(this IServiceCollection services, IConfiguration configuration)
+        {
+            // Add SignalR with optimized configuration for Heroku
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = false; // Tắt trong production
+                options.MaximumReceiveMessageSize = 32 * 1024; // Giảm xuống 32KB
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(15);
+                options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                options.HandshakeTimeout = TimeSpan.FromSeconds(10);
+                options.StreamBufferCapacity = 5; // Giảm xuống
+                options.MaximumParallelInvocationsPerClient = 3; // Thêm giới hạn
+                
+                // // Thêm giới hạn số lượng connections
+                // options.MaximumHubConnectionCount = 300;
+                
+                // // Giới hạn thời gian sống của connection
+                // options.DisconnectTimeout = TimeSpan.FromSeconds(30);
+            });
+            
+            return services;
+        }
 
         public static IServiceCollection ConfigureEventHandlers(
             this IServiceCollection services)

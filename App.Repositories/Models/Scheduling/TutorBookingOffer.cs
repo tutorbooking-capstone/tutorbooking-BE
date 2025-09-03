@@ -12,7 +12,8 @@ namespace App.Repositories.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
         public TimeSpan ExpirationPeriod { get; set; } = TimeSpan.FromMinutes(24*60);
-        public bool IsRejected { get; set; } = false; 
+        public bool IsRejected { get; set; } = false;
+        public bool IsExpired { get; set; } = false;  
 
         public virtual Tutor? Tutor { get; set; }
         public virtual Learner? Learner { get; set; }
@@ -22,11 +23,11 @@ namespace App.Repositories.Models
 
         #region Behavior
 
-        public bool IsExpired()
-        {
-            var referenceTime = UpdatedAt ?? CreatedAt;
-            return DateTime.UtcNow > referenceTime.Add(ExpirationPeriod);
-        }
+        // public bool IsExpired()
+        // {
+        //     var referenceTime = UpdatedAt ?? CreatedAt;
+        //     return DateTime.UtcNow > referenceTime.Add(ExpirationPeriod);
+        // }
 
         public static Expression<Func<TutorBookingOffer, bool>> IsExpiredExpression()
         {
@@ -40,7 +41,6 @@ namespace App.Repositories.Models
             var referenceTime = UpdatedAt ?? CreatedAt;
             return referenceTime.Add(ExpirationPeriod);
         }
-        
         public Expression<Func<TutorBookingOffer, object>>[] MarkAsRejected()
         {
             if (IsRejected) return Array.Empty<Expression<Func<TutorBookingOffer, object>>>();
@@ -55,6 +55,19 @@ namespace App.Repositories.Models
             ];
         }
         
+        public Expression<Func<TutorBookingOffer, object>>[] MarkAsExpired()
+        {
+            if (IsExpired) return Array.Empty<Expression<Func<TutorBookingOffer, object>>>();
+            
+            IsExpired = true;
+            UpdatedAt = DateTime.UtcNow;
+            
+            return
+            [
+                x => x.IsExpired,
+                x => x.UpdatedAt!
+            ];
+        }
         public static TutorBookingOffer Create(
             string tutorId, 
             string learnerId, 
