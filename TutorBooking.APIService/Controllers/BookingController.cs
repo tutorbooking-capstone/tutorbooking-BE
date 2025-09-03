@@ -5,6 +5,7 @@ using App.Repositories.Models.User;
 using App.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TutorBooking.APIService.EventHandlers;
 
 namespace TutorBooking.APIService.Controllers
 {
@@ -14,11 +15,13 @@ namespace TutorBooking.APIService.Controllers
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
+        private readonly PushNotificationEventHandler _notificationEventHandler;
 
         public BookingController(
-            IBookingService bookingService)
+            IBookingService bookingService, PushNotificationEventHandler notificationEventHandler)
         {
             _bookingService = bookingService;
+            _notificationEventHandler = notificationEventHandler;
         }
 
         [HttpGet("learner")]
