@@ -151,7 +151,7 @@ namespace App.Repositories.Models
         // Chuyển lên nhân viên xử lý
         public Expression<Func<BookingDispute, object>>[] EscalateToStaff(string staffId)
         {
-            if (Status != DisputeStatus.PendingReconciliation || string.IsNullOrEmpty(TutorResponse))
+            if (Status != DisputeStatus.PendingReconciliation)
                 throw new InvalidOperationException("Cannot escalate dispute at current status or without tutor response.");
             
             Status = DisputeStatus.AwaitingStaffReview;
