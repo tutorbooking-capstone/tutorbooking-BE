@@ -138,6 +138,24 @@ namespace App.Services.Services
             return BookingDetailDTO.FromEntity(booking);
         }
 
+        public async Task<BookingDetailDTO> GetBookingBySlotIdAsync(string slotId)
+        {
+            var bookingId = await _unitOfWork.GetRepository<BookedSlot>()
+                .ExistEntities()
+                .Where(bs => bs.Id == slotId)
+                .Select(bs => bs.BookingId)
+                .FirstOrDefaultAsync();
+
+            if (bookingId == null)
+                throw new ErrorException(
+                    StatusCodes.Status404NotFound,
+                    ErrorCode.NotFound,
+                    "Booking not found.");
+
+            return await GetBookingByIdAsync(bookingId);
+        }
+
+
         public async Task<BasePaginatedList<BookingListItemDTO>> GetAllBookingsAsync(int page = 1, int pageSize = 10)
         {
             if (!_currentUserProvider.IsInRole(Role.Admin.ToStringRole()) && 

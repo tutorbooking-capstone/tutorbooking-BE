@@ -70,6 +70,16 @@ namespace TutorBooking.APIService.Controllers
             ));
         }
 
+        [HttpGet("by-slot-id/{id}")]
+        public async Task<IActionResult> GetBookingBySlotId(string id)
+        {
+            var booking = await _bookingService.GetBookingBySlotIdAsync(id);
+            return Ok(new BaseResponseModel<BookingDetailDTO>(
+                data: booking,
+                message: "Chi tiết booking"
+            ));
+        }
+
         [HttpGet("all")]
         [AuthorizeRoles(Role.Admin, Role.Staff)]
         public async Task<IActionResult> GetAllBookings(

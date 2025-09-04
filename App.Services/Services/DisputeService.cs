@@ -213,11 +213,14 @@ namespace App.Services.Services
                             
                         case DisputeResolution.TutorNoResponse:
                         case DisputeResolution.StaffLearnerWin:
+                        case DisputeResolution.TutorFullRefund:
                             updateProperties = bookedSlot.UpdateStatus(SlotStatus.CancelledDisputed, GetAuthenticatedUserId());
                             await _walletService.RefundHeldFundToLearnerAsync(heldFund.Id);
                             break;
                             
                         case DisputeResolution.StaffDraw:
+                        case DisputeResolution.TutorPartialRefund:
+                            updateProperties = bookedSlot.UpdateStatus(SlotStatus.CancelledDisputed, GetAuthenticatedUserId());
                             // 50% to tutor, 50% to learner
                             await _walletService.PartialRefundForDisputeAsync(
                                 heldFund.Id,
@@ -303,7 +306,14 @@ namespace App.Services.Services
                     learnerMessage = $"Nhân viên hệ thống đã xử lý khiếu nại {dispute.CaseNumber} và xác định đây là hòa. Bạn sẽ được hoàn lại toàn bộ tiền.";
                     staffMessage = $"Đã xử lý khiếu nại {dispute.CaseNumber} với kết quả hòa.";
                     break;
-                    
+                case DisputeResolution.TutorPartialRefund:
+                    tutorMessage = $"Bạn đã đồng ý hoàn lại 50% số tiền cho học viên trong khiếu nại {dispute.CaseNumber}.";
+                    learnerMessage = $"Gia sư đã đồng ý hoàn lại 50% số tiền cho bạn trong khiếu nại {dispute.CaseNumber}.";
+                    break;
+                case DisputeResolution.TutorFullRefund:
+                    tutorMessage = $"Bạn đã đồng ý hoàn lại 100% số tiền cho học viên trong khiếu nại {dispute.CaseNumber}.";
+                    learnerMessage = $"Gia sư đã đồng ý hoàn lại 100% số tiền cho bạn trong khiếu nại {dispute.CaseNumber}.";
+                    break;
                 default:
                     tutorMessage = $"Khiếu nại {dispute.CaseNumber} đã được giải quyết.";
                     learnerMessage = $"Khiếu nại {dispute.CaseNumber} đã được giải quyết.";
@@ -554,49 +564,51 @@ namespace App.Services.Services
             var dispute = await GetDisputeAsync(request.DisputeId);
             
             // Verify tutor owns this dispute
-            if (dispute.TutorId != tutorId)
-                throw new ErrorException(
-                    StatusCodes.Status403Forbidden, 
-                    ErrorCode.Forbidden, 
-                    "Bạn không có quyền phản hồi khiếu nại này");
+            //if (dispute.TutorId != tutorId)
+            //    throw new ErrorException(
+            //        StatusCodes.Status403Forbidden, 
+            //        ErrorCode.Forbidden, 
+            //        "Bạn không có quyền phản hồi khiếu nại này");
 
             DisputeEligibleForEdit(dispute, Role.Tutor);
-
             var disputeRepo = _unitOfWork.GetRepository<BookingDispute>();
                 
             // Update dispute with response
-            var updateProperties = dispute.AddTutorResponse(request.Response);
+            var updateProperties = dispute.AddTutorResponse(request.Response, request.Resolution);
             disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
-            
-            // Get booking and escalate
-            var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
-            // if (bookedSlot?.Booking != null)
-            // {
-            //     var updateBookingProperties = bookedSlot.Booking.UpdateStatus(BookingStatus.Disputed, tutorId);
-            //     _unitOfWork.GetRepository<Booking>().UpdateFields(bookedSlot.Booking, updateBookingProperties.ToArray());
-            // }
-            
-            // Escalate to staff review
-            var staffId = await GetSystemStaffIdAsync();
-            var escalateProperties = dispute.EscalateToStaff(staffId);
-            disputeRepo.UpdateFields(dispute, escalateProperties.ToArray());
-            
-            // Update HeldFund status if exists
-            if (!string.IsNullOrEmpty(bookedSlot?.HeldFundId))
+            switch (request.Resolution)
             {
-                var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(bookedSlot.HeldFundId);
-                if (heldFund != null)
-                {
-                    var updateFundProperties = heldFund.UpdateStatus(HeldFundStatus.Disputed);
-                    _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, updateFundProperties.ToArray());
-                }
-            }
-            
-            await _unitOfWork.SaveAsync();
-            
-            // Notify staff and parties
-            await NotifyDisputeEscalatedAsync(dispute);
-            
+                case DisputeResolution.TutorPartialRefund:
+                    await ProcessDisputeResolution(dispute, DisputeResolution.TutorPartialRefund);
+                    await _unitOfWork.SaveAsync();
+                    break;
+                case DisputeResolution.TutorFullRefund:
+                    await ProcessDisputeResolution(dispute, DisputeResolution.TutorFullRefund);
+                    await _unitOfWork.SaveAsync();
+                    break;
+                case DisputeResolution.None:
+                    // Escalate to staff review
+                    // Get booking and escalate
+                    var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
+                    var staffId = await GetSystemStaffIdAsync();
+                    var escalateProperties = dispute.EscalateToStaff(staffId);
+                    disputeRepo.UpdateFields(dispute, escalateProperties.ToArray());
+
+                    // Update HeldFund status if exists
+                    if (!string.IsNullOrEmpty(bookedSlot?.HeldFundId))
+                    {
+                        var heldFund = await _unitOfWork.GetRepository<HeldFund>().GetByIdAsync(bookedSlot.HeldFundId);
+                        if (heldFund != null)
+                        {
+                            var updateFundProperties = heldFund.UpdateStatus(HeldFundStatus.Disputed);
+                            _unitOfWork.GetRepository<HeldFund>().UpdateFields(heldFund, updateFundProperties.ToArray());
+                        }
+                    }
+                    await _unitOfWork.SaveAsync();
+                    // Notify staff and parties
+                    await NotifyDisputeEscalatedAsync(dispute);
+                    break;
+            }   
             return await GetDisputeResponseAsync(dispute.Id);
         }
 

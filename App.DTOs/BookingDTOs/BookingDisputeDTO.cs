@@ -35,6 +35,9 @@ namespace App.DTOs.BookingDTOs
         [Required]
         [MinLength(10)]
         public string Response { get; set; } = string.Empty;
+
+        [Required]
+        public DisputeResolution Resolution { get; set; }
     }
 
     public class WithdrawDisputeRequest
