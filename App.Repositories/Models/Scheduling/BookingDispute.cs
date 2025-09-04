@@ -136,9 +136,9 @@ namespace App.Repositories.Models
                 throw new InvalidOperationException("Response period has ended.");
             
             TutorResponse = response;
+            Status = resolution != DisputeResolution.None ? DisputeStatus.ClosedResolved : DisputeStatus.AwaitingStaffReview;
             TutorRespondedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
             Resolution = resolution;
-
 
             return
             [
