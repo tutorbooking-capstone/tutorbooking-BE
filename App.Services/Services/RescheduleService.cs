@@ -471,7 +471,7 @@ namespace App.Services.Services
                     ErrorCode.BadRequest,
                     "Chỉ có thể xóa yêu cầu đang chờ phản hồi.");
 
-            // Xóa offered slots trước khi xóa request
+            // Xóa offered slots trước khi xóa request 
             DeleteOfferedSlotsForRequest(request);
 
             _unitOfWork.GetRepository<RescheduleRequest>().Delete(request);
