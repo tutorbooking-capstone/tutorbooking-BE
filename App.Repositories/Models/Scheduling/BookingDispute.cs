@@ -39,9 +39,9 @@ namespace App.Repositories.Models
         StaffTutorWin = 4,            // Nhân viên quyết định gia sư thắng
         [EnumDescription("Nhân viên quyết định hòa")]
         StaffDraw = 5,
-        [EnumDescription("Nhân viên quyết định hoàn tiền 50%")]
+        [EnumDescription("Gia sư quyết định hoàn tiền 50%")]
         TutorPartialRefund = 6,      
-        [EnumDescription("Nhân viên quyết định hoàn tiền 100%")]
+        [EnumDescription("Gia sư quyết định hoàn tiền 100%")]
         TutorFullRefund = 7,         
         // StaffNoResponse = 6,       // Nhân viên không phản hồi trong 48h (xem xét như hòa)
     }
