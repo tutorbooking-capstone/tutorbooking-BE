@@ -594,7 +594,7 @@ namespace App.Services.Services
                     // Get booking and escalate
                     var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
                     var staffId = await GetSystemStaffIdAsync();
-                    updateProperties = dispute.EscalateToStaff(staffId);
+                    updateProperties = dispute.EscalateToStaff(request.Response, staffId);
                     disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
 
                     // Update HeldFund status if exists

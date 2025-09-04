@@ -149,12 +149,13 @@ namespace App.Repositories.Models
         }
 
         // Chuyển lên nhân viên xử lý
-        public Expression<Func<BookingDispute, object>>[] EscalateToStaff(string staffId)
+        public Expression<Func<BookingDispute, object>>[] EscalateToStaff(string response, string staffId)
         {
             if (Status != DisputeStatus.PendingReconciliation)
                 throw new InvalidOperationException("Cannot escalate dispute at current status or without tutor response.");
             
             Status = DisputeStatus.AwaitingStaffReview;
+            TutorResponse = response;
             StaffId = staffId;
             var now = TimeHelper.EnsureUtc(DateTime.UtcNow); 
             StaffReviewEndTime = now.AddHours(48);  
