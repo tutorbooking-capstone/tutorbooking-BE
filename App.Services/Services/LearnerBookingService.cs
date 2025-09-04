@@ -473,7 +473,7 @@ namespace App.Services.Services
                     booking.Id,
                     $"Thanh toán cho booking: {booking.Id} với {slots.Count} slot được giữ trong ví ký quỹ"
                 );
-                
+
                 _unitOfWork.GetRepository<Transaction>().Insert(transaction);
                 
                 var learnerUpdateFields = learnerWallet.SubtractBalance(totalPrice);
@@ -772,8 +772,8 @@ namespace App.Services.Services
                             if (!isWithin24Hours && completedSlotsCount == 0)
                             {
                                 // Instant Booking cancelled 24+ hours before first slot: 10% refund to learner
-                                tutorPercentage = 0.9m;
-                                learnerPercentage = 0.1m;
+                                tutorPercentage = 0.1m;
+                                learnerPercentage = 0.9m;
                             }
                             else
                             {
