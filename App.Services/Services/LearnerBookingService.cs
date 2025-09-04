@@ -112,7 +112,7 @@ namespace App.Services.Services
                 {
                     NotificationPriority = ENotificationPriority.Normal,
                     Title = "Nhận được yêu cầu đặt lịch",
-                    Content = $"Một học viên đã gửi yêu cầu đặt lịch cho ngày. {request.ExpectedStartDate:dd/MM/yyyy}",
+                    Content = $"Một học viên đã gửi yêu cầu đặt lịch cho ngày {request.ExpectedStartDate:dd/MM/yyyy}.",
                     AdditionalData = JsonSerializer.Serialize(new
                     {
                         Type = "TimeSlotRequestReceived",

@@ -117,7 +117,7 @@ namespace App.Services.Hangfire
                 {
                     NotificationPriority = ENotificationPriority.Normal,
                     Title = $"Slot đã hoàn thành",
-                    Content = $"Slot {slot.GetSlotStartTime:hh/mm/ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
+                    Content = $"Slot {slot.GetSlotStartTime:hh:mm:ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
                     AdditionalData = JsonSerializer.Serialize(notificationData)
                 },
                 ReceiverUserIds = [slot.Booking.TutorId]
@@ -131,7 +131,7 @@ namespace App.Services.Hangfire
                     {
                         NotificationPriority = ENotificationPriority.Normal,
                         Title = $"Slot đã hoàn thành",
-                        Content = $"Slot {slot.GetSlotStartTime:hh/mm/ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
+                        Content = $"Slot {slot.GetSlotStartTime:hh:mm:ss} ngày {slot.BookedDate:dd/MM/yyyy} đã hoàn thành",
                         AdditionalData = JsonSerializer.Serialize(notificationData)
                     },
                     ReceiverUserIds = [slot.Booking.LearnerId]

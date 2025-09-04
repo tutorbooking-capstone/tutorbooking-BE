@@ -182,7 +182,7 @@ namespace App.Services.Hangfire
                     {
                         NotificationPriority = ENotificationPriority.Normal,
                         Title = "Thanh toán buổi học",
-                        Content = $"Bạn đã nhận được {heldFund.Amount} từ việc hoàn thành buổi học.",
+                        Content = $"Bạn đã nhận được {heldFund.Amount} VND từ việc hoàn thành buổi học.",
                         AdditionalData = JsonSerializer.Serialize(new
                         {
                             Type = "TutorReceivedHeldFund",
