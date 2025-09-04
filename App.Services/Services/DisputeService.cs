@@ -572,17 +572,20 @@ namespace App.Services.Services
 
             DisputeEligibleForEdit(dispute, Role.Tutor);
             var disputeRepo = _unitOfWork.GetRepository<BookingDispute>();
-                
+
             // Update dispute with response
-            var updateProperties = dispute.AddTutorResponse(request.Response, request.Resolution);
-            disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
+            Expression<Func<BookingDispute, object>>[] updateProperties;
             switch (request.Resolution)
             {
                 case DisputeResolution.TutorPartialRefund:
+                    updateProperties = dispute.AddTutorResponse(request.Response, request.Resolution);
+                    disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
                     await ProcessDisputeResolution(dispute, DisputeResolution.TutorPartialRefund);
                     await _unitOfWork.SaveAsync();
                     break;
                 case DisputeResolution.TutorFullRefund:
+                    updateProperties = dispute.AddTutorResponse(request.Response, request.Resolution);
+                    disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
                     await ProcessDisputeResolution(dispute, DisputeResolution.TutorFullRefund);
                     await _unitOfWork.SaveAsync();
                     break;
@@ -591,8 +594,8 @@ namespace App.Services.Services
                     // Get booking and escalate
                     var bookedSlot = dispute.BookedSlot ?? await _unitOfWork.GetRepository<BookedSlot>().GetByIdAsync(dispute.BookedSlotId);
                     var staffId = await GetSystemStaffIdAsync();
-                    var escalateProperties = dispute.EscalateToStaff(staffId);
-                    disputeRepo.UpdateFields(dispute, escalateProperties.ToArray());
+                    updateProperties = dispute.EscalateToStaff(staffId);
+                    disputeRepo.UpdateFields(dispute, updateProperties.ToArray());
 
                     // Update HeldFund status if exists
                     if (!string.IsNullOrEmpty(bookedSlot?.HeldFundId))
