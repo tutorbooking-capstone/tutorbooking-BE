@@ -12,7 +12,7 @@ if (builder.Environment.IsProduction())
     // - SetMaxThreads: Giới hạn thread tối đa = số CPU * 8 (worker) và số CPU * 4 (I/O)
     // Mục đích: Tránh việc tạo quá nhiều thread gây tốn tài nguyên trên môi trường Heroku với tài nguyên hạn chế
     ThreadPool.SetMinThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount);
-    ThreadPool.SetMaxThreads(Environment.ProcessorCount * 8, Environment.ProcessorCount * 4);
+    ThreadPool.SetMaxThreads(Environment.ProcessorCount * 6, Environment.ProcessorCount * 3);
 }
 
 #region Config Builder

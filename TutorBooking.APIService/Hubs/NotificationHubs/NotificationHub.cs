@@ -21,7 +21,7 @@ namespace TutorBooking.APIService.Hubs.NotificationHubs
         // Thêm counter để theo dõi số lượng connections
         private static int _connectionCount = 0;
         private static readonly object _connectionLock = new object();
-        private const int MAX_CONNECTIONS = 300; // Notification hub có thể có nhiều connections hơn
+        private const int MAX_CONNECTIONS = 100; // Notification hub có thể có nhiều connections hơn
 
         public NotificationHub(
             INotificationService notificationService, 

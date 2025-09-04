@@ -469,7 +469,7 @@ namespace App.Services.Services
                 throw new ErrorException(
                     StatusCodes.Status400BadRequest,
                     ErrorCode.BadRequest,
-                    "Chỉ có thể xóa yêu cầu đang chờ phản hồi."); 
+                    "Chỉ có thể xóa yêu cầu đang chờ phản hồi.");  
 
             // Xóa offered slots trước khi xóa request 
             DeleteOfferedSlotsForRequest(request);

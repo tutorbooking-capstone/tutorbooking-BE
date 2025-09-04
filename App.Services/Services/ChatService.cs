@@ -19,7 +19,7 @@ namespace App.Services.Services
 		// Cache cho conversations để giảm database queries
 		private static readonly Dictionary<string, (DateTime Timestamp, ICollection<ChatConversationDTO> Data)> _conversationsCache = new();
 		private static readonly object _cacheLock = new object();
-		private const int CACHE_EXPIRY_SECONDS = 30;
+		private const int CACHE_EXPIRY_SECONDS = 15;
 
 		public ChatService(IUnitOfWork unitOfWork, IUserService userService)
 		{
@@ -80,7 +80,7 @@ namespace App.Services.Services
 				_conversationsCache[cacheKey] = (DateTime.UtcNow, conversations);
 				
 				// Dọn cache nếu quá lớn
-				if (_conversationsCache.Count > 100)
+				if (_conversationsCache.Count > 50)
 				{
 					var oldestKey = _conversationsCache
 						.OrderBy(x => x.Value.Timestamp)

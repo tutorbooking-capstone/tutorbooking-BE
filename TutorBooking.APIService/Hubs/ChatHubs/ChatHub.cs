@@ -25,7 +25,7 @@ namespace TutorBooking.APIService.Hubs.ChatHubs
         // Thêm counter để theo dõi số lượng connections
         private static int _connectionCount = 0;
         private static readonly object _connectionLock = new object();
-        private const int MAX_CONNECTIONS = 200;
+        private const int MAX_CONNECTIONS = 50;
 
         public ChatHub(
             IChatService chatService, 

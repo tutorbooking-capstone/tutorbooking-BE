@@ -22,10 +22,10 @@ namespace App.Services.Services
         // Cache cho notifications để giảm database queries
         private static readonly Dictionary<string, (DateTime Timestamp, List<NotificationResponse> Data)> _notificationsCache = new();
         private static readonly object _cacheLock = new object();
-        private const int CACHE_EXPIRY_SECONDS = 30;
+        private const int CACHE_EXPIRY_SECONDS = 15;
         
         // Batch size cho việc xử lý notifications
-        private const int BATCH_SIZE = 100;
+        private const int BATCH_SIZE = 50;
 
         public NotificationService(IUnitOfWork unitOfWork, IUserService userService, NotificationEvents notificationEvents)
         {
@@ -161,7 +161,7 @@ namespace App.Services.Services
                 _notificationsCache[cacheKey] = (DateTime.UtcNow, response);
                 
                 // Dọn cache nếu quá lớn
-                if (_notificationsCache.Count > 100)
+                if (_notificationsCache.Count > 50)
                 {
                     var oldestKey = _notificationsCache
                         .OrderBy(x => x.Value.Timestamp)
