@@ -38,7 +38,11 @@ namespace App.Repositories.Models
         [EnumDescription("Nhân viên quyết định gia sư thắng")]
         StaffTutorWin = 4,            // Nhân viên quyết định gia sư thắng
         [EnumDescription("Nhân viên quyết định hòa")]
-        StaffDraw = 5                 // Nhân viên quyết định hòa
+        StaffDraw = 5,
+        [EnumDescription("Nhân viên quyết định hoàn tiền 50%")]
+        TutorPartialRefund = 6,      
+        [EnumDescription("Nhân viên quyết định hoàn tiền 100%")]
+        TutorFullRefund = 7,         
         // StaffNoResponse = 6,       // Nhân viên không phản hồi trong 48h (xem xét như hòa)
     }
     #endregion
@@ -118,21 +122,29 @@ namespace App.Repositories.Models
         }
 
         // Gia sư thêm phản hồi
-        public Expression<Func<BookingDispute, object>>[] AddTutorResponse(string response)
+        public Expression<Func<BookingDispute, object>>[] AddTutorResponse(string response, DisputeResolution resolution)
         {
             if (Status != DisputeStatus.PendingReconciliation)
                 throw new InvalidOperationException("Cannot add response at current status.");
-                
+
+            if (resolution != DisputeResolution.TutorFullRefund
+                && resolution != DisputeResolution.TutorPartialRefund
+                && resolution != DisputeResolution.None)
+                throw new ArgumentException("Invalid resolution for tutor response.");
+
             if (CoreHelper.SystemTimeNow > ReconciliationEndTime)
                 throw new InvalidOperationException("Response period has ended.");
             
             TutorResponse = response;
             TutorRespondedAt = TimeHelper.EnsureUtc(DateTime.UtcNow);  
-            
+            Resolution = resolution;
+
+
             return
             [
                 x => x.TutorResponse!,
-                x => x.TutorRespondedAt!
+                x => x.TutorRespondedAt!,
+                x => x.Resolution!
             ];
         }
 
