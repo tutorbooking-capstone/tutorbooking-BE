@@ -22,7 +22,7 @@ namespace TutorBooking.APIService
         // Thêm biến để theo dõi memory usage
         private static readonly Timer _memoryMonitorTimer;
         private const int MEMORY_CHECK_INTERVAL_MS = 60000; // 1 phút
-        private const int MEMORY_THRESHOLD_MB = 450; // 450MB (90% của 512MB Heroku dyno)
+        private const int MEMORY_THRESHOLD_MB = 300;  
         
         static Startup()
         {

@@ -220,18 +220,12 @@ namespace TutorBooking.APIService
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = false; // Tắt trong production
-                options.MaximumReceiveMessageSize = 32 * 1024; // Giảm xuống 32KB
+                options.MaximumReceiveMessageSize = 16 * 1024; // Giảm xuống 16KB
                 options.ClientTimeoutInterval = TimeSpan.FromSeconds(15);
                 options.KeepAliveInterval = TimeSpan.FromSeconds(10);
                 options.HandshakeTimeout = TimeSpan.FromSeconds(10);
-                options.StreamBufferCapacity = 5; // Giảm xuống
-                options.MaximumParallelInvocationsPerClient = 3; // Thêm giới hạn
-                
-                // // Thêm giới hạn số lượng connections
-                // options.MaximumHubConnectionCount = 300;
-                
-                // // Giới hạn thời gian sống của connection
-                // options.DisconnectTimeout = TimeSpan.FromSeconds(30);
+                options.StreamBufferCapacity = 3;  
+                options.MaximumParallelInvocationsPerClient = 3; 
             });
             
             return services;
