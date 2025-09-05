@@ -13,8 +13,8 @@ namespace App.Repositories.Models
         PendingReconciliation = 0,    // Giai đoạn hòa giải 24h
         [EnumDescription("Học viên rút khiếu nại")]
         ClosedWithdrawn = 1,          // Học viên rút khiếu nại
-        [EnumDescription("Tự động giải quyết (gia sư không phản hồi)")]
-        ClosedResolved = 2,           // Tự động giải quyết (gia sư không phản hồi)
+        [EnumDescription("Đã giải quyết")]
+        ClosedResolved = 2,// Gia sư phản hồi hoặc hệ thống tự động giải quyết
         [EnumDescription("Chuyển lên nhân viên xử lý")]
         AwaitingStaffReview = 3,      // Chuyển lên nhân viên xử lý
         [EnumDescription("Nhân viên quyết định học viên thắng")]
