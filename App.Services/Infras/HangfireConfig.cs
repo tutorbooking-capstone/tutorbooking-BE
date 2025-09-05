@@ -18,7 +18,7 @@ namespace App.Services.Infras
                 "process-pending-held-funds",
                 service => service.ProcessPendingHeldFundsAsync(),
                 "0 */1 * * *");   
-                 
+                  
             RecurringJob.RemoveIfExists("update-completed-slots");
             RecurringJob.AddOrUpdate<BookedSlotStatusUpdateService>(
                 "update-completed-slots",
