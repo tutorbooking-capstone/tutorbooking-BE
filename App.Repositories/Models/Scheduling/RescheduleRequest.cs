@@ -14,7 +14,7 @@ namespace App.Repositories.Models
         Accepted = 1,
         
         [EnumDescription("Đã từ chối")]
-        Rejected = 2,
+        Rejected = 2, 
         
         [EnumDescription("Đã hết hạn")]
         Expired = 3,
